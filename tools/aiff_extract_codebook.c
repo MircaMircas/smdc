@@ -35,8 +35,12 @@ static const char *progname, *infilename;
 #define checked_fread(a, b, c, d) if (fread(a, b, c, d) != c) fail_parse("error parsing file")
 
 NORETURN
+#include <stdio.h>
+
 void fail_parse(const char *fmt, ...)
 {
+char formatted[1024];
+#if 0
     char *formatted = NULL;
     va_list ap;
     va_start(ap, fmt);
@@ -55,7 +59,7 @@ void fail_parse(const char *fmt, ...)
             }
         }
     }
-
+#endif
     if (formatted != NULL) {
         fprintf(stderr, "%s: %s [%s]\n", progname, formatted, infilename);
         free(formatted);

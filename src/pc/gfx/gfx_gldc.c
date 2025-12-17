@@ -25,10 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "gl.h"
-#include "glu.h"
-#include "glext.h"
-#include "glkos.h"
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glext.h>
+#include <GL/glkos.h>
 #else
 #define GL_GLEXT_PROTOTYPES 1
 #endif
@@ -174,14 +174,14 @@ static inline GLenum texenv_set_texture_color(struct ShaderProgram *prg) {
 
     // HACK: lord forgive me for this, but this is easier
     switch (prg->shader_id) {
-        case 0x0000038D: // mario's eyes
+       // case 0x0000038D: // mario's eyes
         case 0x01045A00: // peach letter
         case 0x01200A00: // intro copyright fade in
             mode = GL_DECAL;
             break;
         case 0x00000551: // goddard
         /*@Note: Issues! */
-            mode =  GL_REPLACE; /*GL_BLEND*/
+            mode =  GL_MODULATE; /*GL_BLEND*/
             break;
         default:
             mode = GL_MODULATE;
@@ -254,9 +254,9 @@ static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
         glDisableClientState(GL_COLOR_ARRAY);
     }
 
-    if (!prg->enabled) {
+    if (1) { //!prg->enabled) {
         // we only need to do this once
-        prg->enabled = true;
+        //prg->enabled = true;
 
         if (prg->shader_id & SHADER_OPT_TEXTURE_EDGE) {
             // (horrible) alpha discard
@@ -392,7 +392,13 @@ static void gfx_opengl_upload_texture(const uint8_t *rgba32_buf, int width, int 
     if(type == GL_RGBA){
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba32_buf);
     } else {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, rgba32_buf);
+        GLint intFormat;
+        if (type == GL_UNSIGNED_SHORT_1_5_5_5_REV) {
+            intFormat = GL_ARGB1555_KOS;
+        } else {
+            intFormat = GL_ARGB4444_KOS;
+        }
+        glTexImage2D(GL_TEXTURE_2D, 0, intFormat, width, height, 0, GL_BGRA, type, rgba32_buf);
     }
 #ifdef DEBUG
     printf("GL Mem left:%u\n", (unsigned int)pvr_mem_available());
@@ -439,15 +445,17 @@ static void gfx_opengl_set_depth_mask(bool z_upd) {
     glDepthMask(z_upd);
 }
 
+static bool is_zmode_decal = false;
+// Polyoffset currently doesn't work so gotta workaround it. 
 static void gfx_opengl_set_zmode_decal(bool zmode_decal) {
+    is_zmode_decal = zmode_decal;
     if (zmode_decal) {
-        glPolygonOffset(-2, -2);
-        glEnable(GL_POLYGON_OFFSET_FILL);
+        glDepthFunc(GL_LEQUAL);  
     } else {
-        glPolygonOffset(0, 0);
-        glDisable(GL_POLYGON_OFFSET_FILL);
+        glDepthFunc(GL_LESS);  
     }
 }
+
 
 static void gfx_opengl_set_viewport(int x, int y, int width, int height) {
     glViewport(x, y, width, height);
@@ -518,6 +526,7 @@ static inline void gfx_opengl_pass_mix_texture(void) {
 #endif
 }
 
+
 static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len, size_t buf_vbo_num_tris) {
     cur_buf = (void*)buf_vbo;
 
@@ -526,23 +535,82 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
     // if there's two textures, set primary texture first
     if (cur_shader->texture_used[1])
         glBindTexture(GL_TEXTURE_2D, tmu_state[cur_shader->texture_ord[0]].tex);
-
-    /*@Error: Goddard hack */
+    
+    if (cur_shader->shader_id == 0x0000038D) {
+        // Face fix. 
+        glEnable(GL_TEXTURE_2D);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+        glEnable(GL_BLEND);
+    }
+    
+    /* Goddard specular */
     if(cur_shader->shader_id == 0x551){
+        // draw goddard stuff twice
+        // first, shaded polys only, no textures
         glDisable(GL_TEXTURE_2D);
         glDisable(GL_BLEND);
+
+        glDrawArrays(GL_TRIANGLES, 0, 3 * buf_vbo_num_tris);
+
+        // after submitting, set all of the vertex colors to solid white
+        dc_fast_t *fast_vbo = (dc_fast_t*)buf_vbo;
+	    for(unsigned int i=0;i<3*buf_vbo_num_tris;i++) {
+		    fast_vbo[i].color.packed = 0xffffffff;
+	    }
+        // enable texture/blend and set blend to ONE+ONE
+        // it will draw again, applying the specular highlights
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     }
 
-    if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox
-        glDepthMask(false);
+    if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox  // may need to relook at this
+        glDepthMask(GL_FALSE);
+        glDepthFunc(GL_LEQUAL);
+        glDisable(GL_BLEND);
+        glDisable(GL_FOG);
+        glPushMatrix();
+        glLoadIdentity();
+    }
+
+    if (is_zmode_decal) {
+        // Adjust depth values slightly for zmode_decal objects
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glDepthMask(GL_TRUE);
+        
+        // Push the geometry slightly towards the camera
+        glPushMatrix();
+        glTranslatef(0.0f, 2.1f, 0.9f);  // magic values need fine tuning. 
     }
 
     glDrawArrays(GL_TRIANGLES, 0, 3 * buf_vbo_num_tris);
 
+    if (is_zmode_decal) {
+        glPopMatrix();
+        glDepthFunc(GL_LESS);  // Reset depth function
+    }
+    
+    // pretty sure this is needed)
+    if (cur_shader->shader_id == 0x0000038D) {
+        glDisable(GL_BLEND);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    }
+    
     if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox
-        glDepthMask(true);
+        glPopMatrix();
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
+        glEnable(GL_BLEND);
+        glEnable(GL_FOG);
     }
 
+    // restore default blend mode after goddard draw
+    if(cur_shader->shader_id == 0x551) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDisable(GL_BLEND);
+    }
     // if there's two textures, draw polys with the second texture
     //if (cur_shader->texture_used[1]) gfx_opengl_pass_mix_texture();
 

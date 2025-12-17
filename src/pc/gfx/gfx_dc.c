@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <dc/video.h>
+#include <kos/thread.h>
 #include <assert.h>
 
 #define GFX_API_NAME "Dreamcast GLdc"
@@ -102,7 +103,7 @@ static void gfx_dc_handle_events(void) {
 
 float cpu_time = 0.f, gpu_time = 0.f;
 uint8_t skip_debounce = 0;
-const unsigned int FRAME_TIME_MS = 30; // hopefully get right on target @ 33.3
+const unsigned int FRAME_TIME_MS = 33; // hopefully get right on target @ 33.3
 
 static bool gfx_dc_start_frame(void) {
     const unsigned int cur_time = GetSystemTimeLow();

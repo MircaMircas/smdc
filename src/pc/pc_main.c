@@ -34,6 +34,7 @@
 #include "configfile.h"
 
 #include "compat.h"
+uint64_t gSysFrameCount = 0;
 
 #if defined(TARGET_PSP)
 #include <pspsdk.h>
@@ -110,6 +111,8 @@ typedef int JobData;
 static s16 audio_buffer[SAMPLES_HIGH * 2 * 2] __attribute__((aligned(64)));
 extern struct Stack* stack;
 extern void audio_psp_play(const uint8_t *buf, size_t len);
+
+
 
 int __attribute__((optimize("O0"))) run_me_audio(JobData data) {
     (void)data;
@@ -190,6 +193,48 @@ int audioOutput(SceSize args, void *argp) {
 }
 #endif
 
+
+#if defined(TARGET_DC)
+#include <kos.h>
+//void create_thread(OSThread *thread, OSId id, void (*entry)(void *), void *arg, void *sp, OSPri pri);
+static volatile uint64_t vblticker=0;
+void vblfunc(uint32_t c, void *d) {
+	(void)c;
+	(void)d;
+    vblticker++;
+    genwait_wake_one((void*)&vblticker);
+}    
+//OSThread gSpinThread;
+//uint8_t somestack[4096];
+
+
+#if defined(TARGET_DC)
+//#define SAMPLES_HIGH 560
+//#define SAMPLES_LOW 528
+#define SAMPLES_HIGH 464
+#define SAMPLES_LOW 432
+
+static  s16 __attribute__((aligned(32))) audio_buffer[SAMPLES_HIGH * 2 * 2];
+void *SPINNING_THREAD(UNUSED void *arg) {
+    uint64_t last_vbltick = vblticker;
+
+    while (1) {
+        while (vblticker <= last_vbltick)
+            genwait_wait((void*)&vblticker, NULL, 5, NULL);
+        last_vbltick = vblticker;
+irq_disable();
+//u32 num_audio_samples = 544;//even_frame ? SAMPLES_HIGH : SAMPLES_LOW;//448;
+//        int num_audio_samples = SAMPLES_LOW;
+        int num_audio_samples = ((gSysFrameCount & 3) < 2) ? SAMPLES_HIGH : SAMPLES_LOW;
+        create_next_audio_buffer(audio_buffer, num_audio_samples);
+        audio_api->play((u8 *)audio_buffer, num_audio_samples * 2 * 2);// * 2);
+irq_enable();
+    }
+    return NULL;
+}
+#endif
+#endif
+
 extern int gProcessAudio;
 void produce_one_frame(void) {
 #if defined(TARGET_PSP)
@@ -215,8 +260,20 @@ void produce_one_frame(void) {
     //printf("Audio samples before submitting: %d\n", audio_api->buffered());
     audio_api->play((u8 *)audio_buffer, 2 * num_audio_samples * 4);
 #endif
-#if defined(TARGET_DC)
-    audio_api->play(NULL, 2 /* 2 buffers */ * SAMPLES_HIGH * sizeof(short) * 2 /* stereo */);
+#if 0 
+defined(TARGET_DC)
+//    audio_api->play(NULL, 2 /* 2 buffers */ * SAMPLES_HIGH * sizeof(short) * 2 /* stereo */);
+    s16 audio_buffer[SAMPLES_HIGH * 2 * 2];
+    for (int i = 0; i < 2; i++) {
+        /*if (audio_cnt-- == 0) {
+            audio_cnt = 2;
+        }
+        u32 num_audio_samples = audio_cnt < 2 ? 528 : 544;*/
+        create_next_audio_buffer(audio_buffer + i * (SAMPLES_HIGH * 2), SAMPLES_HIGH);
+    }
+    //printf("Audio samples before submitting: %d\n", audio_api->buffered());
+    audio_api->play((u8 *)audio_buffer, 2 * SAMPLES_HIGH * 4);
+
 #endif
 
     gfx_end_frame();
@@ -348,6 +405,18 @@ void main_func(void) {
     audio_init();
     sound_init();
 
+#if defined(TARGET_DC)
+    vblank_handler_add(&vblfunc, NULL);
+    kthread_attr_t main_attr;
+    main_attr.create_detached = 1;
+	main_attr.stack_size = 32768;
+	main_attr.stack_ptr = NULL;
+	main_attr.prio = PRIO_DEFAULT;
+	main_attr.label = "spinthread";
+    thd_create_ex(&main_attr, &SPINNING_THREAD, NULL);
+#endif
+
+
     thread5_game_loop(NULL);
 #ifdef TARGET_WEB
     /*for (int i = 0; i < atoi(argv[1]); i++) {
@@ -364,6 +433,7 @@ void main_func(void) {
 #endif
 
     while (1) {
+        gSysFrameCount++;
         wm_api->main_loop(produce_one_frame);
     }
 #endif

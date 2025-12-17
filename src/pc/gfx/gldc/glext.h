@@ -54,16 +54,6 @@ __BEGIN_DECLS
 #define GL_TRANSPOSE_TEXTURE_MATRIX_ARB   0x84E5
 #define GL_TRANSPOSE_COLOR_MATRIX_ARB     0x84E6
 
-#define GL_MULTISAMPLE_ARB                0x809D
-#define GL_SAMPLE_ALPHA_TO_COVERAGE_ARB   0x809E
-#define GL_SAMPLE_ALPHA_TO_ONE_ARB        0x809F
-#define GL_SAMPLE_COVERAGE_ARB            0x80A0
-#define GL_SAMPLE_BUFFERS_ARB             0x80A8
-#define GL_SAMPLES_ARB                    0x80A9
-#define GL_SAMPLE_COVERAGE_VALUE_ARB      0x80AA
-#define GL_SAMPLE_COVERAGE_INVERT_ARB     0x80AB
-#define GL_MULTISAMPLE_BIT_ARB            0x20000000
-
 #define GL_NORMAL_MAP_ARB                 0x8511
 #define GL_REFLECTION_MAP_ARB             0x8512
 #define GL_TEXTURE_CUBE_MAP_ARB           0x8513
@@ -130,7 +120,7 @@ GLAPI void APIENTRY glGenFramebuffersEXT(GLsizei n, GLuint* framebuffers);
 GLAPI void APIENTRY glDeleteFramebuffersEXT(GLsizei n, const GLuint* framebuffers);
 GLAPI void APIENTRY glBindFramebufferEXT(GLenum target, GLuint framebuffer);
 GLAPI void APIENTRY glFramebufferTexture2DEXT(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-GLAPI void APIENTRY glGenerateMipmapEXT(GLenum target);
+GLAPI void APIENTRY glGenerateMipmap(GLenum target);
 GLAPI GLenum APIENTRY glCheckFramebufferStatusEXT(GLenum target);
 GLAPI GLboolean APIENTRY glIsFramebufferEXT(GLuint framebuffer);
 
@@ -161,6 +151,22 @@ GLAPI void APIENTRY glGetColorTableEXT(GLenum target, GLenum format, GLenum type
 GLAPI void APIENTRY glGetColorTableParameterivEXT(GLenum target, GLenum pname, GLint *params);
 GLAPI void APIENTRY glGetColorTableParameterfvEXT(GLenum target, GLenum pname, GLfloat *params);
 
+/* ext OES_compressed_paletted_texture */
+
+/* PixelInternalFormat */
+//Ozzy: used MesaGL definitions please adjust if it causes probs.
+#define GL_PALETTE4_RGB8_OES              0x8B90
+#define GL_PALETTE4_RGBA8_OES             0x8B91
+#define GL_PALETTE4_R5_G6_B5_OES          0x8B92
+#define GL_PALETTE4_RGBA4_OES             0x8B93
+#define GL_PALETTE4_RGB5_A1_OES           0x8B94
+#define GL_PALETTE8_RGB8_OES              0x8B95
+#define GL_PALETTE8_RGBA8_OES             0x8B96
+#define GL_PALETTE8_R5_G6_B5_OES          0x8B97
+#define GL_PALETTE8_RGBA4_OES             0x8B98
+#define GL_PALETTE8_RGB5_A1_OES           0x8B99
+
+
 /* Loads VQ compressed texture from SH4 RAM into PVR VRAM */
 /* internalformat must be one of the following constants:
     GL_UNSIGNED_SHORT_5_6_5_VQ
@@ -179,6 +185,15 @@ GLAPI void APIENTRY glCompressedTexImage2DARB(GLenum target,
         GLsizei imageSize,
         const GLvoid *data);
 
+GLAPI void APIENTRY glCompressedTexSubImage2DARB(GLenum target,
+        GLint level,
+        GLint xoffset,
+        GLint yoffset,
+        GLsizei width,
+        GLsizei height,
+        GLenum format,
+        GLsizei imageSize,
+        const GLvoid *data);
 
 /* Core aliases */
 #define GL_INVALID_FRAMEBUFFER_OPERATION GL_INVALID_FRAMEBUFFER_OPERATION_EXT
@@ -187,15 +202,16 @@ GLAPI void APIENTRY glCompressedTexImage2DARB(GLenum target,
 #define glClientActiveTexture glClientActiveTextureARB
 #define glMultiTexCoord2f glMultiTexCoord2fARB
 
-#define glGenerateMipmap glGenerateMipmapEXT
+#define glGenerateMipmapEXT glGenerateMipmap
 #define glCompressedTexImage2D glCompressedTexImage2DARB
+#define glCompressedTexSubImage2D glCompressedTexSubImage2DARB
 
 #ifndef GL_VERSION_1_4
 #define GL_VERSION_1_4 1
 #define GL_MAX_TEXTURE_LOD_BIAS           0x84FD
 #define GL_TEXTURE_LOD_BIAS               0x8501
 #define GL_MAX_TEXTURE_LOD_BIAS_DEFAULT 7
-#define GL_KOS_INTERNAL_DEFAULT_MIPMAP_LOD_BIAS -4
+#define GL_KOS_INTERNAL_DEFAULT_MIPMAP_LOD_BIAS 4
 #endif
 
 #ifndef GL_EXT_texture_lod_bias
@@ -204,6 +220,11 @@ GLAPI void APIENTRY glCompressedTexImage2DARB(GLenum target,
 #define GL_TEXTURE_FILTER_CONTROL_EXT     0x8500
 #define GL_TEXTURE_LOD_BIAS_EXT           0x8501
 #endif /* GL_EXT_texture_lod_bias */
+
+/* ATI_meminfo */
+#define GL_VBO_FREE_MEMORY_ATI               0x87FB
+#define GL_TEXTURE_FREE_MEMORY_ATI           0x87FC
+#define GL_RENDERBUFFER_FREE_MEMORY_ATI      0x87FD
 
 __END_DECLS
 

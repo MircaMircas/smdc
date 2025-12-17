@@ -314,7 +314,7 @@ u64 *synthesis_execute(u64 *cmdBuf, s32 *writtenCmds, s16 *aiBuf, s32 bufLen) {
     u32 *aiBufPtr = (u32 *) aiBuf;
     u64 *cmd = cmdBuf + 1;
     s32 v0;
-
+    gSynthesisReverb.useReverb = 0;
     aSegment(cmdBuf, 0, 0);
 
     for (i = gAudioUpdatesPerFrame; i > 0; i--) {

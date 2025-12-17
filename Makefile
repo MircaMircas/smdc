@@ -295,7 +295,7 @@ endif
 
   # Use a default opt flag for gcc
   ifeq ($(COMPILER),gcc)
-    OPT_FLAGS := -O2
+    OPT_FLAGS := -Os -flto=auto
   endif
 
 else
@@ -545,7 +545,7 @@ endif
 ifeq ($(TARGET_DC),1)
   #Notes from neo
   #-gdwarf-2 -gstrict-dwarf -g3 --ffunction-sections -fdata-sections -Wl,-gc-sections
-  PLATFORM_CFLAGS  := $(KOS_CFLAGS) -DTARGET_DC -DNDEBUG -Isrc/pc/gfx/gldc -Wall -Wextra -g3
+  PLATFORM_CFLAGS  := $(KOS_CFLAGS) -Os -DTARGET_DC -Wall -Wextra -DNDEBUG
   PLATFORM_LDFLAGS := -Wl,--gc-sections  -Wl,-Map=output.map
 endif
 ifeq ($(TARGET_WEB),1)
@@ -575,8 +575,8 @@ ifeq ($(ENABLE_OPENGL),1)
     GFX_LDFLAGS += -L$(PSPSDK_PREFIX)/lib src/pc/libME.a src/pc/gfx/libpspmath.a -lpspdebug  -lpspgu -lpspvfpu -lpspctrl -lpspge -lpspdisplay -lm -lpspsdk -lpsprtc -lpspaudio -lpsputility -lpspnet_inet -lpsppower -lc -lpspuser -lpspvram  
   endif
   ifeq ($(TARGET_DC),1)
-    GFX_CFLAGS  += -Isrc/pc/audio/aldc2
-    GFX_LDFLAGS += src/pc/gfx/gldc/libGLdc.a src/pc/audio/aldc2/libAL.a -lm
+    GFX_CFLAGS  += 
+    GFX_LDFLAGS += -lGL
   endif
 endif
 ifeq ($(ENABLE_DX11),1)
@@ -587,6 +587,9 @@ ifeq ($(ENABLE_DX12),1)
   GFX_CFLAGS := -DENABLE_DX12
   PLATFORM_LDFLAGS += -lgdi32 -static
 endif
+
+# -lAL
+
 
 #ifneq ($(TARGET_DC),1)
 GFX_CFLAGS += -DWIDESCREEN

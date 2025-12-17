@@ -16,7 +16,9 @@
 #include <sys/cdefs.h>
 __BEGIN_DECLS
 
+#ifndef BUILD_LIBGL
 #include "gl.h"
+#endif
 
 #define GLU_FALSE 0
 #define GLU_TRUE  1
@@ -28,12 +30,14 @@ GLAPI void APIENTRY gluPerspective(GLdouble fovy, GLdouble aspect,
                                    GLdouble zNear, GLdouble zFar);
 
 /* gluLookAt - Set Camera Position for Rendering. */
-GLAPI void APIENTRY gluLookAt(GLfloat eyex, GLfloat eyey, GLfloat eyez,
-                              GLfloat centerx, GLfloat centery, GLfloat centerz,
-                              GLfloat upx, GLfloat upy, GLfloat upz);
+GLAPI void APIENTRY gluLookAt(GLdouble eyex, GLdouble eyey, GLdouble eyez,
+                              GLdouble centerx, GLdouble centery, GLdouble centerz,
+                              GLdouble upx, GLdouble upy, GLdouble upz);
 
-GLAPI GLint APIENTRY gluBuild2DMipmaps( GLenum target,GLint internalFormat, GLsizei width, 
-                                        GLsizei height, GLenum format, GLenum type, const void *data );
+/* generate mipmaps for any image provided by the user and then pass them to OpenGL */
+GLAPI GLint APIENTRY gluBuild2DMipmaps(GLenum target, GLint internalFormat,
+                                       GLsizei width, GLsizei height,
+                                       GLenum format, GLenum type, const void *data);
 
 GLAPI const GLubyte* APIENTRY gluErrorString(GLenum error);
 
