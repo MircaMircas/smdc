@@ -33,6 +33,7 @@ void aADPCMdecImpl(uint8_t flags, ADPCM_STATE state);
 void aResampleImpl(uint8_t flags, uint16_t pitch, RESAMPLE_STATE state);
 void aEnvMixerImpl(uint8_t flags, ENVMIX_STATE state);
 void aMixImpl(int16_t gain, uint16_t in_addr, uint16_t out_addr);
+void aSaveBuffer2Impl(uint16_t source_addr, int16_t* dest_addr, uint16_t nbytes);
 
 #define aSegment(pkt, s, b) do { } while(0)
 #define aClearBuffer(pkt, d, c) aClearBufferImpl(d, c)
@@ -49,5 +50,6 @@ void aMixImpl(int16_t gain, uint16_t in_addr, uint16_t out_addr);
 #define aResample(pkt, f, p, s) aResampleImpl(f, p, s)
 #define aEnvMixer(pkt, f, s) aEnvMixerImpl(f, s)
 #define aMix(pkt, f, g, i, o) aMixImpl(g, i, o)
+#define aSaveBuffer2(pkt, s, d, c) aSaveBuffer2Impl(s, d, c)
 
 #endif

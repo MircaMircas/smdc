@@ -1,6 +1,6 @@
 #include "libultra_internal.h"
 #include <string.h>
-
+#if 0
 void *memcpy(void *dst, const void *src, size_t size) {
     u8 *_dst = dst;
     const u8 *_src = src;
@@ -10,6 +10,7 @@ void *memcpy(void *dst, const void *src, size_t size) {
     }
     return dst;
 }
+    #endif
 size_t strlen(const char *str) {
     const u8 *ptr = (const u8 *) str;
     while (*ptr) {

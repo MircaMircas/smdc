@@ -20,6 +20,7 @@
 #include "sfx.h"
 #include "shape_helper.h"
 #include "skin.h"
+#include "sh4zam.h"
 
 #define MAX_GD_DLS 1000
 #define OS_MESG_SI_COMPLETE 0x33333333
@@ -781,15 +782,15 @@ f64 gd_cos_d(f64 x) {
 
 /* 249B2C -> 249BA4 */
 f64 gd_sqrt_d(f64 x) {
-    if (x < 1.0e-7) {
+/*     if (x < 1.0e-7) {
         return 0.0;
-    }
-    return sqrtf(x);
+    } */
+    return shz_sqrtf_fsrra(x);
 }
 
 /* 249BA4 -> 249BCC */
 f64 Unknown8019B3D4(UNUSED f64 x) {
-    return 0.0;
+    return 0.0f;
 }
 
 /* 249BCC -> 24A19C */
@@ -1463,9 +1464,9 @@ void gd_draw_rect(f32 ulx, f32 uly, f32 lrx, f32 lry) {
     bound_on_active_view(&lrx, &lry);
 
     if (lrx > ulx && lry > uly) {
-        gDPFillRectangle(next_gfx(), (u32)(sActiveView->upperLeft.x + ulx),
-                         (u32)(uly + sActiveView->upperLeft.y), (u32)(sActiveView->upperLeft.x + lrx),
-                         (u32)(lry + sActiveView->upperLeft.y));
+//        gDPFillRectangle(next_gfx(), (u32)(sActiveView->upperLeft.x + ulx),
+  //                       (u32)(uly + sActiveView->upperLeft.y), (u32)(sActiveView->upperLeft.x + lrx),
+    //                     (u32)(lry + sActiveView->upperLeft.y));
     }
 
     gDPPipeSync(next_gfx());
@@ -1479,7 +1480,7 @@ void gd_draw_border_rect(f32 ulx, f32 uly, f32 lrx, f32 lry) {
     bound_on_active_view(&lrx, &lry);
 
     if (lrx > ulx && lry > uly) {
-        gDPFillRectangle(
+/*        gDPFillRectangle(
             next_gfx(), (u32)(sActiveView->upperLeft.x + ulx), (u32)(uly + sActiveView->upperLeft.y),
             (u32)(sActiveView->upperLeft.x + ulx + 5.0f), (u32)(lry + sActiveView->upperLeft.y));
         gDPFillRectangle(next_gfx(), (u32)(sActiveView->upperLeft.x + lrx - 5.0f),
@@ -1490,7 +1491,7 @@ void gd_draw_border_rect(f32 ulx, f32 uly, f32 lrx, f32 lry) {
                          (u32)(uly + sActiveView->upperLeft.y + 5.0f));
         gDPFillRectangle(next_gfx(), (u32)(sActiveView->upperLeft.x + ulx),
                          (u32)(lry + sActiveView->upperLeft.y - 5.0f),
-                         (u32)(sActiveView->upperLeft.x + lrx), (u32)(lry + sActiveView->upperLeft.y));
+                         (u32)(sActiveView->upperLeft.x + lrx), (u32)(lry + sActiveView->upperLeft.y));*/
     }
 
     gDPPipeSync(next_gfx());
@@ -1972,9 +1973,10 @@ void func_801A0478(s32 idx, // material GdDl number; offsets into hilite array
     sp40.z = cam->unkE8[0][2] + arg4->x;
     sp40.y = cam->unkE8[1][2] + arg4->y;
     sp40.x = cam->unkE8[2][2] + arg4->z;
-    sp3C = sqrtf(SQ(sp40.z) + SQ(sp40.y) + SQ(sp40.x));
-    if (sp3C > 0.1) {
-        sp3C = 1.0 / sp3C; //? 1.0f
+    sp3C = shz_vec3_magnitude_inv(shz_vec3_deref(&sp40));
+//    sp3C = sqrtf(SQ(sp40.z) + SQ(sp40.y) + SQ(sp40.x));
+    if (sp3C/*  > 10.0f */) { //0.1) {
+//        sp3C = 1.0 / sp3C; //? 1.0f
         sp40.z *= sp3C;
         sp40.y *= sp3C;
         sp40.x *= sp3C;
@@ -2172,28 +2174,28 @@ void func_801A1A00(void) {
 
 /* 250300 -> 250640 */
 void Unknown801A1B30(void) {
-    gDPPipeSync(next_gfx());
+    //gDPPipeSync(next_gfx());
     gd_set_color_fb();
     gd_set_fill(&sActiveView->colour);
-    gDPFillRectangle(next_gfx(), (u32)(sActiveView->upperLeft.x), (u32)(sActiveView->upperLeft.y),
-                     (u32)(sActiveView->upperLeft.x + sActiveView->lowerRight.x - 1.0f),
-                     (u32)(sActiveView->upperLeft.y + sActiveView->lowerRight.y - 1.0f));
-    gDPPipeSync(next_gfx());
+//    gDPFillRectangle(next_gfx(), (u32)(sActiveView->upperLeft.x), (u32)(sActiveView->upperLeft.y),
+  //                   (u32)(sActiveView->upperLeft.x + sActiveView->lowerRight.x - 1.0f),
+    //                 (u32)(sActiveView->upperLeft.y + sActiveView->lowerRight.y - 1.0f));
+    //gDPPipeSync(next_gfx());
 }
 
 /* 250640 -> 250AE0 */
 void Unknown801A1E70(void) {
-    gDPPipeSync(next_gfx());
+    //gDPPipeSync(next_gfx());
     gDPSetCycleType(next_gfx(), G_CYC_FILL);
     gDPSetRenderMode(next_gfx(), G_RM_OPA_SURF, G_RM_OPA_SURF2);
     gd_set_zb_area();
-    gDPSetColorImage(next_gfx(), G_IM_FMT_RGBA, G_IM_SIZ_16b, sActiveView->parent->lowerRight.x,
-                     GD_LOWER_24(sActiveView->parent->zbuf));
-    gDPSetFillColor(next_gfx(), GPACK_ZDZ(G_MAXFBZ, 0) << 16 | GPACK_ZDZ(G_MAXFBZ, 0));
-    gDPFillRectangle(next_gfx(), (u32)(sActiveView->upperLeft.x), (u32)(sActiveView->upperLeft.y),
-                     (u32)(sActiveView->upperLeft.x + sActiveView->lowerRight.x - 1.0f),
-                     (u32)(sActiveView->upperLeft.y + sActiveView->lowerRight.y - 1.0f));
-    gDPPipeSync(next_gfx());
+   // gDPSetColorImage(next_gfx(), G_IM_FMT_RGBA, G_IM_SIZ_16b, sActiveView->parent->lowerRight.x,
+     //                GD_LOWER_24(sActiveView->parent->zbuf));
+    //gDPSetFillColor(next_gfx(), GPACK_ZDZ(G_MAXFBZ, 0) << 16 | GPACK_ZDZ(G_MAXFBZ, 0));
+    //gDPFillRectangle(next_gfx(), (u32)(sActiveView->upperLeft.x), (u32)(sActiveView->upperLeft.y),
+      //               (u32)(sActiveView->upperLeft.x + sActiveView->lowerRight.x - 1.0f),
+        //             (u32)(sActiveView->upperLeft.y + sActiveView->lowerRight.y - 1.0f));
+    //gDPPipeSync(next_gfx());
     gd_set_color_fb();
 }
 

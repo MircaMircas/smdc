@@ -869,14 +869,14 @@ struct SPTask *create_next_audio_frame_task(void) {
 struct SPTask *create_next_audio_frame_task(void) {
     return NULL;
 }
-void create_next_audio_buffer(s16 *samples, u32 num_samples) {
+void create_next_audio_buffer(s16 *samplesL, s16 *samplesR, u32 num_samples) {
     gAudioFrameCount++;
     if (sGameLoopTicked != 0) {
         update_game_sound();
         sGameLoopTicked = 0;
     }
     s32 writtenCmds;
-    synthesis_execute(gAudioCmdBuffers[0], &writtenCmds, samples, num_samples);
+    synthesis_execute(gAudioCmdBuffers[0], &writtenCmds, samplesL, samplesR, num_samples);
     gAudioRandom = ((gAudioRandom + gAudioFrameCount) * gAudioFrameCount);
     decrease_sample_dma_ttls();
 }
@@ -888,7 +888,7 @@ void play_sound(s32 soundBits, f32 *pos) {
     sSoundRequests[sSoundRequestCount].position = pos;
     sSoundRequestCount++;
 }
-
+#include "sh4zam.h"
 void process_sound_request(u32 bits, f32 *pos) {
     u8 bankIndex;
     u8 index;
@@ -930,7 +930,8 @@ void process_sound_request(u32 bits, f32 *pos) {
 
     if (gSoundBanks[bankIndex][D_803320B0[bankIndex]].next != 0xff && index != 0) {
         index = D_803320B0[bankIndex];
-        dist = sqrtf(pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2]) * one;
+//        dist = sqrtf(pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2]) * one;
+        dist = shz_sqrtf_fsrra(shz_vec3_magnitude_sqr(shz_vec3_deref(pos)));
         gSoundBanks[bankIndex][index].x = &pos[0];
         gSoundBanks[bankIndex][index].y = &pos[1];
         gSoundBanks[bankIndex][index].z = &pos[2];

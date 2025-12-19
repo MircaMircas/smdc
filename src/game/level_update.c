@@ -1134,9 +1134,11 @@ s32 update_level(void) {
 
     return changeLevel;
 }
-
+extern void nuke_everything(void);
 s32 init_level(void) {
     s32 val4 = 0;
+
+nuke_everything();
 
     set_play_mode(PLAY_MODE_NORMAL);
 

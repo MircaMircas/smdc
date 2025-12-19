@@ -183,6 +183,7 @@ static inline GLenum texenv_set_texture(UNUSED struct ShaderProgram *prg) {
 }
 
 static inline GLenum texenv_set_texture_color(struct ShaderProgram *prg) {
+#if 0
     GLenum mode;
 
     // HACK: lord forgive me for this, but this is easier
@@ -202,6 +203,8 @@ static inline GLenum texenv_set_texture_color(struct ShaderProgram *prg) {
     }
 
     return mode;
+#endif
+return GL_MODULATE;
 }
 
 static inline GLenum texenv_set_texture_texture(UNUSED struct ShaderProgram *prg) {
@@ -220,7 +223,7 @@ void gfx_opengl_change_fog(void) {
     glFogf(GL_FOG_START, (GLfloat)gl_fog_start * fog_scale * 0.9f);
     glFogf(GL_FOG_END, (GLfloat)gl_fog_end * fog_scale);
 }
-
+extern int extra_force_decal;
 static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
     // vertices are always there
     glVertexPointer(3, GL_FLOAT, sizeof(dc_fast_t), &cur_buf[0].vert);
@@ -319,7 +322,7 @@ static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
         }
         
 //        if (doing_hmc_thing) mode = GL_DECAL;
-
+if(extra_force_decal) mode = GL_MODULATE;
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode);
     
 }
@@ -390,21 +393,60 @@ static void gfx_opengl_shader_get_info(struct ShaderProgram *prg, uint8_t *num_i
     used_textures[1] = prg->texture_used[1];
 }
 
+
+GLuint newest_texture = 0;
+
+static void gfx_clear_all_textures(void) {
+    GLuint index = 0;
+    if (newest_texture != 0) {
+        for (index = 2; index <= newest_texture; index++)
+            glDeleteTextures(1, &index);
+
+        tmu_state[0].tex = 0;
+        tmu_state[1].tex = 0;
+    }
+    newest_texture = 0;
+}
+
+void gfx_clear_texidx(GLuint texidx) {
+    GLuint index = texidx;
+    glDeleteTextures(0, &index);
+    if (tmu_state[0].tex == texidx)
+        tmu_state[0].tex = 0;
+    if (tmu_state[1].tex == texidx)
+        tmu_state[1].tex = 0;
+}
+
 static uint32_t gfx_opengl_new_texture(void) {
     GLuint ret;
     glGenTextures(1, &ret);
-    return (uint32_t)ret;
+    newest_texture = ret;
+    return (uint32_t) ret;
 }
 
 static void gfx_opengl_select_texture(int tile, uint32_t texture_id) {
-    tmu_state[tile].tex = texture_id; // remember this for multitexturing later
+    tmu_state[tile].tex = texture_id;
     glBindTexture(GL_TEXTURE_2D, texture_id);
 }
+
 /* Used for rescaling textures ROUGHLY into pow2 dims */
-static unsigned int __attribute__((aligned(16))) scaled[64 * 64 * sizeof(unsigned int)]; /* 16kb */
+static unsigned int __attribute__((aligned(16))) scaled[64 * 64 * 2]; /* 16kb */
+extern void reset_texcache(void);
+void nuke_everything(void) {
+    gfx_clear_all_textures();
+    reset_texcache();
+}
+
 
 //extern uint32_t pvr_mem_available(void);
 static void gfx_opengl_upload_texture(const uint8_t *rgba32_buf, int width, int height, unsigned int type) {
+    unsigned int intFormat;
+    if (type == GL_UNSIGNED_SHORT_1_5_5_5_REV) {
+        intFormat = GL_ARGB1555_TWID_KOS;
+    } else {
+        intFormat = GL_ARGB4444_TWID_KOS;
+    }
+
     if (!gl_npot) {
         // we don't support non power of two textures, scale to next power of two if necessary
         if ((!is_pot(width) || !is_pot(height)) || (width < 8) || (height < 8)) {
@@ -425,27 +467,27 @@ static void gfx_opengl_upload_texture(const uint8_t *rgba32_buf, int width, int 
             if(pheight < 8){
                 pheight = 8;
             }
-            if(type == GL_RGBA){
-                resample_32bit((const uint32_t *)rgba32_buf, width, height, (uint32_t*)scaled, pwidth, pheight);
-            } else {
+//            if(type == GL_RGBA){
+  //              resample_32bit((const uint32_t *)rgba32_buf, width, height, (uint32_t*)scaled, pwidth, pheight);
+    //        } else {
                 resample_16bit((const uint16_t *)rgba32_buf, width, height, (uint16_t*)scaled, pwidth, pheight);
-            }
+      //      }
             rgba32_buf = (uint8_t*)scaled;
             width = pwidth;
             height = pheight;
         }
     }
-    if(type == GL_RGBA){
+/*     if(type == GL_RGBA){
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba32_buf);
     } else {
-        GLint intFormat;
+ *//*         GLint intFormat;
         if (type == GL_UNSIGNED_SHORT_1_5_5_5_REV) {
             intFormat = GL_ARGB1555_KOS;
         } else {
             intFormat = GL_ARGB4444_KOS;
         }
-        glTexImage2D(GL_TEXTURE_2D, 0, intFormat, width, height, 0, GL_BGRA, type, rgba32_buf);
-    }
+   */      glTexImage2D(GL_TEXTURE_2D, 0, intFormat, width, height, 0, GL_BGRA, type, rgba32_buf);
+//    }
 #ifdef DEBUG
     printf("GL Mem left:%u\n", (unsigned int)pvr_mem_available());
 #endif
@@ -608,6 +650,9 @@ static void over_skybox_setup_post(void) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
+extern int water_bomb;
+extern int doing_skybox;
+
 static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len, size_t buf_vbo_num_tris) {
     cur_buf = (void*)buf_vbo;
 
@@ -646,10 +691,16 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
     }
 
     if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox  // may need to relook at this
+if (doing_skybox) {
+        glDisable(GL_DEPTH_TEST);
         glDepthMask(GL_FALSE);
         glDepthFunc(GL_LEQUAL);
         glDisable(GL_BLEND);
         glDisable(GL_FOG);
+} else {
+        glEnable(GL_BLEND);
+
+}
 //        glPushMatrix();
 //        glLoadIdentity();
     }
@@ -665,8 +716,14 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
         glTranslatef(0.0f, 2.1f, 0.9f);  // magic values need fine tuning. 
     }
 
+    if (water_bomb)
+        over_skybox_setup_pre();
+
     glDrawArrays(GL_TRIANGLES, 0, 3 * buf_vbo_num_tris);
 
+    if (water_bomb)
+        over_skybox_setup_pre();
+        
     if (is_zmode_decal) {
         glPopMatrix();
         glDepthFunc(GL_LESS);  // Reset depth function
@@ -679,11 +736,14 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
     }
     
     if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox
-//        glPopMatrix();
+if (doing_skybox) {
+        //        glPopMatrix();
+    glEnable(GL_DEPTH_TEST);
         glDepthMask(GL_TRUE);
         glDepthFunc(GL_LESS);
         glEnable(GL_BLEND);
         glEnable(GL_FOG);
+}
     }
 
     // restore default blend mode after goddard draw
@@ -722,9 +782,7 @@ void gfx_opengl_draw_triangles_2d(void *buf_vbo, UNUSED size_t buf_vbo_len, UNUS
         glDisable(GL_TEXTURE_2D);
     }
 
-//    glDrawArrays(GL_TRIANGLES, 0, 3 * 2 /* 2 tri quad */);
-        glDrawArrays(GL_QUADS, 0, 4);
-
+    glDrawArrays(GL_QUADS, 0, 4);
 
     gfx_opengl_reset_projection();
 }
@@ -790,6 +848,8 @@ static void gfx_opengl_init(void) {
     if ((err = glewInit()) != GLEW_OK)
         sys_fatal("could not init GLEW:\n%s", glewGetErrorString(err));
 #endif
+    newest_texture = 0;
+
     clear_color = 0;
     GLdcConfig config;
     glKosInitConfig(&config);
@@ -886,7 +946,7 @@ static void gfx_opengl_start_frame(void) {
 //if (gCurrLevelNum == 7){ //LEVEL_HMC) {
 //clear_color = 0;
 //}
-    //    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+//        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     rgba5551_to_rgbf(clear_color, &clr, &clg, &clb);
     glClearColor(clr, clg, clb, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

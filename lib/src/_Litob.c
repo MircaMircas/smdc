@@ -7,6 +7,7 @@
 
 static u8 D_80334960[] = "0123456789abcdef";
 static u8 D_80334974[] = "0123456789ABCDEF";
+void n64_memcpy(void* dst, const void* src, size_t size);
 
 void _Litob(printf_struct *args, u8 type) {
     u8 buff[BUFF_LEN];
@@ -44,7 +45,7 @@ void _Litob(printf_struct *args, u8 type) {
 
     args->part2_len = BUFF_LEN - buff_ind;
 
-    memcpy(args->buff, buff + buff_ind, args->part2_len);
+    n64_memcpy(args->buff, buff + buff_ind, args->part2_len);
 
     if (args->part2_len < args->precision) {
         args->num_leading_zeros = args->precision - args->part2_len;

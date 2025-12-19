@@ -1,43 +1,41 @@
 #include "libultra_internal.h"
+#include <math.h>
+#include <stdint.h>
+#include "sh4zam.h"
 
-void guPerspectiveF(float mf[4][4], u16 *perspNorm, float fovy, float aspect, float near, float far,
-                    float scale) {
+void guPerspectiveF(float mf[4][4], u16* perspNorm, float fovy, float aspect, float near, float far, float scale) {
     float yscale;
     int row;
     int col;
+    f32 recip_aspect = shz_fast_invf(aspect);
+    f32 recip_nsubf = shz_fast_invf(near - far);
+
     guMtxIdentF(mf);
-    fovy *= GU_PI / 180.0;
-    yscale = cosf(fovy / 2) / sinf(fovy / 2);
-    mf[0][0] = yscale / aspect;
+    // pi / 180
+    fovy *= 0.01745329f;
+    f32 recipsinf = shz_fast_invf(sinf(fovy * 0.5f));
+    yscale = cosf(fovy * 0.5f) * recipsinf;
+    mf[0][0] = yscale * recip_aspect;
     mf[1][1] = yscale;
-    mf[2][2] = (near + far) / (near - far);
-    mf[2][3] = -1;
-    mf[3][2] = 2 * near * far / (near - far);
+    mf[2][2] = (near + far) * recip_nsubf;
+    mf[2][3] = -1.0f;
+    mf[3][2] = 2.0f * near * far * recip_nsubf;
     mf[3][3] = 0.0f;
-    for (row = 0; row < 4; row++) {
-        for (col = 0; col < 4; col++) {
-            mf[row][col] *= scale;
-        }
-    }
-    if (perspNorm != NULL) {
-        if (near + far <= 2.0) {
-            *perspNorm = 65535;
-        } else {
-            *perspNorm = (double) (1 << 17) / (near + far);
-            if (*perspNorm <= 0) {
-                *perspNorm = 1;
+    if (scale != 1.0f) {
+        for (row = 0; row < 4; row++) {
+            for (col = 0; col < 4; col++) {
+                mf[row][col] *= scale;
             }
         }
     }
 }
-void guPerspective(Mtx *m, u16 *perspNorm, float fovy, float aspect, float near, float far,
-                   float scale) {
+
+void guPerspective(Mtx* m, u16* perspNorm, float fovy, float aspect, float near, float far, float scale) {
+#ifndef GBI_FLOATS
     float mat[4][4];
-/* Really this is a native 16:9 aspect rendering hack, could be used on dc for anamophic */
-#if defined(TARGET_PSP)
-    guPerspectiveF(mat, perspNorm, fovy, aspect*(1.0f/0.75555555555f), near, far, scale);
-#else 
     guPerspectiveF(mat, perspNorm, fovy, aspect, near, far, scale);
-#endif
     guMtxF2L(mat, m);
+#else
+    guPerspectiveF(m->m, perspNorm, fovy, aspect, near, far, scale);
+#endif
 }

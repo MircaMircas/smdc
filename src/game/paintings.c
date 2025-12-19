@@ -608,18 +608,19 @@ void painting_update_ripple_state(struct Painting *painting) {
         }
     }
 }
-
+#include "sh4zam.h"
 /**
  * @return the ripple function at posX, posY
  * note that posX and posY correspond to a point on the face of the painting, not actual axes
  */
+#define RECIP_PAINTING_SIZE 0.00162866f
 s16 calculate_ripple_at_point(struct Painting *painting, f32 posX, f32 posY) {
     /// Controls the peaks of the ripple.
     f32 rippleMag = painting->currRippleMag;
     /// Controls the ripple's frequency
     f32 rippleRate = painting->currRippleRate;
     /// Controls how fast the ripple spreads
-    f32 dispersionFactor = painting->dispersionFactor;
+    f32 dispersionFactor = shz_fast_invf(painting->dispersionFactor);
     /// How far the ripple has spread
     f32 rippleTimer = painting->rippleTimer;
     /// x and y ripple origin
@@ -629,11 +630,11 @@ s16 calculate_ripple_at_point(struct Painting *painting, f32 posX, f32 posY) {
     f32 distanceToOrigin;
     f32 rippleDistance;
 
-    posX *= painting->size / PAINTING_SIZE;
-    posY *= painting->size / PAINTING_SIZE;
-    distanceToOrigin = sqrtf((posX - rippleX) * (posX - rippleX) + (posY - rippleY) * (posY - rippleY));
+    posX *= painting->size * RECIP_PAINTING_SIZE;
+    posY *= painting->size * RECIP_PAINTING_SIZE;
+    distanceToOrigin = shz_sqrtf_fsrra((posX - rippleX) * (posX - rippleX) + (posY - rippleY) * (posY - rippleY));
     // A larger dispersionFactor makes the ripple spread slower
-    rippleDistance = distanceToOrigin / dispersionFactor;
+    rippleDistance = distanceToOrigin * dispersionFactor;
     if (rippleTimer < rippleDistance) {
         // if the ripple hasn't reached the point yet, make the point magnitude 0
         return 0;
@@ -803,6 +804,12 @@ void painting_average_vertex_normals(s16 *neighborTris, s16 numVtx) {
         nx /= neighbors;
         ny /= neighbors;
         nz /= neighbors;
+
+        shz_vec3_t normd = shz_vec3_normalize((shz_vec3_t){.x = nx, .y = ny, .z = nz});
+        gPaintingMesh[i].norm[0] = normalize_component(normd.x);
+        gPaintingMesh[i].norm[1] = normalize_component(normd.y);
+        gPaintingMesh[i].norm[2] = normalize_component(normd.z);
+#if 0
         nlen = sqrtf(nx * nx + ny * ny + nz * nz);
 
         if (nlen == 0.0) {
@@ -814,6 +821,7 @@ void painting_average_vertex_normals(s16 *neighborTris, s16 numVtx) {
             gPaintingMesh[i].norm[1] = normalize_component(ny / nlen);
             gPaintingMesh[i].norm[2] = normalize_component(nz / nlen);
         }
+#endif
     }
 }
 

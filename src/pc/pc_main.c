@@ -12,21 +12,10 @@
 
 #include "gfx/gfx_pc.h"
 #include "gfx/gfx_opengl.h"
-#include "gfx/gfx_direct3d11.h"
-#include "gfx/gfx_direct3d12.h"
-#include "gfx/gfx_dxgi.h"
-#include "gfx/gfx_glx.h"
-#include "gfx/gfx_psp.h"
 #include "gfx/gfx_dc.h"
-#include "gfx/gfx_sdl.h"
 
 #include "audio/audio_api.h"
-#include "audio/audio_psp.h"
 #include "audio/audio_dc.h"
-#include "audio/audio_wasapi.h"
-#include "audio/audio_pulse.h"
-#include "audio/audio_alsa.h"
-#include "audio/audio_sdl.h"
 #include "audio/audio_null.h"
 
 #include "controller/controller_keyboard.h"
@@ -68,7 +57,8 @@ static struct GfxRenderingAPI *rendering_api;
 
 extern void gfx_run(Gfx *commands);
 extern void thread5_game_loop(void *arg);
-extern void create_next_audio_buffer(s16 *samples, u32 num_samples);
+
+extern void create_next_audio_buffer(s16 *samplesL, s16* samplesR, u32 num_samples);
 void game_loop_one_iteration(void);
 
 void dispatch_audio_sptask(UNUSED struct SPTask *spTask) {
@@ -95,105 +85,7 @@ void send_display_list(struct SPTask *spTask) {
 #define SAMPLES_LOW 528
 #endif
 
-#if defined(TARGET_PSP)
-/* This flag enables use of the MediaEngine */
-#define ME_EXEC
-
-#include "psp_audio_stack.h"
-#include "sceGuDebugPrint.h"
-#ifdef ME_EXEC
-#include "melib.h"
-static struct Job j __attribute__((aligned(64)));
-#else 
-typedef int JobData;
-#endif
-
-static s16 audio_buffer[SAMPLES_HIGH * 2 * 2] __attribute__((aligned(64)));
-extern struct Stack* stack;
-extern void audio_psp_play(const uint8_t *buf, size_t len);
-
-
-
-int __attribute__((optimize("O0"))) run_me_audio(JobData data) {
-    (void)data;
-    create_next_audio_buffer(audio_buffer + 0 * (SAMPLES_HIGH * 2), SAMPLES_HIGH);
-    create_next_audio_buffer(audio_buffer + 1 * (SAMPLES_HIGH * 2), SAMPLES_HIGH);
-    return 0;
-}
-
-int volatile mediaengine_sound = 0;
-int volatile *mediaengine_sound_ptr = &mediaengine_sound;
-int mediaengine_available = 0;
-
-int audioOutput(SceSize args, void *argp) {
-    (void)args;
-    (void)argp;
-    bool running = true;
-#ifdef DEBUG
-    char buffer[64];
-#endif
-
-#ifdef ME_EXEC
-    if(mediaengine_available) {
-        /* Job data for MELib */
-        j.jobInfo.id = 1;
-        j.jobInfo.execMode = MELIB_EXEC_ME;
-        j.function = run_me_audio;
-        j.data = 0;
-        sceKernelDcacheWritebackInvalidateRange(&j, sizeof(j));
-        mediaengine_sound = 1;
-    }
-#endif
-    sceKernelDelayThread(1000);
-
-    while (running) {
-        AudioTask task = stack_pop(stack);
-
-        #ifdef DEBUG
-        switch(task) {
-            case NOP: sceGuDebugPrint(8,8,0xffffffff, "NOP");break;
-            case QUIT: sceGuDebugPrint(8,16,0xffffffff, "QUIT");break;
-            case GENERATE: sceGuDebugPrint(8,24,0xffffffff, "GENERATE");break;
-            case PLAY: sceGuDebugPrint(8,32,0xffffffff, "PLAY");break;
-        }
-        sprintf(buffer, "SOUND: %s", (mediaengine_sound ? "ME" : "CPU"));
-        sceGuDebugPrint(10,48,0xffffffff, buffer);
-        #endif
-
-        switch (task) {
-            case NOP:       {; sceKernelDelayThread(1000 + 1000  * (mediaengine_sound)); }break;
-            case QUIT:      {; running = false; }break;
-            case GENERATE:  {;
-#ifdef ME_EXEC
-            if(mediaengine_sound){
-                J_AddJob(&j);
-                J_Update(0.0f);
-            } else
-#endif
-            {
-                run_me_audio(0);
-                sceKernelDcacheWritebackInvalidateRange(audio_buffer,sizeof(audio_buffer));
-            }
-            stack_push(stack, PLAY);
-            sceKernelDelayThread(250);
-            }
-            break;
-            case PLAY:      {;
-                //sceKernelDelayThread(100);
-                //stack_clear(stack);
-                audio_api->play((u8 *)audio_buffer, 2 /* 2 buffers */ * SAMPLES_HIGH * sizeof(short) * 2 /* stereo */);
-            }
-            break;
-        }
-    }
-    sceIoWrite(1,"Audio Manager Exit!\n",21);
-    SceUID thid = sceKernelGetThreadId();
-    sceKernelTerminateDeleteThread(thid);
-    return 0;
-}
-#endif
-
-
+#define TARGET_DC 1
 #if defined(TARGET_DC)
 #include <kos.h>
 //void create_thread(OSThread *thread, OSId id, void (*entry)(void *), void *arg, void *sp, OSPri pri);
@@ -213,8 +105,8 @@ void vblfunc(uint32_t c, void *d) {
 //#define SAMPLES_LOW 528
 #define SAMPLES_HIGH 464
 #define SAMPLES_LOW 432
+s16 audio_buffer[2][SAMPLES_HIGH * 2 * 2 * 3] __attribute__((aligned(64)));
 
-static  s16 __attribute__((aligned(32))) audio_buffer[SAMPLES_HIGH * 2 * 2];
 void *SPINNING_THREAD(UNUSED void *arg) {
     uint64_t last_vbltick = vblticker;
 
@@ -226,9 +118,12 @@ void *SPINNING_THREAD(UNUSED void *arg) {
 //u32 num_audio_samples = 544;//even_frame ? SAMPLES_HIGH : SAMPLES_LOW;//448;
 //        int num_audio_samples = SAMPLES_LOW;
         int num_audio_samples = ((gSysFrameCount & 3) < 2) ? SAMPLES_HIGH : SAMPLES_LOW;
-        create_next_audio_buffer(audio_buffer, num_audio_samples);
-        audio_api->play((u8 *)audio_buffer, num_audio_samples * 2 * 2);// * 2);
+        create_next_audio_buffer(audio_buffer[0],audio_buffer[1], num_audio_samples);
+        audio_api->play((u8 *)audio_buffer[0], (u8 *)audio_buffer[1],num_audio_samples * 2 * 2);// * 2);
 //irq_enable();
+//udio_buffer[0], audio_buffer[1], samplecount);
+  //      audio_api->play((u8*) audio_buffer[0], (u8*) audio_buffer[1], samplecount * 4);
+
     }
     return NULL;
 }
@@ -344,24 +239,8 @@ void main_func(void) {
     request_anim_frame(on_anim_frame);
 #endif
 
-#if defined(ENABLE_DX12)
-    rendering_api = &gfx_direct3d12_api;
-    wm_api = &gfx_dxgi_api;
-#elif defined(ENABLE_DX11)
-    rendering_api = &gfx_direct3d11_api;
-    wm_api = &gfx_dxgi_api;
-#elif defined(ENABLE_OPENGL)
     rendering_api = &gfx_opengl_api;
-    #if defined(__linux__) || defined(__BSD__)
-        wm_api = &gfx_glx;
-    #elif defined(TARGET_PSP)
-        wm_api = &gfx_psp;
-    #elif defined(TARGET_DC)
         wm_api = &gfx_dc;
-    #else
-        wm_api = &gfx_sdl;
-    #endif
-#endif
 
     gfx_init(wm_api, rendering_api, "Super Mario 64 PC-Port", configFullscreen);
     
@@ -446,7 +325,9 @@ int WINAPI WinMain(UNUSED HINSTANCE hInstance, UNUSED HINSTANCE hPrevInstance, U
     return 0;
 }
 #else
+#include <kos.h>
 int main(UNUSED int argc, UNUSED char *argv[]) {
+              
     main_func();
     return 0;
 }

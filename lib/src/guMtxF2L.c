@@ -1,4 +1,7 @@
 #include "libultra_internal.h"
+
+
+#if 0
 #ifdef GBI_FLOATS
 #include <string.h>
 #endif
@@ -40,8 +43,10 @@ void guMtxL2F(float mf[4][4], Mtx *m) {
     }
 }
 #else
+void n64_memcpy(void* dst, const void* src, size_t size);
+
 void guMtxF2L(float mf[4][4], Mtx *m) {
-    memcpy(m, mf, sizeof(Mtx));
+    n64_memcpy(m, mf, sizeof(Mtx));
 }
 #endif
 
@@ -65,4 +70,22 @@ void guMtxIdent(Mtx *m) {
 #else
     guMtxIdentF(m->m);
 #endif
+}
+#endif
+
+
+#include <stdint.h>
+#include "sh4zam.h"
+
+void guMtxF2L(float mf[4][4], Mtx* m) {
+    shz_memcpy4_16(m, mf);
+}
+
+void guMtxIdentF(float mf[4][4]) {
+    shz_xmtrx_init_identity();
+    shz_xmtrx_store_4x4_unaligned(mf);
+}
+
+void guMtxIdent(Mtx* m) {
+    guMtxIdentF(m->m);
 }

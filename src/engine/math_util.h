@@ -17,15 +17,20 @@
  * exploits array sizes for range analysis-based optimizations as well).
  * Thus, for non-IDO compilers we use the standard-compliant version.
  */
+#if 1
 extern f32 gSineTable[];
 #ifdef AVOID_UB
 #define gCosineTable (gSineTable + 0x400)
 #else
 extern f32 gCosineTable[];
 #endif
+#endif
 
-#define sins(x) gSineTable[(u16) (x) >> 4]
-#define coss(x) gCosineTable[(u16) (x) >> 4]
+f32 sins(u16 arg0);
+f32 coss(u16 arg0);
+
+//#define sins(x) gSineTable[(u16) (x) >> 4]
+//#define coss(x) gCosineTable[(u16) (x) >> 4]
 
 #define min(a, b) ((a) <= (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))

@@ -92,13 +92,13 @@ s16 calc_tex_transition_radius(s8 fadeTimer, s8 transTime, struct WarpTransition
 
     return (s16)(result + 0.5);;
 }
-
+#include "sh4zam.h"
 f32 calc_tex_transition_time(s8 fadeTimer, s8 transTime, struct WarpTransitionData *transData) {
     f32 startX = transData->startTexX;
     f32 startY = transData->startTexY;
     f32 endX = transData->endTexX;
     f32 endY = transData->endTexY;
-    f32 sqrtfXY = sqrtf((startX - endX) * (startX - endX) + (startY - endY) * (startY - endY));
+    f32 sqrtfXY = shz_sqrtf_fsrra((startX - endX) * (startX - endX) + (startY - endY) * (startY - endY));
     f32 result = (f32) sTransitionColorFadeCount[fadeTimer] * sqrtfXY / (f32)(transTime - 1);
 
     return result;

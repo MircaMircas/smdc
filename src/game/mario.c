@@ -738,7 +738,7 @@ void update_mario_sound_and_camera(struct MarioState *m) {
         }
     }
 }
-
+#include "sh4zam.h"
 /**
  * Transitions Mario to a steep jump action.
  */
@@ -754,7 +754,7 @@ void set_steep_jump_action(struct MarioState *m) {
         f32 y = sins(faceAngleTemp) * m->forwardVel;
         f32 x = coss(faceAngleTemp) * m->forwardVel * 0.75f;
 
-        m->forwardVel = sqrtf(y * y + x * x);
+        m->forwardVel = shz_sqrtf_fsrra(y * y + x * x);
         m->faceAngle[1] = atan2s(x, y) + angleTemp;
     }
 

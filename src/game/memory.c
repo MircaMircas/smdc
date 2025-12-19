@@ -239,6 +239,7 @@ u32 main_pool_pop_state(void) {
     gMainPoolState = gMainPoolState->prev;
     return sPoolFreeSpace;
 }
+void n64_memcpy(void* dst, const void* src, size_t size);
 
 /**
  * Perform a DMA read from ROM. The transfer is split into 4KB blocks, and this
@@ -260,7 +261,7 @@ static void dma_read(u8 *dest, u8 *srcStart, u8 *srcEnd) {
         size -= copySize;
     }
 #else
-    memcpy(dest, srcStart, srcEnd - srcStart);
+    n64_memcpy(dest, srcStart, srcEnd - srcStart);
 #endif
 }
 

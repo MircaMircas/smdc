@@ -10,11 +10,12 @@
 extern OSMgrArgs piMgrArgs;
 
 u64 osClockRate = 62500000;
+void n64_memcpy(void* dst, const void* src, size_t size);
 
 s32 osPiStartDma(UNUSED OSIoMesg *mb, UNUSED s32 priority, UNUSED s32 direction,
                  uintptr_t devAddr, void *vAddr, size_t nbytes,
                  UNUSED OSMesgQueue *mq) {
-    memcpy(vAddr, (const void *) devAddr, nbytes);
+    n64_memcpy(vAddr, (const void *) devAddr, nbytes);
     return 0;
 }
 
@@ -132,12 +133,14 @@ s32 osAiSetFrequency(u32 freq) {
 static file_t eeprom_file = -1;
 static mutex_t eeprom_lock;
 static int eeprom_init = 0;
+#if 0
 // thanks @zcrc
 #include <kos/oneshot_timer.h>
 /* 2s timer, to delay closing the VMU file.
  * This is because the emulator might open/modify/close often, and we want the
  * VMU VFS driver to only write to the VMU once we're done modifying the file. */
-static oneshot_timer_t *timer;
+
+ static oneshot_timer_t *timer;
 
 void eeprom_flush(UNUSED void *arg) {
 	mutex_lock_scoped(&eeprom_lock);
@@ -147,7 +150,7 @@ void eeprom_flush(UNUSED void *arg) {
         eeprom_file = -1;
     }
 }
-
+#endif
 uint8_t icondata[512]; 
 #if 1
 char *ico_fn = "/pc/mario.ico";
@@ -161,7 +164,7 @@ s32 osEepromProbe(UNUSED OSMesgQueue* mq) {
     if (!eeprom_init) {
         mutex_init(&eeprom_lock, MUTEX_TYPE_NORMAL);
         eeprom_init = 1;
-        timer = oneshot_timer_create(eeprom_flush, NULL, 2000);
+//        timer = oneshot_timer_create(eeprom_flush, NULL, 2000);
     }
 
     vmudev = maple_enum_type(0, MAPLE_FUNC_MEMCARD);
@@ -225,8 +228,13 @@ s32 osEepromProbe(UNUSED OSMesgQueue* mq) {
     vid_border_color(0,0,0);
     printf("successfully returning from EEPROM probe\n");
 
-    oneshot_timer_reset(timer);
-    return EEPROM_TYPE_4K;
+//    oneshot_timer_reset(timer);
+    if (eeprom_file != FILEHND_INVALID) {
+                    fs_close(eeprom_file);
+            eeprom_file = FILEHND_INVALID;
+
+    }
+return EEPROM_TYPE_4K;
 }
 
 s32 osEepromLongRead(UNUSED OSMesgQueue* mq, unsigned char address, unsigned char* buffer, s32 length) {
@@ -252,6 +260,7 @@ s32 osEepromLongRead(UNUSED OSMesgQueue* mq, unsigned char address, unsigned cha
         printf("\tKOS claims /vmu/a1/mario64.rec exists on vmu A1 with size: %d\n", size);
         if (size != 1536) {
             fs_close(eeprom_file);
+            eeprom_file = -1;
             printf("\tbut the size was wrong (%d, expect 1536)\n", size);
             vid_border_color(255,0,0);
             return 1;
@@ -261,14 +270,24 @@ s32 osEepromLongRead(UNUSED OSMesgQueue* mq, unsigned char address, unsigned cha
         fs_seek(eeprom_file, (512*2) + (address * 8), SEEK_SET);
         ssize_t rv = fs_read(eeprom_file, buffer, length);
         if (rv != length) {
+    if (eeprom_file != FILEHND_INVALID) {
+                    fs_close(eeprom_file);
+            eeprom_file = FILEHND_INVALID;
+
+    }
             printf("\tcould not read %d bytes from /vmu/a1/mario64.rec\n", length);
             vid_border_color(255,0,0);
             return 1;
         }
+    if (eeprom_file != FILEHND_INVALID) {
+                    fs_close(eeprom_file);
+            eeprom_file = FILEHND_INVALID;
+
+    }
 
         vid_border_color(0,0,0);
         printf("success reading EEPROM file\n");
-        oneshot_timer_reset(timer);
+        //oneshot_timer_reset(timer);
         return 0;
     } else {
         vid_border_color(255,0,0);
@@ -303,6 +322,7 @@ s32 osEepromLongWrite(UNUSED OSMesgQueue* mq, unsigned char address, unsigned ch
         printf("\tKOS claims mario64.rec exists on vmu A1 with size: %d\n", size);
         if (size != 1536) {
             fs_close(eeprom_file);
+            eeprom_file = -1;
             printf("\tbut the size was wrong (%d, expect 1536)\n", size);
             vid_border_color(255,0,0);
             return 1;
@@ -313,6 +333,11 @@ s32 osEepromLongWrite(UNUSED OSMesgQueue* mq, unsigned char address, unsigned ch
         fs_seek(eeprom_file, (512*2) + (address * 8), SEEK_SET);
         ssize_t rv = fs_write(eeprom_file, buffer, length);
         if (rv != length) {
+    if (eeprom_file != FILEHND_INVALID) {
+                    fs_close(eeprom_file);
+            eeprom_file = FILEHND_INVALID;
+
+    }
             printf("\tcould not write %d bytes to /vmu/a1/mario64.rec\n", length);
             vid_border_color(255,0,0);
             return 1;
@@ -320,8 +345,13 @@ s32 osEepromLongWrite(UNUSED OSMesgQueue* mq, unsigned char address, unsigned ch
 
         vid_border_color(0,0,0);
         printf("success writing EEPROM file\n");
-        oneshot_timer_reset(timer);
-        return 0;
+//        oneshot_timer_reset(timer);
+    if (eeprom_file != FILEHND_INVALID) {
+                    fs_close(eeprom_file);
+            eeprom_file = FILEHND_INVALID;
+
+    }
+    return 0;
     } else {
         vid_border_color(255,0,0);
         return 1;

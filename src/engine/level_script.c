@@ -605,6 +605,9 @@ static void level_cmd_set_gamma(void) {
     sCurrentCmd = CMD_NEXT;
 }
 
+void n64_memcpy(void* dst, const void* src, size_t size);
+
+
 static void level_cmd_set_terrain_data(void) {
     if (sCurrAreaIndex != -1) {
 #ifndef NO_SEGMENTED_MEMORY
@@ -617,7 +620,7 @@ static void level_cmd_set_terrain_data(void) {
         data = segmented_to_virtual(CMD_GET(void *, 4));
         size = get_area_terrain_size(data) * sizeof(Collision);
         gAreas[sCurrAreaIndex].terrainData = alloc_only_pool_alloc(sLevelPool, size);
-        memcpy(gAreas[sCurrAreaIndex].terrainData, data, size);
+        n64_memcpy(gAreas[sCurrAreaIndex].terrainData, data, size);
 #endif
     }
     sCurrentCmd = CMD_NEXT;
@@ -643,7 +646,7 @@ static void level_cmd_set_macro_objects(void) {
             len += 4;
         }
         gAreas[sCurrAreaIndex].macroObjects = alloc_only_pool_alloc(sLevelPool, len * sizeof(MacroObject));
-        memcpy(gAreas[sCurrAreaIndex].macroObjects, data, len * sizeof(MacroObject));
+        n64_memcpy(gAreas[sCurrAreaIndex].macroObjects, data, len * sizeof(MacroObject));
 #endif
     }
     sCurrentCmd = CMD_NEXT;

@@ -480,6 +480,11 @@ void aSaveBufferImpl(int16_t *dest_addr) {
     n64_memcpy(dest_addr, rspa.buf.as_s16 + rspa.out / sizeof(int16_t), ROUND_UP_8(rspa.nbytes));
 }
 
+void aSaveBuffer2Impl(uint16_t source_addr, int16_t* dest_addr, uint16_t nbytes) {
+    size_t rnb = ROUND_UP_16(nbytes);
+    n64_memcpy((void*) ((uintptr_t) dest_addr), (const void*)(rspa.buf.as_s16 + source_addr / sizeof(int16_t)), rnb);
+}
+
 #define recip8192 0.00012207f
 #define recip2048 0.00048828f
 #define recip2560 0.00039062f

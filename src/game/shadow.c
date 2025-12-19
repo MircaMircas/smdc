@@ -247,7 +247,7 @@ s8 init_shadow(struct Shadow *s, f32 xPos, f32 yPos, f32 zPos, s16 shadowScale, 
 
     s->floorDownwardAngle = atan2_deg(s->floorNormalZ, s->floorNormalX);
 
-    floorSteepness = shz_sqrtf_fsrra(s->floorNormalX * s->floorNormalX + s->floorNormalZ * s->floorNormalZ);
+    floorSteepness = sqrtf(s->floorNormalX * s->floorNormalX + s->floorNormalZ * s->floorNormalZ);
 
     // This if-statement avoids dividing by 0.
     if (floorSteepness == 0.0) {

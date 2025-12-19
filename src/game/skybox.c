@@ -246,6 +246,13 @@ Vtx *make_skybox_rect(s32 tileIndex, s8 colorIndex) {
     }
     return verts;
 }
+#define gSPSkybox(pkt)                                       \
+    {                                                                                   \
+        Gfx* _g = (Gfx*) (pkt);                                                         \
+                                                                                        \
+        _g->words.w0 = 0x424C4E44; \
+        _g->words.w1 = 0x12345678;               \
+    }
 
 /**
  * Draws a 3x3 grid of 32x32 sections of the original skybox image.
@@ -255,6 +262,7 @@ Vtx *make_skybox_rect(s32 tileIndex, s8 colorIndex) {
 void draw_skybox_tile_grid(Gfx **dlist, s8 background, s8 player, s8 colorIndex) {
     s32 row;
     s32 col;
+        gSPSkybox((*dlist)++);
 
     for (row = 0; row < 3; row++) {
         for (col = 0; col < 3; col++) {
@@ -268,6 +276,7 @@ void draw_skybox_tile_grid(Gfx **dlist, s8 background, s8 player, s8 colorIndex)
             gSPDisplayList((*dlist)++, dl_draw_quad_verts_0123);
         }
     }
+    gSPSkybox((*dlist)++);
 }
 
 void *create_skybox_ortho_matrix(s8 player) {
@@ -303,7 +312,7 @@ void *create_skybox_ortho_matrix(s8 player) {
  * Creates the skybox's display list, then draws the 3x3 grid of tiles.
  */
 Gfx *init_skybox_display_list(s8 player, s8 background, s8 colorIndex) {
-    s32 dlCommandCount = 5 + (3 * 3) * 7; // 5 for the start and end, plus 9 skybox tiles
+    s32 dlCommandCount = 2 + 5 + (3 * 3) * 7; // extra commands plus 5 for the start and end, plus 9 skybox tiles
     void *skybox = alloc_display_list(dlCommandCount * sizeof(Gfx));
     Gfx *dlist = skybox;
 
@@ -321,7 +330,7 @@ Gfx *init_skybox_display_list(s8 player, s8 background, s8 colorIndex) {
     }
     return skybox;
 }
-
+#include "sh4zam.h"
 /**
  * Draw a skybox facing the direction from pos to foc.
  *
@@ -350,7 +359,7 @@ Gfx *create_skybox_facing_camera(s8 player, s8 background, f32 fov,
     //! the first frame, which causes a floating point divide by 0
     fov = 90.0f;
     sSkyBoxInfo[player].yaw = atan2s(cameraFaceZ, cameraFaceX);
-    sSkyBoxInfo[player].pitch = atan2s(sqrtf(cameraFaceX * cameraFaceX + cameraFaceZ * cameraFaceZ), cameraFaceY);
+    sSkyBoxInfo[player].pitch = atan2s(shz_sqrtf_fsrra (cameraFaceX * cameraFaceX + cameraFaceZ * cameraFaceZ), cameraFaceY);
     sSkyBoxInfo[player].scaledX = calculate_skybox_scaled_x(player, fov);
     sSkyBoxInfo[player].scaledY = calculate_skybox_scaled_y(player, fov);
     sSkyBoxInfo[player].upperLeftTile = get_top_left_tile_idx(player);

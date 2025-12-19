@@ -21,7 +21,7 @@
 /* Minor modifications */
 #include <ultra64.h>
 #define FTOFRAC8(x) ((int) MIN(((x) * (128.0)), 127.0) & 0xff)
-
+#include <sh4zam.h>
 void guLookAtReflectF(float mf[4][4], LookAt *l, float xEye, float yEye, float zEye, float xAt,
                       float yAt, float zAt, float xUp, float yUp, float zUp) {
     float len, xLook, yLook, zLook, xRight, yRight, zRight;
@@ -32,6 +32,34 @@ void guLookAtReflectF(float mf[4][4], LookAt *l, float xEye, float yEye, float z
     yLook = yAt - yEye;
     zLook = zAt - zEye;
 
+    /* Negate because positive Z is behind us: */
+    shz_vec3_t lookOut = shz_vec3_normalize((shz_vec3_t){xLook,yLook,zLook});
+    xLook = -lookOut.x;
+    yLook = -lookOut.y;
+    zLook = -lookOut.z;
+
+    /* Right = Up x Look */
+
+    xRight = yUp * zLook - zUp * yLook;
+    yRight = zUp * xLook - xUp * zLook;
+    zRight = xUp * yLook - yUp * xLook;
+
+    shz_vec3_t rightOut = shz_vec3_normalize((shz_vec3_t){xRight,yRight,zRight});
+    xRight = rightOut.x;
+    yRight = rightOut.y;
+    zRight = rightOut.z;
+
+    /* Up = Look x Right */
+
+    xUp = yLook * zRight - zLook * yRight;
+    yUp = zLook * xRight - xLook * zRight;
+    zUp = xLook * yRight - yLook * xRight;
+
+    shz_vec3_t upOut = shz_vec3_normalize((shz_vec3_t){xUp,yUp,zUp});
+    xUp = upOut.x;
+    yUp = upOut.y;
+    zUp = upOut.z;
+#if 0
     /* Negate because positive Z is behind us: */
     len = -1.0 / sqrtf(xLook * xLook + yLook * yLook + zLook * zLook);
     xLook *= len;
@@ -57,7 +85,7 @@ void guLookAtReflectF(float mf[4][4], LookAt *l, float xEye, float yEye, float z
     xUp *= len;
     yUp *= len;
     zUp *= len;
-
+#endif
     /* reflectance vectors = Up and Right */
 
     l->l[0].l.dir[0] = FTOFRAC8(xRight);

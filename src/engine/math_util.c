@@ -110,19 +110,24 @@ void vec3f_cross(Vec3f dest, Vec3f a, Vec3f b) {
     dest[1] = a[2] * b[0] - b[2] * a[0];
     dest[2] = a[0] * b[1] - b[0] * a[1];
 }
-
+#include "sh4zam.h"
 /// Scale vector 'dest' so it has length 1
 void vec3f_normalize(Vec3f dest) {
     //! Possible division by zero
-    f32 invsqrt = 1.0f / sqrtf(dest[0] * dest[0] + dest[1] * dest[1] + dest[2] * dest[2]);
+//    f32 invsqrt = 1.0f / sqrtf(dest[0] * dest[0] + dest[1] * dest[1] + dest[2] * dest[2]);
 
-    dest[0] *= invsqrt;
-    dest[1] *= invsqrt;
-    dest[2] *= invsqrt;
+//    dest[0] *= invsqrt;
+//    dest[1] *= invsqrt;
+//    dest[2] *= invsqrt;
+    shz_vec3_t out = shz_vec3_normalize(shz_vec3_deref(dest));
+    dest[0] = out.x;
+    dest[1] = out.y;
+    dest[2] = out.z;
 }
 
 /// Copy matrix 'src' to 'dest'
 void mtxf_copy(Mat4 dest, Mat4 src) {
+#if 0
     register s32 i;
     register u32 *d = (u32 *) dest;
     register u32 *s = (u32 *) src;
@@ -130,12 +135,15 @@ void mtxf_copy(Mat4 dest, Mat4 src) {
     for (i = 0; i < 16; i++) {
         *d++ = *s++;
     }
+#endif
+    shz_matrix_4x4_copy(dest, src);
 }
 
 /**
  * Set mtx to the identity matrix
  */
 void mtxf_identity(Mat4 mtx) {
+#if 0
     register s32 i;
     register f32 *dest;
     // Note: These loops need to be on one line to match on PAL
@@ -144,6 +152,10 @@ void mtxf_identity(Mat4 mtx) {
 
     // initialize the diagonal cells to 1
     for (dest = (f32 *) mtx, i = 0; i < 4; dest += 5, i++) *dest = 1;
+#endif
+    shz_xmtrx_init_identity();
+    shz_xmtrx_store_4x4_unaligned(mtx);
+
 }
 
 /**
@@ -154,6 +166,24 @@ void mtxf_translate(Mat4 dest, Vec3f b) {
     dest[3][0] = b[0];
     dest[3][1] = b[1];
     dest[3][2] = b[2];
+}
+
+f32 sins(u16 arg0) {
+#if 0
+    return gSineTable[arg0 >> 4];
+#else
+    float farg0 = (float)arg0 * TRIG_ARG_SCALE;
+    return sinf(farg0);
+#endif
+}
+
+f32 coss(u16 arg0) {
+#if 0
+    return gCosineTable[arg0 >> 4];
+#else
+    float farg0 = (float)arg0 * TRIG_ARG_SCALE;
+    return cosf(farg0);
+#endif
 }
 
 /**
@@ -191,29 +221,29 @@ void mtxf_lookat(Mat4 mtx, Vec3f from, Vec3f to, s16 roll) {
     yColZ = to[1] - from[1];
     zColZ = to[2] - from[2];
 
-    invLength = -1.0 / sqrtf(xColZ * xColZ + yColZ * yColZ + zColZ * zColZ);
-    xColZ *= invLength;
-    yColZ *= invLength;
-    zColZ *= invLength;
+    /* Negate because positive Z is behind us: */
+    shz_vec3_t lookOut = shz_vec3_normalize((shz_vec3_t){xColZ,yColZ,zColZ});
+    xColZ = -lookOut.x;
+    yColZ = -lookOut.y;
+    zColZ = -lookOut.z;
 
     xColX = yColY * zColZ - zColY * yColZ;
     yColX = zColY * xColZ - xColY * zColZ;
     zColX = xColY * yColZ - yColY * xColZ;
 
-    invLength = 1.0 / sqrtf(xColX * xColX + yColX * yColX + zColX * zColX);
-
-    xColX *= invLength;
-    yColX *= invLength;
-    zColX *= invLength;
+    shz_vec3_t rightOut = shz_vec3_normalize((shz_vec3_t){xColX,yColX,zColX});
+    xColX = rightOut.x;
+    yColX = rightOut.y;
+    zColX = rightOut.z;
 
     xColY = yColZ * zColX - zColZ * yColX;
     yColY = zColZ * xColX - xColZ * zColX;
     zColY = xColZ * yColX - yColZ * xColX;
 
-    invLength = 1.0 / sqrtf(xColY * xColY + yColY * yColY + zColY * zColY);
-    xColY *= invLength;
-    yColY *= invLength;
-    zColY *= invLength;
+    shz_vec3_t upOut = shz_vec3_normalize((shz_vec3_t){xColY,yColY,zColY});
+    xColY = upOut.x;
+    yColY = upOut.y;
+    zColY = upOut.z;
 
     mtx[0][0] = xColX;
     mtx[1][0] = yColX;
@@ -595,19 +625,19 @@ void get_pos_from_transform_mtx(Vec3f dest, Mat4 objMtx, Mat4 camMtx) {
     dest[2] =
         objMtx[3][0] * camMtx[2][0] + objMtx[3][1] * camMtx[2][1] + objMtx[3][2] * camMtx[2][2] - camZ;
 }
-
+#include "sh4zam.h"
 /**
  * Take the vector starting at 'from' pointed at 'to' an retrieve the length
  * of that vector, as well as the yaw and pitch angles.
  * Basically it converts the direction to spherical coordinates.
  */
 void vec3f_get_dist_and_angle(Vec3f from, Vec3f to, f32 *dist, s16 *pitch, s16 *yaw) {
-    register f32 x = to[0] - from[0];
-    register f32 y = to[1] - from[1];
-    register f32 z = to[2] - from[2];
+    /* register */ f32 x = to[0] - from[0];
+    /* register */ f32 y = to[1] - from[1];
+    /* register */ f32 z = to[2] - from[2];
 
-    *dist = sqrtf(x * x + y * y + z * z);
-    *pitch = atan2s(sqrtf(x * x + z * z), y);
+    *dist = shz_sqrtf_fsrra(x * x + y * y + z * z);
+    *pitch = atan2s(shz_sqrtf_fsrra(x * x + z * z), y);
     *yaw = atan2s(z, x);
 }
 

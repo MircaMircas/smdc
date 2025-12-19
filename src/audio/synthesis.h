@@ -64,7 +64,7 @@ extern f32 *gCurrentRightVolRamping; // Points to any of the three right buffers
 extern struct SynthesisReverb gSynthesisReverb;
 #endif
 
-u64 *synthesis_execute(u64 *cmdBuf, s32 *writtenCmds, s16 *aiBuf, s32 bufLen);
+u64 *synthesis_execute(u64 *cmdBuf, s32 *writtenCmds, s16 *aiBufL, s16 *aiBufR, s32 bufLen);
 #ifndef VERSION_EU
 void note_init_volume(struct Note *note);
 void note_set_vel_pan_reverb(struct Note *note, f32 velocity, f32 pan, u8 reverb);
