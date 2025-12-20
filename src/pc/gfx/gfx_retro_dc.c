@@ -1557,11 +1557,23 @@ static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx *verti
 uint8_t trilerp_a = 0;
 
 extern void get_mario_pos(float *x, float *y, float *z);
-float late_ramp(float x) {
+/* float late_ramp(float x) {
     float t = (x - 0.7f) / 0.3f;
     if (t < 0.0f) t = 0.0f;
     if (t > 1.0f) t = 1.0f;
     float n = 4.0f;                  // tweak 4..10
+    return 0.25f + 0.75f * powf(t, n);
+} */
+
+static inline float clamp01(float v) {
+    if (v < 0.0f) return 0.0f;
+    if (v > 1.0f) return 1.0f;
+    return v;
+}
+
+float late_ramp(float x) {
+    float t = clamp01((x - 0.8975f) / 0.1f);   // 0 until x=0.9, 1 at x=1.0
+    float n = 2.0f;                         // tweak 3..10
     return 0.25f + 0.75f * powf(t, n);
 }
 

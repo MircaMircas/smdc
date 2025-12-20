@@ -110,10 +110,10 @@ static void gfx_dc_handle_events(void) {
 
 float cpu_time = 0.f, gpu_time = 0.f;
 uint8_t skip_debounce = 0;
-const unsigned int FRAME_TIME_MS = 32; // hopefully get right on target @ 33.3
+const unsigned int FRAME_TIME_MS = 33; // hopefully get right on target @ 33.3
 
 static bool gfx_dc_start_frame(void) {
-#if 1
+#if 0
     const unsigned int cur_time = GetSystemTimeLow();
     const unsigned int elapsed = cur_time - last_time;
 
@@ -150,6 +150,8 @@ static void gfx_dc_swap_buffers_end(void) {
 #endif
         DelayThread(FRAME_TIME_MS - elapsed);
         last_time += (FRAME_TIME_MS - elapsed);
+    } else {
+        thd_pass();
     }
 }
 

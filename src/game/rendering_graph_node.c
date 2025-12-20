@@ -279,7 +279,7 @@ static void geo_process_level_of_detail(struct GraphNodeLevelOfDetail *node) {
 
 #ifndef TARGET_N64
     // We assume modern hardware is powerful enough to draw the most detailed variant
-//    distanceFromCam = 0;
+    distanceFromCam = 0;
 #endif
 
     if (node->minDistance <= distanceFromCam && distanceFromCam < node->maxDistance) {
@@ -517,7 +517,8 @@ static void geo_process_background(struct GraphNodeBackground *node) {
     if (list != 0) {
         geo_append_display_list((void *) VIRTUAL_TO_PHYSICAL(list), node->fnNode.node.flags >> 8);
     } else if (gCurGraphNodeMasterList != NULL) {
-#ifndef F3DEX_GBI_2E
+#if 0
+        #ifndef F3DEX_GBI_2E
         Gfx *gfxStart = alloc_display_list(sizeof(Gfx) * (7+1));
 #else
         Gfx *gfxStart = alloc_display_list(sizeof(Gfx) * (8+1));
@@ -537,6 +538,7 @@ static void geo_process_background(struct GraphNodeBackground *node) {
         gSPEndDisplayList(gfx++);
 
         geo_append_display_list((void *) VIRTUAL_TO_PHYSICAL(gfxStart), 0);
+#endif
     }
     if (node->fnNode.node.children != NULL) {
         geo_process_node_and_siblings(node->fnNode.node.children);
