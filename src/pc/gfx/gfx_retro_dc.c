@@ -30,6 +30,11 @@
 #include "gl_fast_vert.h"
 #endif
 
+int in_trilerp = 0;
+int doing_peach = 0;
+int doing_bowser = 0;
+
+
 #define SUPPORT_CHECK(x) assert(x)
 int aquarium_draw = 0;
 int water_bomb = 0;
@@ -1450,7 +1455,6 @@ static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx *verti
         y = out.y;
         z = out.z;
         w = out.w;
-
         MEM_BARRIER();
 
         float recw = shz_fast_invf(w);
@@ -1547,6 +1551,20 @@ static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx *verti
 #define MAX4(a, b, c, d) (MAX(MAX3((a), (b), (c)), (d)))
 #define MAX5(a, b, c, d, e) (MAX(MAX4((a), (b), (c), (d)), (e)))
 
+//							const uint8_t frac = (uint8_t) (distance_frac * 255.0f);
+//							buf_vbo[buf_num_vert].color.packed = PACK_ARGB8888(frac, frac, frac, frac);
+//							break;
+uint8_t trilerp_a = 0;
+
+extern void get_mario_pos(float *x, float *y, float *z);
+float late_ramp(float x) {
+    float t = (x - 0.7f) / 0.3f;
+    if (t < 0.0f) t = 0.0f;
+    if (t > 1.0f) t = 1.0f;
+    float n = 4.0f;                  // tweak 4..10
+    return 0.25f + 0.75f * powf(t, n);
+}
+
 int eyeball_guy = 0;
 static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
     struct LoadedVertex* v1 = &rsp.loaded_vertices[vtx3_idx];
@@ -1556,7 +1574,6 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
     uint8_t l_clip_rej[3] = { clip_rej[vtx3_idx], clip_rej[vtx2_idx], clip_rej[vtx1_idx] };
     MEM_BARRIER_PREF(v2);
     struct LoadedVertex* v_arr[3] = { v1, v2, v3 };
-
     uint8_t c0 = l_clip_rej[0];
     uint8_t c1 = l_clip_rej[1];
     uint8_t c2 = l_clip_rej[2];
@@ -1590,6 +1607,38 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
                 break;
             default:
                 break;
+        }
+    }
+
+    if (in_trilerp) {
+        if (doing_peach && in_trilerp == 1) {
+            float mx,my,mz;
+            get_mario_pos(&mx,&my,&mz);
+//printf("mx %f my %f mz %f\n", mx, my, mz);
+// -7395,   1126,  -5772
+
+            //            in_trilerp = 2;
+            // if _x = x / w, w = x / _x
+  //          float w = glob_w;
+/*             if (v1->_x == 0) {
+                if (v1->_y == 0) {
+                    w = 0;
+                } else {
+                    w = v1->y / v1->_y;
+                }
+            } else {
+                w = v1->x / v1->_x;
+            }
+ */
+            float distance_frac = mz / -4000.0f;// 07317;
+			if (distance_frac < 0.0f)
+				distance_frac = 0.0f;
+			if (distance_frac > 1.0f)
+    			distance_frac = 1.0f;
+            distance_frac = 1.0f - late_ramp(distance_frac);
+            trilerp_a = (uint8_t)(distance_frac * 255.0f);
+      //  trilerp_a = (trilerp_a + 1) & 0xff;
+        //    printf("peach w is %f trilerp a is %d\n", w, trilerp_a);
         }
     }
 
@@ -2234,7 +2283,7 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
 		buf_vbo_len += sizeof(dc_fast_t);
 	}
     buf_vbo_num_tris += 1;
-    if (doing_skybox || water_bomb || aquarium_draw || buf_vbo_num_tris == MAX_BUFFERED) {
+    if (in_trilerp || doing_skybox || water_bomb || aquarium_draw || buf_vbo_num_tris == MAX_BUFFERED) {
         gfx_flush();
     }
 }
@@ -3167,6 +3216,23 @@ static void gfx_run_dl(Gfx* cmd) {
         if (cmd->words.w0 == 0x424C4E44) {
                 if (cmd->words.w1 == 0x12345678) {
                     doing_skybox ^= 1;
+                }
+                else if (cmd->words.w1 == 0xAAAAAAAA) {
+                    in_trilerp = 1;
+                    doing_peach = 0;
+                    doing_bowser = 0;
+                }
+                else if (cmd->words.w1 == 0xBBBBBBBB) {
+                    doing_peach = 1;
+                }
+                else if (cmd->words.w1 == 0xCCCCCCCC) {
+                    doing_bowser = 1;
+                    doing_peach = 0;
+                }
+                else if(cmd->words.w1 == 0xDDDDDDDD) {
+                    in_trilerp = 0;
+                    doing_bowser = 0;
+                    doing_peach = 0;
                 }
         }
 

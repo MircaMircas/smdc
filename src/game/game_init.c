@@ -235,6 +235,13 @@ void display_frame_buffer(void) {
 }
 
 //#include <stdio.h>
+#define gSPSkybox(pkt)                                       \
+    {                                                                                   \
+        Gfx* _g = (Gfx*) (pkt);                                                         \
+                                                                                        \
+        _g->words.w0 = 0x424C4E44; \
+        _g->words.w1 = 0x12345678;               \
+    }
 
     s32 clear_color;
 /** Clears the framebuffer, allowing it to be overwritten. */
@@ -243,14 +250,15 @@ void clear_frame_buffer(s32 color) {
   //  printf("clear color now %08x\n", clear_color);
 #if defined(TARGET_N64)
     gDPPipeSync(gDisplayListHead++);
-
     gDPSetRenderMode(gDisplayListHead++, G_RM_OPA_SURF, G_RM_OPA_SURF2);
     gDPSetCycleType(gDisplayListHead++, G_CYC_FILL);
-
+    gDPSetCombineMode(gDisplayListHead++, G_CC_SHADE, G_CC_SHADE);
     gDPSetFillColor(gDisplayListHead++, color);
+gSPSkybox(gDisplayListHead++);
     gDPFillRectangle(gDisplayListHead++,
                      GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(0), BORDER_HEIGHT,
                      GFX_DIMENSIONS_RECT_FROM_RIGHT_EDGE(0) - 1, SCREEN_HEIGHT - BORDER_HEIGHT - 1);
+gSPSkybox(gDisplayListHead++);
 
     gDPPipeSync(gDisplayListHead++);
 

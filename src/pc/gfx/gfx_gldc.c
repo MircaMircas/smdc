@@ -651,6 +651,11 @@ static void over_skybox_setup_post(void) {
 extern int water_bomb;
 extern int doing_skybox;
 
+extern int in_trilerp;
+extern int doing_peach;
+extern int doing_bowser;
+extern uint8_t trilerp_a;
+
 static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len, size_t buf_vbo_num_tris) {
     cur_buf = (void*)buf_vbo;
 
@@ -716,6 +721,24 @@ if (doing_skybox) {
 
     if (water_bomb)
         over_skybox_setup_pre();
+
+    if (in_trilerp) {
+        dc_fast_t *fast_vbo = (dc_fast_t*)buf_vbo;
+        glEnable(GL_BLEND);
+        if (doing_peach) {
+            if (!trilerp_a) return;
+            for(unsigned int i=0;i<3*buf_vbo_num_tris;i++) {
+                fast_vbo[i].color.array.a = trilerp_a;
+                fast_vbo[i].vert.y += 0.1f;
+                fast_vbo[i].vert.z += 0.1f;
+            }
+        } else if (doing_bowser) {
+            if (trilerp_a == 255) return;
+            for(unsigned int i=0;i<3*buf_vbo_num_tris;i++) {
+                fast_vbo[i].color.array.a = 255 - trilerp_a;
+            }
+        }
+    }
 
     glDrawArrays(GL_TRIANGLES, 0, 3 * buf_vbo_num_tris);
 
