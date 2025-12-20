@@ -183,7 +183,7 @@ static inline GLenum texenv_set_texture(UNUSED struct ShaderProgram *prg) {
 }
 
 static inline GLenum texenv_set_texture_color(struct ShaderProgram *prg) {
-#if 0
+#if 1
     GLenum mode;
 
     // HACK: lord forgive me for this, but this is easier
@@ -193,10 +193,10 @@ static inline GLenum texenv_set_texture_color(struct ShaderProgram *prg) {
         case 0x01200A00: // intro copyright fade in
             mode = GL_DECAL;
             break;
-        case 0x00000551: // goddard
+     //   case 0x00000551: // goddard
         /*@Note: Issues! */
-            mode =  GL_MODULATE; /*GL_BLEND*/
-            break;
+       //     mode =  GL_MODULATE; /*GL_BLEND*/
+         //   break;
         default:
             mode = GL_MODULATE;
             break;

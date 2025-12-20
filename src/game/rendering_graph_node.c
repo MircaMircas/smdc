@@ -279,7 +279,7 @@ static void geo_process_level_of_detail(struct GraphNodeLevelOfDetail *node) {
 
 #ifndef TARGET_N64
     // We assume modern hardware is powerful enough to draw the most detailed variant
-    distanceFromCam = 0;
+//    distanceFromCam = 0;
 #endif
 
     if (node->minDistance <= distanceFromCam && distanceFromCam < node->maxDistance) {
@@ -506,6 +506,7 @@ static void geo_process_generated_list(struct GraphNodeGenerated *node) {
  * the function of the node. If that function is null or returns null, a black
  * rectangle is drawn instead.
  */
+extern s32 clear_color;
 static void geo_process_background(struct GraphNodeBackground *node) {
     Gfx *list = NULL;
 
@@ -517,15 +518,18 @@ static void geo_process_background(struct GraphNodeBackground *node) {
         geo_append_display_list((void *) VIRTUAL_TO_PHYSICAL(list), node->fnNode.node.flags >> 8);
     } else if (gCurGraphNodeMasterList != NULL) {
 #ifndef F3DEX_GBI_2E
-        Gfx *gfxStart = alloc_display_list(sizeof(Gfx) * 7);
+        Gfx *gfxStart = alloc_display_list(sizeof(Gfx) * (7+1));
 #else
-        Gfx *gfxStart = alloc_display_list(sizeof(Gfx) * 8);
+        Gfx *gfxStart = alloc_display_list(sizeof(Gfx) * (8+1));
 #endif
         Gfx *gfx = gfxStart;
 
+        // responsible for not fucking up background colors
         gDPPipeSync(gfx++);
         gDPSetCycleType(gfx++, G_CYC_FILL);
+        gDPSetCombineMode(gfx++, G_CC_SHADE, G_CC_SHADE);
         gDPSetFillColor(gfx++, node->background);
+        clear_color = node->background;
         gDPFillRectangle(gfx++, GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(0), BORDER_HEIGHT,
         GFX_DIMENSIONS_RECT_FROM_RIGHT_EDGE(0) - 1, SCREEN_HEIGHT - BORDER_HEIGHT - 1);
         gDPPipeSync(gfx++);

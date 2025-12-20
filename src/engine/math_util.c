@@ -719,7 +719,7 @@ static inline float bump_atan2f(const float y, const float x)
  * the resulting angle is in range [0, 0x2000] (1/8 of a circle).
  */
 static u16 atan2_lookup(f32 y, f32 x) {
-#if 0
+#if 1
     u16 ret;
 
     if (x == 0.f) {
@@ -728,8 +728,9 @@ static u16 atan2_lookup(f32 y, f32 x) {
         ret = gArctanTable[(s32)(y / x * 1024 + 0.5f)];
     }
     return ret;
-#endif
+#else
     return (u16)bump_atan2f(y,x); 
+#endif
 }
 
 /**
