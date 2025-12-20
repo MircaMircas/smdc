@@ -142,7 +142,7 @@ s32 check_fall_damage_or_get_stuck(struct MarioState *m, u32 hardFallAction) {
 
     return check_fall_damage(m, hardFallAction);
 }
-
+#include "sh4zam.h"
 s32 check_horizontal_wind(struct MarioState *m) {
     struct Surface *floor;
     f32 speed;
@@ -156,7 +156,7 @@ s32 check_horizontal_wind(struct MarioState *m) {
         m->slideVelX += 1.2f * sins(pushAngle);
         m->slideVelZ += 1.2f * coss(pushAngle);
 
-        speed = sqrtf(m->slideVelX * m->slideVelX + m->slideVelZ * m->slideVelZ);
+        speed = shz_sqrtf_fsrra(m->slideVelX * m->slideVelX + m->slideVelZ * m->slideVelZ);
 
         if (speed > 48.0f) {
             m->slideVelX = m->slideVelX * 48.0f / speed;

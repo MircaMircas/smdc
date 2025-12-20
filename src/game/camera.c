@@ -3556,7 +3556,7 @@ void unused_object_angle_to_vec3s(Vec3s dst, struct Object *o) {
     dst[1] = o->oMoveAngleYaw;
     dst[2] = o->oMoveAngleRoll;
 }
-
+#include "sh4zam.h"
 /**
  * Produces values using a cubic b-spline curve. Basically Q is the used output,
  * u is a value between 0 and 1 that represents the position along the spline,
@@ -3575,15 +3575,19 @@ void evaluate_cubic_spline(f32 u, Vec3f Q, Vec3f a0, Vec3f a1, Vec3f a2, Vec3f a
         u = 1.f;
     }
 
-    B[0] = (1.f - u) * (1.f - u) * (1.f - u) / 6.f;
-    B[1] = u * u * u / 2.f - u * u + 0.6666667f;
-    B[2] = -u * u * u / 2.f + u * u / 2.f + u / 2.f + 0.16666667f;
-    B[3] = u * u * u / 6.f;
+    B[0] = (1.f - u) * (1.f - u) * (1.f - u) * 0.16666667f;// / 6.f;
+    B[1] = u * u * u *0.5f/* / 2.f */ - u * u + 0.6666667f;
+    B[2] = -u * u * u *0.5f/* / 2.f */ + u * u *0.5f/* / 2.f */ + u *0.5f/* / 2.f */ + 0.16666667f;
+    B[3] = u * u * u * 0.16666667f; /// 6.f;
 
-    Q[0] = B[0] * a0[0] + B[1] * a1[0] + B[2] * a2[0] + B[3] * a3[0];
-    Q[1] = B[0] * a0[1] + B[1] * a1[1] + B[2] * a2[1] + B[3] * a3[1];
-    Q[2] = B[0] * a0[2] + B[1] * a1[2] + B[2] * a2[2] + B[3] * a3[2];
+    Q[0] = shz_dot8f(B[0], B[1], B[2], B[3], a0[0], a1[0], a2[0], a3[0]);
+    Q[1] = shz_dot8f(B[0], B[1], B[2], B[3], a0[1], a1[1], a2[1], a3[1]);
+    Q[2] = shz_dot8f(B[0], B[1], B[2], B[3], a0[2], a1[2], a2[2], a3[2]);
 
+    //    B[0] * a0[0] + B[1] * a1[0] + B[2] * a2[0] + B[3] * a3[0];
+//    Q[1] = B[0] * a0[1] + B[1] * a1[1] + B[2] * a2[1] + B[3] * a3[1];
+//    Q[2] = B[0] * a0[2] + B[1] * a1[2] + B[2] * a2[2] + B[3] * a3[2];
+#if 0
     // Unused code
     B[0] = -0.5f * u * u + u - 0.33333333f;
     B[1] = 1.5f * u * u - 2.f * u - 0.5f;
@@ -3596,6 +3600,7 @@ void evaluate_cubic_spline(f32 u, Vec3f Q, Vec3f a0, Vec3f a1, Vec3f a2, Vec3f a
 
     unusedSplinePitch = atan2s(sqrtf(x * x + z * z), y);
     unusedSplineYaw = atan2s(z, x);
+#endif
 }
 
 /**
@@ -4269,7 +4274,7 @@ s16 reduce_by_dist_from_camera(s16 value, f32 maxDist, f32 posX, f32 posY, f32 p
     f32 goalDY = gLakituState.goalPos[1] - posY;
     f32 goalDZ = gLakituState.goalPos[2] - posZ;
 
-    dist = sqrtf(goalDX * goalDX + goalDY * goalDY + goalDZ * goalDZ);
+    dist = shz_sqrtf_fsrra(goalDX * goalDX + goalDY * goalDY + goalDZ * goalDZ);
     if (maxDist > dist) {
         pos[0] = posX;
         pos[1] = posY;
@@ -4511,14 +4516,14 @@ s16 calculate_pitch(Vec3f from, Vec3f to) {
     f32 dx = to[0] - from[0];
     f32 dy = to[1] - from[1];
     f32 dz = to[2] - from[2];
-    s16 pitch = atan2s(sqrtf(dx * dx + dz * dz), dy);
+    s16 pitch = atan2s(shz_sqrtf_fsrra(dx * dx + dz * dz), dy);
 
     return pitch;
 }
 
 s16 calculate_yaw(Vec3f from, Vec3f to) {
     f32 dx = to[0] - from[0];
-    UNUSED f32 dy = to[1] - from[1];
+//    UNUSED f32 dy = to[1] - from[1];
     f32 dz = to[2] - from[2];
     s16 yaw = atan2s(dz, dx);
 
@@ -4533,7 +4538,7 @@ void calculate_angles(Vec3f from, Vec3f to, s16 *pitch, s16 *yaw) {
     f32 dy = to[1] - from[1];
     f32 dz = to[2] - from[2];
 
-    *pitch = atan2s(sqrtf(dx * dx + dz * dz), dy);
+    *pitch = atan2s(shz_sqrtf_fsrra(dx * dx + dz * dz), dy);
     *yaw = atan2s(dz, dx);
 }
 
@@ -4544,7 +4549,8 @@ f32 calc_abs_dist(Vec3f a, Vec3f b) {
     f32 distX = b[0] - a[0];
     f32 distY = b[1] - a[1];
     f32 distZ = b[2] - a[2];
-    f32 distAbs = sqrtf(distX * distX + distY * distY + distZ * distZ);
+    f32 distAbs = shz_mag_sqr3f(distX, distY, distZ);
+    //sqrtf(distX * distX + distY * distY + distZ * distZ);
 
     return distAbs;
 }
@@ -4555,7 +4561,7 @@ f32 calc_abs_dist(Vec3f a, Vec3f b) {
 f32 calc_hor_dist(Vec3f a, Vec3f b) {
     f32 distX = b[0] - a[0];
     f32 distZ = b[2] - a[2];
-    f32 distHor = sqrtf(distX * distX + distZ * distZ);
+    f32 distHor = shz_sqrtf_fsrra(distX * distX + distZ * distZ);
 
     return distHor;
 }

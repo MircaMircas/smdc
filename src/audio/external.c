@@ -1027,7 +1027,7 @@ void func_8031E16C(u8 bankIndex) {
         if (gSoundBanks[bankIndex][soundIndex].soundStatus != SOUND_STATUS_STOPPED
             && soundIndex == spDB) {
             gSoundBanks[bankIndex][soundIndex].distance =
-                sqrtf((*gSoundBanks[bankIndex][soundIndex].x * *gSoundBanks[bankIndex][soundIndex].x)
+                shz_sqrtf_fsrra((*gSoundBanks[bankIndex][soundIndex].x * *gSoundBanks[bankIndex][soundIndex].x)
                       + (*gSoundBanks[bankIndex][soundIndex].y * *gSoundBanks[bankIndex][soundIndex].y)
                       + (*gSoundBanks[bankIndex][soundIndex].z * *gSoundBanks[bankIndex][soundIndex].z))
                 * 1;

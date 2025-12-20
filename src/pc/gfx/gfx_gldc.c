@@ -223,7 +223,7 @@ void gfx_opengl_change_fog(void) {
     glFogf(GL_FOG_START, (GLfloat)gl_fog_start * fog_scale * 0.9f);
     glFogf(GL_FOG_END, (GLfloat)gl_fog_end * fog_scale);
 }
-extern int extra_force_decal;
+
 static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
     // vertices are always there
     glVertexPointer(3, GL_FLOAT, sizeof(dc_fast_t), &cur_buf[0].vert);
@@ -321,8 +321,6 @@ static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
             default:                    mode = texenv_set_color(prg); break;
         }
         
-//        if (doing_hmc_thing) mode = GL_DECAL;
-if(extra_force_decal) mode = GL_MODULATE;
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode);
     
 }

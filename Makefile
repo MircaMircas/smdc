@@ -592,7 +592,7 @@ endif
 
 
 #ifneq ($(TARGET_DC),1)
-GFX_CFLAGS += -DWIDESCREEN
+#GFX_CFLAGS += -DWIDESCREEN
 #endif
 
 CC_CHECK := $(CC) -fsyntax-only -fsigned-char $(INCLUDE_CFLAGS) -Wall -Wextra -Wno-format-security -D_LANGUAGE_C $(VERSION_CFLAGS) $(MATCH_CFLAGS) $(PLATFORM_CFLAGS) $(GFX_CFLAGS) $(GRUCODE_CFLAGS)
@@ -935,7 +935,7 @@ $(BUILD_DIR)/$(TARGET).objdump: $(ELF)
 else
 $(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES)
 	@echo "Linking $@"
-	@$(LD) -L $(BUILD_DIR) -o $@ $(O_FILES) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS)
+	@$(LD) -L $(BUILD_DIR) -o $@ $(O_FILES) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS) -flto
 ifeq ($(TARGET_PSP),1)
 	psp-fixup-imports $@
 	psp-prxgen $@ $@.prx

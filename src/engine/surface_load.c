@@ -290,7 +290,7 @@ static void add_surface(struct Surface *surface, s32 dynamic) {
         }
     }
 }
-
+#include "sh4zam.h"
 /**
  * Initializes a Surface struct using the given vertex data
  * @param vertexData The raw data containing vertex positions
@@ -326,7 +326,7 @@ static struct Surface *read_surface_data(s16 *vertexData, s16 **vertexIndices) {
     nx = (y2 - y1) * (z3 - z2) - (z2 - z1) * (y3 - y2);
     ny = (z2 - z1) * (x3 - x2) - (x2 - x1) * (z3 - z2);
     nz = (x2 - x1) * (y3 - y2) - (y2 - y1) * (x3 - x2);
-    mag = sqrtf(nx * nx + ny * ny + nz * nz);
+    mag = shz_sqrtf_fsrra(nx * nx + ny * ny + nz * nz);
 
     // Could have used min_3 and max_3 for this...
     minY = y1;

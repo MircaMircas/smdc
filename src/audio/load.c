@@ -268,6 +268,7 @@ void *dma_sample_data(uintptr_t devAddr, u32 size, s32 arg2, u8 *arg3) {
     dmaDevAddr = devAddr & ~0xF;
     dma->ttl = 2;
     dma->source = dmaDevAddr;
+    dma->buffer = (u8*)dmaDevAddr;
     dma->sizeUnused = transfer;
 #ifdef VERSION_US
     osInvalDCache(dma->buffer, transfer);
@@ -279,8 +280,10 @@ void *dma_sample_data(uintptr_t devAddr, u32 size, s32 arg2, u8 *arg3) {
     return (devAddr - dmaDevAddr) + dma->buffer;
 #else
     gCurrAudioFrameDmaCount++;
+#if 0
     osPiStartDma(&gCurrAudioFrameDmaIoMesgBufs[gCurrAudioFrameDmaCount - 1], OS_MESG_PRI_NORMAL,
                  OS_READ, dmaDevAddr, dma->buffer, transfer, &gCurrAudioFrameDmaQueue);
+#endif
     *arg3 = dmaIndex;
     return dma->buffer + (devAddr - dmaDevAddr);
 #endif
@@ -301,14 +304,14 @@ void init_sample_dma_buffers(UNUSED s32 arg0) {
     D_80226D68 = 144 * 9;
     for (i = 0; i < gMaxSimultaneousNotes * 3; i++) {
 #endif
-        sSampleDmas[gSampleDmaNumListItems].buffer = soundAlloc(&gNotesAndBuffersPool, D_80226D68);
+        sSampleDmas[gSampleDmaNumListItems].buffer = NULL;/*soundAlloc(&gNotesAndBuffersPool, D_80226D68);
         if (sSampleDmas[gSampleDmaNumListItems].buffer == NULL) {
 #ifdef VERSION_EU
             break;
 #else
             goto out1;
 #endif
-        }
+        }*/
         sSampleDmas[gSampleDmaNumListItems].source = 0;
         sSampleDmas[gSampleDmaNumListItems].sizeUnused = 0;
         sSampleDmas[gSampleDmaNumListItems].unused2 = 0;
@@ -339,14 +342,14 @@ out1:
     D_80226D68 = 160 * 9;
 #endif
     for (i = 0; i < gMaxSimultaneousNotes; i++) {
-        sSampleDmas[gSampleDmaNumListItems].buffer = soundAlloc(&gNotesAndBuffersPool, D_80226D68);
+        sSampleDmas[gSampleDmaNumListItems].buffer = NULL;/* soundAlloc(&gNotesAndBuffersPool, D_80226D68);
         if (sSampleDmas[gSampleDmaNumListItems].buffer == NULL) {
 #ifdef VERSION_EU
             break;
 #else
             goto out2;
 #endif
-        }
+        } */
         sSampleDmas[gSampleDmaNumListItems].source = 0;
         sSampleDmas[gSampleDmaNumListItems].sizeUnused = 0;
         sSampleDmas[gSampleDmaNumListItems].unused2 = 0;

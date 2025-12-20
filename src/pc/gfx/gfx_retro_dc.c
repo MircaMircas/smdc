@@ -382,68 +382,21 @@ static void import_texture_rgba16(int tile) {
 	uint32_t i;
 	uint32_t width = rdp.texture_tile.line_size_bytes >> 1;
 	uint32_t height = rdp.loaded_texture[tile].size_bytes / rdp.texture_tile.line_size_bytes;
-//memset(rgba16_buf, 0, width*height*2);
-//	if (last_set_texture_image_width == 0) {
-        uint16_t *inbuf = (uint16_t*)rdp.loaded_texture[tile].addr;
-		//memcpy(rgba16_buf, rdp.loaded_texture[tile].addr, rdp.loaded_texture[tile].size_bytes);
+    uint16_t *inbuf = (uint16_t*)rdp.loaded_texture[tile].addr;
 
 		for (i = 0; i < rdp.loaded_texture[tile].size_bytes / 2; i++) {
-			uint16_t col16 = inbuf[i];//(rdp.loaded_texture[tile].addr[2 * i] << 8) | rdp.loaded_texture[tile].addr[2 * i + 1];
-			col16 = (col16 << 8) | ((col16 >> 8) & 0xff);
+			uint16_t col16 = inbuf[i];
+            col16 = (col16 << 8) | ((col16 >> 8) & 0xff);
+            rgba16_buf[i] = ((col16 & 1) << 15) | (col16 >> 1);
+			/*col16 = (col16 << 8) | ((col16 >> 8) & 0xff);
 			const uint8_t a = col16 & 1;
 			const uint8_t r = (col16 >> 11) & 0x1f;
 			const uint8_t g = (col16 >> 6) & 0x1f;
 			const uint8_t b = (col16 >> 1) & 0x1f;
-			rgba16_buf[i] = (a << 15)  | (r << 10)  | (g << 5) | (b);
-		}
-    #if 0
-	}
-    else {
-		u32 src_width = last_set_texture_image_width + 1;
-//		memset(rgba16_buf,0,);
-//	printf("%08x w %d h %d set_tx w %d\n", rdp.loaded_texture[tile].addr, width, height, last_set_texture_image_width);
-uint32_t somewidth = src_width;
-    if (width <= ((src_width / 2) + 4)) {
-        somewidth = width;
-    }
-else {
-if (width == 20 && last_set_texture_image_width == 30) 
-        somewidth = width - 4;
-//	printf("%08x w %d h %d set_tx w %d\n", rdp.loaded_texture[tile].addr, width, height, last_set_texture_image_width);
-
-}
-
-		uint16_t* start = (uint16_t*) &rdp.loaded_texture[tile]
-					.addr[(((rdp.texture_tile.uls >> G_TEXTURE_IMAGE_FRAC)) << 1) +
-						((((rdp.texture_tile.ult >> G_TEXTURE_IMAGE_FRAC)) * (src_width)) << 1)];
-
-		uint16_t *tex16 = rgba16_buf;
-		for (i = 0; i < height; i++) {
-			for (uint32_t x = 0; x < somewidth; x++) {
-				uint16_t np = start[x];//++;
-				np = ((np << 8)) | ((np >> 8) & 0xff);
-				uint8_t a = np & 1;
-				uint8_t r = (np >> 11) & 0x1f;
-				uint8_t g = (np >> 6) & 0x1f;
-				uint8_t b = (np >> 1) & 0x1f;
-				*tex16++/* [x] */ = (a << 15) | (r << 10) | (g << 5) | (b);
-			}
-			start += src_width;
-//			tex16 += src_width;
+			rgba16_buf[i] = (a << 15)  | (r << 10)  | (g << 5) | (b);*/
 		}
 
-		width = somewidth;
-	}
-#endif
-//	if (!last_cl_rv) {
 		gfx_rapi->upload_texture((uint8_t*) rgba16_buf, width, height, GL_UNSIGNED_SHORT_1_5_5_5_REV);
-/* 	} else {
-		int rv = gfx_opengl_replace_texture((uint8_t*) rgba16_buf, width, height, GL_UNSIGNED_SHORT_1_5_5_5_REV);
-		if (rv) {
-			gfx_texture_cache_failed((void*)rdp.loaded_texture[tile].addr);
-			import_texture(tile);
-		}
-	} */
 }
 
 static void import_texture_rgba32(int tile) {
@@ -1593,7 +1546,6 @@ static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx *verti
 #define MAX3(a, b, c) (MAX(MAX((a), (b)), (c)))
 #define MAX4(a, b, c, d) (MAX(MAX3((a), (b), (c)), (d)))
 #define MAX5(a, b, c, d, e) (MAX(MAX4((a), (b), (c), (d)), (e)))
-int extra_force_decal = 0;
 
 int eyeball_guy = 0;
 static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
@@ -1729,25 +1681,7 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
     bool used_textures[2];
     gfx_rapi->shader_get_info(prg, &num_inputs, used_textures);
     int i;
-#if 0
-    for (i = 0; i < 2; i++) {
-        if (used_textures[i]) {
-            if (rdp.textures_changed[i]) {
-                gfx_flush();
-                import_texture(i);
-                rdp.textures_changed[i] = false;
-            }
-            bool linear_filter = (rdp.other_mode_h & (3U << G_MDSFT_TEXTFILT)) != G_TF_POINT;
-            gfx_rapi->set_sampler_parameters(i, linear_filter, rdp.texture_tile.cms, rdp.texture_tile.cmt);
-            if (linear_filter != rendering_state.textures[i]->linear_filter || rdp.texture_tile.cms != rendering_state.textures[i]->cms || rdp.texture_tile.cmt != rendering_state.textures[i]->cmt) {
-                gfx_flush();
-                rendering_state.textures[i]->linear_filter = linear_filter;
-                rendering_state.textures[i]->cms = rdp.texture_tile.cms;
-                rendering_state.textures[i]->cmt = rdp.texture_tile.cmt;
-            }
-        }
-    }
-#endif
+
     uint8_t usetex = used_textures[0];
     uint8_t linear_filter = (rdp.other_mode_h & (3U << G_MDSFT_TEXTFILT)) != G_TF_POINT;
 
@@ -1812,14 +1746,6 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
         rendering_state.textures[0]->cmt = cmt;
     }
 
-    /* Will be enabled when pvr fog is working, something isn't quite right current */
-#if 0
-    if(use_fog){
-        float fog_color[4] = {rdp.fog_color.r/(float)255, rdp.fog_color.g/(float)255, rdp.fog_color.b/(float)255, rdp.fog_color.a/(float)512};
-        glFogfv(GL_FOG_COLOR, fog_color);
-    }
-#endif
-    extra_force_decal = 0;
     bool use_texture = used_textures[0] || used_textures[1];
     uint32_t tex_width = (rdp.texture_tile.lrs - rdp.texture_tile.uls + 4) / 4;
     uint32_t tex_height = (rdp.texture_tile.lrt - rdp.texture_tile.ult + 4) / 4;
@@ -1830,31 +1756,20 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
     uint32_t packedc;
     color_r = color_g = color_b = color_a = 255;
     int use_shade = 0;
-//if (cc_rgb != 0x863 && cc_rgb != 0x864 && cc_rgb != 0x200 && cc_rgb != 0x101 && cc_rgb != 0x800) {
-  //  printf(" cc_rgb %04x\n", cc_rgb);
-//}
 
-    //    if (eyeball_guy) printf("eyeball cc_rgb = %04x\n", cc_rgb);
-//    /* if (cc_rgb < 0x100) */ printf(" cc_rgb %04x\n", cc_rgb);
-// crazy guess
-if (cc_rgb == 0x0c1) {
-lit = 0;
+    if (cc_rgb == 0x0c1) {
+        lit = 0;
         color_r = rdp.prim_color.r;
         color_g = rdp.prim_color.g;
         color_b = rdp.prim_color.b;
         color_a = rdp.prim_color.a;
-}
-else if (cc_rgb == 0x200) {
-    extra_force_decal = 1;
-//    printf("decal things\n");
-lit = 0;
-        color_r = 255;//rdp.env_color.r;
-        color_g = 255;//rdp.env_color.g;
-        color_b = 255;//rdp.env_color.b;
-        color_a = 255;//rdp.env_color.a;
-
-}
-    else if (doing_text_bg_box) {
+    } else if (cc_rgb == 0x200) {
+        lit = 0;
+        color_r = 255;
+        color_g = 255;
+        color_b = 255;
+        color_a = 255;
+    } else if (doing_text_bg_box) {
         color_r = rdp.env_color.r;
         color_g = rdp.env_color.g;
         color_b = rdp.env_color.b;
@@ -2291,14 +2206,7 @@ lit = 0;
                 tc_b = ((((255 + color_b) >> 1) * light_b) >> 8) & 0xff;
             packedc = PACK_ARGB8888(tc_r, tc_g, tc_b, color_a);
         }
-//        if (aquarium_draw) {
-  //          cc_id |= SHADER_OPT_ALPHA;
-    //        buf_vbo[buf_num_vert].color.packed = 0;//(0x00FFFFFF & buf_vbo[buf_num_vert].color.packed) | 0x70000000;
-      //  }
-        //if (doing_hmc_thing) {
-          //  cc_id |= SHADER_OPT_ALPHA;
-            //buf_vbo[buf_num_vert].color.packed = 0x7fffffff;
-        //}
+
         buf_vbo[buf_num_vert].color.packed = packedc;
 #if 0
 		/*@Error: Transition Hack */
@@ -2844,14 +2752,14 @@ static void gfx_dp_set_scissor(UNUSED uint32_t mode, uint32_t ulx, uint32_t uly,
     rdp.viewport_or_scissor_changed = true;
 }
 
-static void gfx_dp_set_texture_image(UNUSED uint32_t format, uint32_t size, UNUSED uint32_t width, UNUSED const void* addr) {
+static void gfx_dp_set_texture_image(UNUSED uint32_t format, uint32_t size,  uint32_t width,  const void* addr) {
     rdp.texture_to_load.addr = addr;
     rdp.texture_to_load.siz = size;
 		last_set_texture_image_width = width;
 
 }
 
-static void gfx_dp_set_tile(uint8_t fmt, uint32_t siz, uint32_t line, uint32_t tmem, uint8_t tile, UNUSED uint32_t palette, uint32_t cmt, UNUSED uint32_t maskt, UNUSED uint32_t shiftt, uint32_t cms, UNUSED uint32_t masks, UNUSED uint32_t shifts) {
+static void gfx_dp_set_tile(uint8_t fmt, uint32_t siz, uint32_t line, uint32_t tmem, uint8_t tile,  uint32_t palette, uint32_t cmt,  uint32_t maskt,  uint32_t shiftt, uint32_t cms,  uint32_t masks,  uint32_t shifts) {
     if (tile == G_TX_RENDERTILE) {
         SUPPORT_CHECK(palette == 0); // palette should set upper 4 bits of color index in 4b mode
         rdp.texture_tile.fmt = fmt;
@@ -2880,8 +2788,8 @@ static void gfx_dp_set_tile_size(uint8_t tile, uint16_t uls, uint16_t ult, uint1
 }
 
 static void gfx_dp_load_tlut(UNUSED uint8_t tile, UNUSED uint32_t high_index) {
-    SUPPORT_CHECK(tile == G_TX_LOADTILE);
-    SUPPORT_CHECK(rdp.texture_to_load.siz == G_IM_SIZ_16b);
+//    SUPPORT_CHECK(tile == G_TX_LOADTILE);
+  //  SUPPORT_CHECK(rdp.texture_to_load.siz == G_IM_SIZ_16b);
     rdp.palette = rdp.texture_to_load.addr;
 }
 
@@ -2996,6 +2904,7 @@ static void gfx_dp_set_prim_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     rdp.prim_color.b = b;
     rdp.prim_color.a = a;
 }
+
 #define recip255 0.00392157f
 static void gfx_dp_set_fog_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     rdp.fog_color.r = r;
@@ -3005,10 +2914,10 @@ static void gfx_dp_set_fog_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     if ((!rendering_state.fog_col_change)) {
         rendering_state.fog_col_change = 1;
 
-            float fog_color[4] = { rdp.fog_color.r * recip255, rdp.fog_color.g * recip255, rdp.fog_color.b * recip255,
+        float fog_color[4] = { rdp.fog_color.r * recip255, rdp.fog_color.g * recip255, rdp.fog_color.b * recip255,
                                1.0f };
         glFogfv(GL_FOG_COLOR, fog_color);
-            }
+    }
 }
 
 static void gfx_dp_set_fill_color(uint32_t packed_color) {
@@ -3217,9 +3126,11 @@ static void gfx_sp_set_other_mode(uint32_t shift, uint32_t num_bits, uint64_t mo
     rdp.other_mode_h = (uint32_t)(om >> 32);
 }
 
-static inline void *seg_addr(uintptr_t w1) {
-    return (void *) w1;
-}
+//static inline void *seg_addr(uintptr_t w1) {
+//    return (void *) w1;
+//}
+
+#define seg_addr(a) ((void*)a)
 
 #define C0(pos, width) ((cmd->words.w0 >> (pos)) & ((1U << width) - 1))
 #define C1(pos, width) ((cmd->words.w1 >> (pos)) & ((1U << width) - 1))
@@ -3231,16 +3142,13 @@ extern Gfx dl_draw_text_bg_box[];
 extern Gfx mr_i_eyeball_seg6_dl_06002080[];
 extern Gfx water_bubble_seg5_dl_05010D30[];
 static void gfx_run_dl(Gfx* cmd) {
-//    if (cmd == inside_castle_seg7_dl_07037DE8) {
-  //      aquarium_draw = 1;
-    //} else {
-      //  aquarium_draw = 0;
-    //}
+
     if (cmd == mr_i_eyeball_seg6_dl_06002080) {
         eyeball_guy = 1;
     } else {
         eyeball_guy = 0;
     }
+
     if (cmd == water_bubble_seg5_dl_05010D30) {
         water_bomb = 1;
     } else {
@@ -3252,13 +3160,6 @@ static void gfx_run_dl(Gfx* cmd) {
     } else {
         doing_text_bg_box = 0;
     }
-#if 0
-    if (cmd == g_hmc_seg7_dl_07014950 || cmd == g_hmc_seg7_dl_0700FDF0) {
-        doing_hmc_thing = 1;
-    } else {
-        doing_hmc_thing = 0;
-    }
-#endif
 
     for (;;) {
         uint32_t opcode = cmd->words.w0 >> 24;
