@@ -152,11 +152,7 @@ void eeprom_flush(UNUSED void *arg) {
 }
 #endif
 uint8_t icondata[512]; 
-#if 1
-char *ico_fn = "/pc/mario.ico";
-#else
-char *ico_fn = "/cd/mario.ico";
-#endif
+char *ico_fn = "/rd/mario.ico";
 
 s32 osEepromProbe(UNUSED OSMesgQueue* mq) {
 	maple_device_t *vmudev = NULL;

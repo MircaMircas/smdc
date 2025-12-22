@@ -2,6 +2,8 @@
 
 ### Default target ###
 
+KOS_ROMDISK_DIR = romdisk
+
 default: all
 
 ### Build Options ###
@@ -902,7 +904,7 @@ $(BUILD_DIR)/%.o: %.cpp
 $(BUILD_DIR)/%.o: %.c
 	@$(CC_CHECK) $(CC_CHECK_CFLAGS) -MMD -MP -MT $@ -MF $(BUILD_DIR)/$*.d $<
 	@echo $@
-	@$(CC) -c $(CFLAGS) -o $@ $<
+	$(CC) -c $(CFLAGS) -o $@ $<
 
 $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.c
 	@$(CC_CHECK) $(CC_CHECK_CFLAGS) -MMD -MP -MT $@ -MF $(BUILD_DIR)/$*.d $<
@@ -933,7 +935,13 @@ $(BUILD_DIR)/$(TARGET).objdump: $(ELF)
 	$(OBJDUMP) -D $< > $@
 
 else
-$(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES)
+ifeq ($(TARGET_DC),1)
+# Unused for now, might be later
+include $(KOS_BASE)/Makefile.rules
+  $(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) romdisk.o
+else
+  $(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES)
+endif
 	@echo "Linking $@"
 	@$(LD) -L $(BUILD_DIR) -o $@ $(O_FILES) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS) -flto
 ifeq ($(TARGET_PSP),1)
@@ -951,9 +959,6 @@ pbp: $(EXE)
 .PHONY: pbp
 endif
 ifeq ($(TARGET_DC),1)
-
-# Unused for now, might be later
-include $(KOS_BASE)/Makefile.rules
 elf: $(EXE)
 	sh-elf-objcopy -R .stack -O binary $< $<.bin
 
