@@ -57,10 +57,6 @@ static struct  __attribute__((aligned(32)))  {
     ADPCM_STATE *adpcm_loop_state;
 
     float __attribute__((aligned(32))) adpcm_table[8][2][8];
-/*     union {
-        int16_t as_s16[2512 / sizeof(int16_t)];
-        uint8_t as_u8[2512];
-    } buf; */
 } rspa;
 static float __attribute__((aligned(32))) resample_table[64][4] = {
     {
@@ -779,9 +775,6 @@ void aADPCMdecImpl(uint8_t flags, ADPCM_STATE state) {
         shz_zero_16_shorts(out);
     } else if (flags & A_LOOP) {
         shz_copy_16_shorts(out, rspa.adpcm_loop_state);
-        for (int i=0;i<16;i++) {
-            out[i] = __builtin_bswap16(out[i]);
-        }
     } else {
         shz_copy_16_shorts(out, state);
     }
