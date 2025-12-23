@@ -18,8 +18,6 @@
 #include "audio/audio_dc.h"
 #include "audio/audio_null.h"
 
-#include "controller/controller_keyboard.h"
-
 #include "configfile.h"
 
 #include "compat.h"
@@ -114,11 +112,11 @@ void *AudioSynthesisThread(UNUSED void *arg) {
         while (vblticker <= last_vbltick)
             genwait_wait((void*)&vblticker, NULL, 5, NULL);
         last_vbltick = vblticker;
-//irq_disable();
+irq_disable();
         int num_audio_samples = ((gSysFrameCount & 3) < 2) ? SAMPLES_HIGH : SAMPLES_LOW;
         create_next_audio_buffer(audio_buffer[0],audio_buffer[1], num_audio_samples);
         audio_api->play((u8 *)audio_buffer[0], (u8 *)audio_buffer[1],num_audio_samples * 2 * 2);
-//irq_enable();
+irq_enable();
     }
     return NULL;
 }
@@ -127,45 +125,8 @@ void *AudioSynthesisThread(UNUSED void *arg) {
 
 extern int gProcessAudio;
 void produce_one_frame(void) {
-#if defined(TARGET_PSP)
-    /* Generate sound */
-    stack_push(stack, GENERATE);
-#endif
-
     gfx_start_frame();
     game_loop_one_iteration();
-
-#if !(defined(TARGET_DC) || defined(TARGET_PSP))
-    int samples_left = audio_api->buffered();
-    u32 num_audio_samples = samples_left < audio_api->get_desired_buffered() ? SAMPLES_HIGH : SAMPLES_LOW;
-    //printf("Audio samples: %d %u\n", samples_left, num_audio_samples);
-    s16 audio_buffer[SAMPLES_HIGH * 2 * 2];
-    for (int i = 0; i < 2; i++) {
-        /*if (audio_cnt-- == 0) {
-            audio_cnt = 2;
-        }
-        u32 num_audio_samples = audio_cnt < 2 ? 528 : 544;*/
-        create_next_audio_buffer(audio_buffer + i * (num_audio_samples * 2), num_audio_samples);
-    }
-    //printf("Audio samples before submitting: %d\n", audio_api->buffered());
-    audio_api->play((u8 *)audio_buffer, 2 * num_audio_samples * 4);
-#endif
-#if 0 
-defined(TARGET_DC)
-//    audio_api->play(NULL, 2 /* 2 buffers */ * SAMPLES_HIGH * sizeof(short) * 2 /* stereo */);
-    s16 audio_buffer[SAMPLES_HIGH * 2 * 2];
-    for (int i = 0; i < 2; i++) {
-        /*if (audio_cnt-- == 0) {
-            audio_cnt = 2;
-        }
-        u32 num_audio_samples = audio_cnt < 2 ? 528 : 544;*/
-        create_next_audio_buffer(audio_buffer + i * (SAMPLES_HIGH * 2), SAMPLES_HIGH);
-    }
-    //printf("Audio samples before submitting: %d\n", audio_api->buffered());
-    audio_api->play((u8 *)audio_buffer, 2 * SAMPLES_HIGH * 4);
-
-#endif
-
     gfx_end_frame();
 }
 
@@ -237,10 +198,10 @@ void main_func(void) {
     rendering_api = &gfx_opengl_api;
         wm_api = &gfx_dc;
 
-    gfx_init(wm_api, rendering_api, "Super Mario 64 PC-Port", configFullscreen);
+    gfx_init(wm_api, rendering_api, "Super Mario 64", configFullscreen);
     
     wm_api->set_fullscreen_changed_callback(on_fullscreen_changed);
-    wm_api->set_keyboard_callbacks(keyboard_on_key_down, keyboard_on_key_up, keyboard_on_all_keys_up);
+//    wm_api->set_keyboard_callbacks(keyboard_on_key_down, keyboard_on_key_up, keyboard_on_all_keys_up);
     
 #if HAVE_WASAPI
     if (audio_api == NULL && audio_wasapi.init()) {
@@ -298,12 +259,6 @@ void main_func(void) {
     inited = 1;
 #else
     inited = 1;
-
-    /* Needed because not everything is synced up */
-#ifdef TARGET_PSP
-    extern void psp_divert_slow_memory_card(void);
-    psp_divert_slow_memory_card();
-#endif
 
     while (1) {
         gSysFrameCount++;

@@ -88,11 +88,6 @@ static void calculate_frameTime_from_OSTime(OSTime diff) {
 }
 
 static void render_fps(void) {
-#if defined(TARGET_PSP)
-    extern int mediaengine_available;
-    extern int volatile mediaengine_sound;
-#endif
-
     // Toggle rendering framerate with the L button.
     if ((gPlayer1Controller->buttonPressed & R_TRIG) && (gPlayer1Controller->buttonPressed & L_TRIG)) {
         gRenderFPS ^= 1;
@@ -100,33 +95,10 @@ static void render_fps(void) {
 
     if ((gPlayer1Controller->buttonPressed & R_TRIG) && (gPlayer1Controller->buttonPressed & B_BUTTON)) {
         gProcessAudio ^= 1;
-#if defined(TARGET_PSP)
-        if(mediaengine_available){
-            mediaengine_sound ^= 1;
-        }
-#endif
     }
 
     if ((gPlayer1Controller->buttonPressed & R_TRIG) && (gPlayer1Controller->buttonPressed & Z_TRIG)) {
         gDoDither ^= 1;
-#if defined(TARGET_PSP)
-        extern void init_mediaengine(void);
-        extern void kill_audiomanager(void);
-        extern void init_audiomanager(void);
-        extern volatile s32 gAudioFrameCount;
-        extern s32 sGameLoopTicked;
-        gAudioFrameCount++;
-        if (sGameLoopTicked != 0) {
-            sGameLoopTicked = 0;
-        }
-        gAudioFrameCount++;
-        if (sGameLoopTicked != 0) {
-            sGameLoopTicked = 0;
-        }
-        kill_audiomanager();
-        init_mediaengine();
-        init_audiomanager();
-#endif
     }
 
     if ((gPlayer1Controller->buttonPressed & L_TRIG)) {
@@ -722,18 +694,19 @@ void game_loop_one_iteration(void) {
             return;
 #endif
         }
-        profiler_log_thread5_time(THREAD5_START);
+//        profiler_log_thread5_time(THREAD5_START);
 
         // if any controllers are plugged in, start read the data for when
         // read_controller_inputs is called later.
-        if (gControllerBits) {
+      //  if (gControllerBits) {
 #ifdef VERSION_SH
-            block_until_rumble_pak_free();
+        //    block_until_rumble_pak_free();
 #endif
-            osContStartReadData(&gSIEventMesgQueue);
-        }
+          //  osContStartReadData(&gSIEventMesgQueue);
+       // }
 
         audio_game_loop_tick();
+//    sGameLoopTicked = 1;
         config_gfx_pool();
         read_controller_inputs();
         levelCommandAddr = level_script_execute(levelCommandAddr);

@@ -546,42 +546,6 @@ void aSetVolumeImpl(uint8_t flags, int16_t v, int16_t t, int16_t r) {
     }
 }
 
-void aInterleaveImpl(uint16_t left, uint16_t right) {
-    int count = ROUND_UP_16(rspa.nbytes) / sizeof(int16_t) / 4;
-    int32_t *l = (int32_t *) BUF_S16(left);
-    int32_t *r = (int32_t *) BUF_S16(right);
-
-    // int16_t* d = BUF_S16(rspa.out);
-    int32_t *d = (int32_t *) (((uintptr_t) BUF_S16(rspa.out) + 3) & ~3);
-
-    __builtin_prefetch(r);
-
-    while (count > 0) {
-        __builtin_prefetch(r + 16);
-        int32_t l12 = *l++;
-        int32_t l34 = *l++;
-        int32_t r12 = *r++;
-        int32_t r34 = *r++;
-
-        asm volatile("" : : : "memory");
-
-        int32_t lr0 = ((r12 & 0xffff) << 16) | (l12 & 0xffff);
-        int32_t lr1 = (((r12 >> 16) & 0xffff) << 16) | ((l12 >> 16) & 0xffff);
-        int32_t lr2 = ((r34 & 0xffff) << 16) | (l34 & 0xffff);
-        int32_t lr3 = (((r34 >> 16) & 0xffff) << 16) | ((l34 >> 16) & 0xffff);
-
-#if 1
-        asm volatile("" : : : "memory");
-#endif
-        *d++ = lr0;
-        *d++ = lr1;
-        *d++ = lr2;
-        *d++ = lr3;
-
-        --count;
-    }
-}
-
 void aDMEMMoveImpl(uint16_t in_addr, uint16_t out_addr, int nbytes) {
     nbytes = ROUND_UP_16(nbytes);
     memmove(rspa.buf.as_u8 + out_addr, rspa.buf.as_u8 + in_addr, nbytes);
@@ -886,6 +850,8 @@ void aResampleImpl(uint8_t flags, uint16_t pitch, RESAMPLE_STATE state) {
     int32_t *wdp, *wsp;
 
     if (!(flags & A_INIT)) {
+        shz_copy_16_shorts(tmp, state);
+#if 0
         dp = tmp;
         sp = state;
 
@@ -899,6 +865,7 @@ void aResampleImpl(uint8_t flags, uint16_t pitch, RESAMPLE_STATE state) {
             for (l = 0; l < 16; l++)
                 *dp++ = *sp++;
         }
+#endif
     }
 
     in -= 4;

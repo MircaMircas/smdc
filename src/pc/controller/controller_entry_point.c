@@ -3,43 +3,10 @@
 #include "lib/src/libultra_internal.h"
 #include "lib/src/osContInternal.h"
 
-
-#include "controller_recorded_tas.h"
-#if !defined(TARGET_PSP) && !defined(TARGET_DC)
-#include "controller_keyboard.h"
-#endif
-
-#if defined(_WIN32) || defined(_WIN64)
-#include "controller_xinput.h"
-#elif defined(TARGET_PSP)
-#include "controller_psp.h"
-#elif defined(TARGET_DC)
 #include "controller_dc.h"
-#else
-#include "controller_sdl.h"
-#endif
-
-#ifdef __linux__
-#include "controller_wup.h"
-#endif
 
 static struct ControllerAPI *controller_implementations[] = {
-#if !defined(TARGET_PSP) && !defined(TARGET_DC)
-    &controller_recorded_tas,
-    &controller_keyboard,
-#endif
-#if defined(_WIN32) || defined(_WIN64)
-    &controller_xinput,
-#elif defined(TARGET_PSP)
-    &controller_psp,
-#elif defined(TARGET_DC)
     &controller_dc,
-#else
-    &controller_sdl,
-#endif
-#ifdef __linux__
-    &controller_wup,
-#endif
 };
 
 s32 osContInit(UNUSED OSMesgQueue *mq, u8 *controllerBits, UNUSED OSContStatus *status) {

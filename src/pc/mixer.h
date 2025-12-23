@@ -26,7 +26,6 @@ void aSaveBufferImpl(int16_t *dest_addr);
 void aLoadADPCMImpl(int num_entries_times_16, const int16_t *book_source_addr);
 void aSetBufferImpl(uint8_t flags, uint16_t in, uint16_t out, uint16_t nbytes);
 void aSetVolumeImpl(uint8_t flags, int16_t v, int16_t t, int16_t r);
-void aInterleaveImpl(uint16_t left, uint16_t right);
 void aDMEMMoveImpl(uint16_t in_addr, uint16_t out_addr, int nbytes);
 void aSetLoopImpl(ADPCM_STATE *adpcm_loop_state);
 void aADPCMdecImpl(uint8_t flags, ADPCM_STATE state);
@@ -43,7 +42,6 @@ void aSaveBuffer2Impl(uint16_t source_addr, int16_t* dest_addr, uint16_t nbytes)
 #define aSetBuffer(pkt, f, i, o, c) aSetBufferImpl(f, i, o, c)
 #define aSetVolume(pkt, f, v, t, r) aSetVolumeImpl(f, v, t, r)
 #define aSetVolume32(pkt, f, v, tr) aSetVolume(pkt, f, v, (int16_t)((tr) >> 16), (int16_t)(tr))
-#define aInterleave(pkt, l, r) aInterleaveImpl(l, r)
 #define aDMEMMove(pkt, i, o, c) aDMEMMoveImpl(i, o, c)
 #define aSetLoop(pkt, a) aSetLoopImpl(a)
 #define aADPCMdec(pkt, f, s) aADPCMdecImpl(f, s)
