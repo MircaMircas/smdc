@@ -1,3 +1,7 @@
+# DC build artifacts
+mario64.cdi
+sm64.bin
+
 # Object files
 *.o
 *.obj
