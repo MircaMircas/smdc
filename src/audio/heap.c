@@ -770,7 +770,7 @@ void audio_reset_session(void) {
 #else
     reverbWindowSize = preset->reverbWindowSize;
     gAiFrequency = osAiSetFrequency(preset->frequency);
-    gMaxSimultaneousNotes = preset->maxSimultaneousNotes;
+    gMaxSimultaneousNotes = 12;//preset->maxSimultaneousNotes;
     gSamplesPerFrameTarget = ALIGN16(gAiFrequency / 60);
     gReverbDownsampleRate = preset->reverbDownsampleRate;
 

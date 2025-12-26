@@ -27,13 +27,13 @@ struct Note *gNotes;
 static u8 pad[4];
 #endif
 
-struct SequencePlayer gSequencePlayers[SEQUENCE_PLAYERS];
-struct SequenceChannel gSequenceChannels[SEQUENCE_CHANNELS];
-struct SequenceChannelLayer gSequenceLayers[SEQUENCE_LAYERS];
+struct SequencePlayer __attribute__((aligned(32))) gSequencePlayers[SEQUENCE_PLAYERS];
+struct SequenceChannel __attribute__((aligned(32))) gSequenceChannels[SEQUENCE_CHANNELS];
+struct SequenceChannelLayer __attribute__((aligned(32))) gSequenceLayers[SEQUENCE_LAYERS];
 
-struct SequenceChannel gSequenceChannelNone;
-struct AudioListItem gLayerFreeList;
-struct NotePool gNoteFreeLists;
+struct SequenceChannel __attribute__((aligned(32))) gSequenceChannelNone;
+struct AudioListItem __attribute__((aligned(32))) gLayerFreeList;
+struct NotePool __attribute__((aligned(32))) gNoteFreeLists;
 
 OSMesgQueue gCurrAudioFrameDmaQueue;
 OSMesg gCurrAudioFrameDmaMesgBufs[AUDIO_FRAME_DMA_QUEUE_SIZE];
@@ -43,14 +43,14 @@ OSMesgQueue gAudioDmaMesgQueue;
 OSMesg gAudioDmaMesg;
 OSIoMesg gAudioDmaIoMesg;
 
-struct SharedDma sSampleDmas[0x60];
+struct SharedDma __attribute__((aligned(32))) sSampleDmas[0x60];
 u32 gSampleDmaNumListItems;
 u32 sSampleDmaListSize1;
 u32 sUnused80226B40; // set to 0, never read
 
 // Circular buffer of DMAs with ttl = 0. tail <= head, wrapping around mod 256.
-u8 sSampleDmaReuseQueue1[256];
-u8 sSampleDmaReuseQueue2[256];
+u8 __attribute__((aligned(32))) sSampleDmaReuseQueue1[256];
+u8 __attribute__((aligned(32))) sSampleDmaReuseQueue2[256];
 u8 sSampleDmaReuseQueueTail1;
 u8 sSampleDmaReuseQueueTail2;
 u8 sSampleDmaReuseQueueHead1;
@@ -102,22 +102,34 @@ extern u8 gSoundDataRaw[];  // sound_data.tbl
 extern u8 gMusicData[];     // sequences.s
 extern u8 gBankSetsData[];  // bank_sets.s
 
+void n64_memcpy(void* dst, const void* src, size_t size);
+
+#if 0
+s32 osPiStartDma(UNUSED OSIoMesg *mb, UNUSED s32 priority, UNUSED s32 direction,
+                 uintptr_t devAddr, void *vAddr, size_t nbytes,
+                 UNUSED OSMesgQueue *mq) {
+    n64_memcpy(vAddr, (const void *) devAddr, nbytes);
+    return 0;
+}
+#endif
 /**
  * Performs an immediate DMA copy
  */
 void audio_dma_copy_immediate(uintptr_t devAddr, void *vAddr, size_t nbytes) {
-    osInvalDCache(vAddr, nbytes);
-    osPiStartDma(&gAudioDmaIoMesg, OS_MESG_PRI_HIGH, OS_READ, devAddr, vAddr, nbytes,
-                 &gAudioDmaMesgQueue);
-    osRecvMesg(&gAudioDmaMesgQueue, NULL, OS_MESG_BLOCK);
+//    osInvalDCache(vAddr, nbytes);
+//    osPiStartDma(&gAudioDmaIoMesg, OS_MESG_PRI_HIGH, OS_READ, devAddr, vAddr, nbytes,
+//                 &gAudioDmaMesgQueue);
+//    osRecvMesg(&gAudioDmaMesgQueue, NULL, OS_MESG_BLOCK);
+    n64_memcpy(vAddr, (const void *) devAddr, nbytes);
 }
 
 /**
  * Performs an asynchronus (normal priority) DMA copy
  */
 void audio_dma_copy_async(uintptr_t devAddr, void *vAddr, size_t nbytes, OSMesgQueue *queue, OSIoMesg *mesg) {
-    osInvalDCache(vAddr, nbytes);
-    osPiStartDma(mesg, OS_MESG_PRI_NORMAL, OS_READ, devAddr, vAddr, nbytes, queue);
+//    osInvalDCache(vAddr, nbytes);
+//    osPiStartDma(mesg, OS_MESG_PRI_NORMAL, OS_READ, devAddr, vAddr, nbytes, queue);
+    n64_memcpy(vAddr, (const void *) devAddr, nbytes);
 }
 
 /**
@@ -125,16 +137,21 @@ void audio_dma_copy_async(uintptr_t devAddr, void *vAddr, size_t nbytes, OSMesgQ
  * to 0x1000 bytes transfer at once.
  */
 void audio_dma_partial_copy_async(uintptr_t *devAddr, u8 **vAddr, ssize_t *remaining, OSMesgQueue *queue, OSIoMesg *mesg) {
-#ifdef VERSION_EU
+    n64_memcpy(vAddr, (const void *) devAddr, *remaining);
+    *remaining = 0;
+#if 0
+    #ifdef VERSION_EU
     ssize_t transfer = (*remaining >= 0x1000 ? 0x1000 : *remaining);
 #else
     ssize_t transfer = (*remaining < 0x1000 ? *remaining : 0x1000);
 #endif
     *remaining -= transfer;
-    osInvalDCache(*vAddr, transfer);
-    osPiStartDma(mesg, OS_MESG_PRI_NORMAL, OS_READ, *devAddr, *vAddr, transfer, queue);
+//    osInvalDCache(*vAddr, transfer);
+//    osPiStartDma(mesg, OS_MESG_PRI_NORMAL, OS_READ, *devAddr, *vAddr, transfer, queue);
+    n64_memcpy(vAddr, (const void *) devAddr, transfer);
     *devAddr += transfer;
     *vAddr += transfer;
+#endif
 }
 
 void decrease_sample_dma_ttls() {

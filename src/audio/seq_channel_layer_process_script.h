@@ -133,27 +133,27 @@ void seq_channel_layer_process_script(struct SequenceChannelLayer *layer) {
     struct AudioBankSound *sound; // v0
     struct Instrument *instrument; // v1
     struct Drum *drum;
-    UNUSED s32 pad[1];
+    //UNUSED s32 pad[1];
     u8 sameSound; // sp3F
     u8 cmd; // a0 sp3E, EU s2
-    UNUSED u8 loBits;
+    //UNUSED u8 loBits;
     u16 sp3A = 0; // t2, a0, a1
-    UNUSED s32 pad2[1];
+    //UNUSED s32 pad2[1];
     s32 vel = 0.f; // sp30, t3
-    UNUSED s32 pad3[1];
+    //UNUSED s32 pad3[1];
     f32 freqScale = 0.f; // sp28, f0
     f32 sp24 = 0.f;
     u8 temp8;
-    UNUSED u8 semitone; // v0
+    //UNUSED u8 semitone; // v0
     s32 usedSemitone; // a1
     f32 temp_f12;
     f32 temp_f2;
     s32 temp_a0_5;
-    UNUSED u8 drumIndex; // t0
-    UNUSED s32 cmdBase; // t1
+    //UNUSED u8 drumIndex; // t0
+    //UNUSED s32 cmdBase; // t1
     u8 temp_a0_6;
     u8 portamentoTargetNote; // t7
-    UNUSED s32 bankId; // a3
+    //UNUSED s32 bankId; // a3
     u8 instId; // v0
     u8 cmdSemitone; // v1
     f32 tuning; // f0
