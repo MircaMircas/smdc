@@ -969,6 +969,11 @@ elf: $(EXE)
 scramble: elf
 	$(KOS_BASE)/utils/scramble/scramble $(EXE).bin $(BUILD_DIR)/1ST_READ.bin
 
+cdi: $(EXE)
+	sh-elf-objcopy -R .stack -O binary $< sm64.bin
+	kos-cc loader.c -o loader.elf
+	mkdcdisc -n "Super Mario 64" -N -f sm64.bin -e loader.elf -o mario64.cdi
+
 .PHONY: scramble
 .PHONY: elf
 endif

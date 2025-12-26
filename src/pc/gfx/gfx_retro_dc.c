@@ -1815,7 +1815,7 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
 
     buf_vbo_num_tris += 1;
 
-    if (do_radar_mark || drawing_hand || in_trilerp || doing_skybox || water_bomb || aquarium_draw || buf_vbo_num_tris == MAX_BUFFERED) {
+    if (font_draw || do_radar_mark || drawing_hand || in_trilerp || doing_skybox || water_bomb || aquarium_draw || buf_vbo_num_tris == MAX_BUFFERED) {
         gfx_flush();
     }
 }
@@ -2735,6 +2735,8 @@ extern Gfx water_bubble_seg5_dl_05010D30[];
 
 extern Gfx dl_ia_text_begin[];
 extern Gfx dl_ia_text_end[];
+extern Gfx dl_rgba16_text_begin[];
+extern Gfx dl_rgba16_text_end[];
 
 extern Gfx dl_menu_idle_hand[];
 extern Gfx dl_menu_grabbing_hand[];
@@ -2770,10 +2772,10 @@ static void gfx_run_dl(Gfx* cmd) {
         if (cmd == dl_menu_hand) {
             drawing_hand = 1;
         }
-        if (cmd == dl_ia_text_begin) {
+        if (cmd == dl_ia_text_begin || cmd == dl_rgba16_text_begin) {
             font_draw = 1;
         }
-        if (cmd == dl_ia_text_end) {
+        if (cmd == dl_ia_text_end || cmd == dl_rgba16_text_end) {
             font_draw = 0;
         }
 

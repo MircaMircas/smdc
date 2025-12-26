@@ -2232,6 +2232,9 @@ const Gfx dl_ia_text_end[] = {
 };
 
 #elif defined(VERSION_US)
+
+#define TRI_MODE 0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT
+
 const Gfx dl_ia_text_begin[] = {
     gsDPPipeSync(),
     gsSPClearGeometryMode(G_LIGHTING),
