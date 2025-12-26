@@ -547,7 +547,8 @@ endif
 ifeq ($(TARGET_DC),1)
   #Notes from neo
   #-gdwarf-2 -gstrict-dwarf -g3 --ffunction-sections -fdata-sections -Wl,-gc-sections
-  PLATFORM_CFLAGS  := $(KOS_CFLAGS) -Os -flto=auto -DTARGET_DC -Wall -Wextra -DNDEBUG -Wno-incompatible-pointer-types
+  PLATFORM_CFLAGS  := $(KOS_CFLAGS) -Os -flto=auto -DTARGET_DC -Wall -Wextra -DNDEBUG
+# -Wno-incompatible-pointer-types
   PLATFORM_LDFLAGS := -Wl,--gc-sections  -Wl,-Map=output.map
 endif
 ifeq ($(TARGET_WEB),1)

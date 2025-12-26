@@ -545,6 +545,7 @@ void func_80320ED8(void);
 
 #ifndef VERSION_JP
 void unused_8031E4F0(void) {
+#if 0
     // This is a debug function which is almost entirely optimized away,
     // except for loops, string literals, and a read of a volatile variable.
     // The string literals have allowed it to be partially reconstructed.
@@ -606,11 +607,14 @@ void unused_8031E4F0(void) {
     stubbed_printf("TEMPO G1  %d\n", gSequencePlayers[SEQ_PLAYER_ENV].tempo / TEMPO_SCALE);
     stubbed_printf("TEMPO G2  %d\n", gSequencePlayers[SEQ_PLAYER_SFX].tempo / TEMPO_SCALE);
     stubbed_printf("DEBUGFLAG  %8x\n", gAudioErrorFlags);
+#endif
 }
 
 void unused_8031E568(void) {
+#if 0
     stubbed_printf("COUNT %8d\n", gAudioFrameCount);
-}
+#endif
+    }
 #endif
 
 #ifdef VERSION_EU
@@ -1195,8 +1199,8 @@ f32 get_sound_dynamics(u8 bankIndex, u8 item, f32 arg2) {
         } else {
             f0 = shz_divf((f32)D_80332028[gCurrLevelNum] , (f32) div);
             if (f0 < gSoundBanks[bankIndex][item].distance) {
-                intensity = ((AUDIO_MAX_DISTANCE - gSoundBanks[bankIndex][item].distance)
-                             / (AUDIO_MAX_DISTANCE - f0))
+                intensity = shz_divf((AUDIO_MAX_DISTANCE - gSoundBanks[bankIndex][item].distance)
+                             , (AUDIO_MAX_DISTANCE - f0))
                             * (1.0f - arg2);
             } else {
                 intensity = 1.0f - shz_divf(gSoundBanks[bankIndex][item].distance , f0) * arg2;
@@ -1225,7 +1229,7 @@ f32 get_sound_freq_scale(u8 bankIndex, u8 item) {
     f32 f2;
 
     if (!(gSoundBanks[bankIndex][item].soundBits & SOUND_NO_FREQUENCY_LOSS)) {
-        f2 = gSoundBanks[bankIndex][item].distance / AUDIO_MAX_DISTANCE;
+        f2 = shz_divf(gSoundBanks[bankIndex][item].distance , AUDIO_MAX_DISTANCE);
         if (gSoundBanks[bankIndex][item].soundBits & SOUND_VIBRATO) {
             f2 += (f32)(gAudioRandom & 0xff) * 0.015625f; /// US_FLOAT(64.0);
         }
@@ -1726,7 +1730,8 @@ void func_8031F96C(u8 player) {
     }
 }
 
-#ifdef NON_MATCHING
+#if 1
+//def NON_MATCHING
 
 void process_level_music_dynamics(void) {
     s32 conditionBits;      // s0
@@ -1947,7 +1952,7 @@ u8 func_803200E4(u16 fadeTimer) {
             func_8031D838(SEQ_PLAYER_LEVEL, fadeTimer, vol);
         } else {
 #if defined(VERSION_JP) || defined(VERSION_US)
-            gSequencePlayers[SEQ_PLAYER_LEVEL].volume = sBackgroundMusicDefaultVolume[sPlayer0CurSeqId] / 127.0f;
+            gSequencePlayers[SEQ_PLAYER_LEVEL].volume = sBackgroundMusicDefaultVolume[sPlayer0CurSeqId] * 0.00787402f; // / 127.0f;
 #endif
             func_8031D7B0(SEQ_PLAYER_LEVEL, fadeTimer);
         }
@@ -2368,7 +2373,7 @@ void func_803210D4(u16 fadeOutTime) {
 
     for (i = 0; i < SOUND_BANK_COUNT; i++) {
         if (i != 7) {
-            fade_channel_volume_scale(SEQ_PLAYER_SFX, i, 0, fadeOutTime / 16);
+            fade_channel_volume_scale(SEQ_PLAYER_SFX, i, 0, fadeOutTime>>4 /* / 16 */);
         }
     }
     sHasStartedFadeOut = TRUE;

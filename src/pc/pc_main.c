@@ -86,6 +86,12 @@ void send_display_list(struct SPTask *spTask) {
 #define TARGET_DC 1
 #if defined(TARGET_DC)
 #include <kos.h>
+#undef bool
+#undef true
+#undef false
+#define bool uint8_t
+#define false 0
+#define true 1
 //void create_thread(OSThread *thread, OSId id, void (*entry)(void *), void *arg, void *sp, OSPri pri);
 static volatile uint64_t vblticker=0;
 void vblfunc(uint32_t c, void *d) {

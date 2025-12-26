@@ -638,9 +638,10 @@ struct AudioBank *bank_load_async(s32 bankId, s32 arg1, struct SequencePlayer *s
     seqPlayer->bankDmaMesg = NULL;
 #endif
     seqPlayer->bankDmaInProgress = TRUE;
-    audio_dma_partial_copy_async(&seqPlayer->bankDmaCurrDevAddr, &seqPlayer->bankDmaCurrMemAddr,
-                                 &seqPlayer->bankDmaRemaining, mesgQueue, &seqPlayer->bankDmaIoMesg);
-    gBankLoadStatus[bankId] = SOUND_LOAD_STATUS_IN_PROGRESS;
+//    audio_dma_partial_copy_async(&seqPlayer->bankDmaCurrDevAddr, &seqPlayer->bankDmaCurrMemAddr,
+//                                 &seqPlayer->bankDmaRemaining, mesgQueue, &seqPlayer->bankDmaIoMesg);
+seqPlayer->bankDmaCurrMemAddr = (u8*)  seqPlayer->bankDmaCurrDevAddr;
+gBankLoadStatus[bankId] = SOUND_LOAD_STATUS_COMPLETE;// SOUND_LOAD_STATUS_IN_PROGRESS;
     return ret;
 }
 
@@ -652,14 +653,14 @@ void *sequence_dma_immediate(s32 seqId, s32 arg1) {
     seqLength = gSeqFileHeader->seqArray[seqId].len + 0xf;
     seqLength = ALIGN16(seqLength);
     seqData = gSeqFileHeader->seqArray[seqId].offset;
-    ptr = alloc_bank_or_seq(&gSeqLoadedPool, 1, seqLength, arg1, seqId);
-    if (ptr == NULL) {
-        return NULL;
-    }
+//    ptr = alloc_bank_or_seq(&gSeqLoadedPool, 1, seqLength, arg1, seqId);
+  //  if (ptr == NULL) {
+    //    return NULL;
+    //}
 
-    audio_dma_copy_immediate((uintptr_t) seqData, ptr, seqLength);
+//    audio_dma_copy_immediate((uintptr_t) seqData, ptr, seqLength);
     gSeqLoadStatus[seqId] = SOUND_LOAD_STATUS_COMPLETE;
-    return ptr;
+    return (void*)seqData;//ptr;
 }
 
 void *sequence_dma_async(s32 seqId, s32 arg1, struct SequencePlayer *seqPlayer) {

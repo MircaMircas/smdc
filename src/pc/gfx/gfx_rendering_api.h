@@ -3,8 +3,9 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
-
+//#include <stdbool.h>
+#undef bool
+#define bool uint8_t 
 struct ShaderProgram;
 
 struct GfxRenderingAPI {

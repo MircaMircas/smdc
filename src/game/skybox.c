@@ -10,9 +10,9 @@
 #include "segment2.h"
 #include "sm64.h"
 
-#if !defined(TARGET_N64) && !defined(TARGET_DC)
-#define BETTER_SKYBOX_POSITION_PRECISION
-#endif
+//#if !defined(TARGET_N64) && !defined(TARGET_DC)
+//#define BETTER_SKYBOX_POSITION_PRECISION
+//#endif
 
 /**
  * @file skybox.c
@@ -145,6 +145,8 @@ u8 sSkyboxColors[][3] = {
  *                 (how far is the camera rotated from 0, scaled 0 to 1)   *
  *                 (the screen width)
  */
+#include "sh4zam.h"
+
 #ifdef BETTER_SKYBOX_POSITION_PRECISION
 f32
 #else
@@ -154,7 +156,7 @@ calculate_skybox_scaled_x(s8 player, f32 fov) {
     f32 yaw = sSkyBoxInfo[player].yaw;
 
     //! double literals are used instead of floats
-    f32 yawScaled = SCREEN_WIDTH * 360.0 * yaw / (fov * 65536.0);
+    f32 yawScaled = 1.7578125f * shz_divf(yaw, fov);//SCREEN_WIDTH * 360.0 * yaw / (fov * 65536.0);
 
 #ifdef BETTER_SKYBOX_POSITION_PRECISION
     f32 scaledX = yawScaled;
@@ -164,11 +166,11 @@ calculate_skybox_scaled_x(s8 player, f32 fov) {
     }
 #else
     // Round the scaled yaw. Since yaw is a u16, it doesn't need to check for < 0
-    s32 scaledX = yawScaled + 0.5;
+    s32 scaledX = yawScaled;// + 0.5f;
 
-    if (scaledX > SKYBOX_WIDTH) {
-        scaledX -= scaledX / SKYBOX_WIDTH * SKYBOX_WIDTH;
-    }
+//    if (scaledX > SKYBOX_WIDTH) {
+  //      scaledX -= scaledX / SKYBOX_WIDTH * SKYBOX_WIDTH;
+    //}
 #endif
 
     return SKYBOX_WIDTH - scaledX;
@@ -187,10 +189,10 @@ s32
 #endif
 calculate_skybox_scaled_y(s8 player, UNUSED f32 fov) {
     // Convert pitch to degrees. Pitch is bounded between -90 (looking down) and 90 (looking up).
-    f32 pitchInDegrees = (f32) sSkyBoxInfo[player].pitch * 360.0 / 65535.0;
+    f32 pitchInDegrees = (f32) sSkyBoxInfo[player].pitch * 0.00549316f; // 360.0 / 65535.0;
 
     // Scale by 360 / fov
-    f32 degreesToScale = 360.0f * pitchInDegrees / 90.0;
+    f32 degreesToScale = pitchInDegrees * 4.0f;// 360.0f * pitchInDegrees / 90.0;
 
 #ifdef BETTER_SKYBOX_POSITION_PRECISION
     f32 scaledY = degreesToScale + 5 * SKYBOX_TILE_HEIGHT;
@@ -199,7 +201,7 @@ calculate_skybox_scaled_y(s8 player, UNUSED f32 fov) {
 
     // Since pitch can be negative, and the tile grid starts 1 octant above the camera's focus, add
     // 5 octants to the y position
-    s32 scaledY = roundedY + 5 * SKYBOX_TILE_HEIGHT;
+    s32 scaledY = roundedY + 600;// 5 * SKYBOX_TILE_HEIGHT;
 #endif
 
     if (scaledY > SKYBOX_HEIGHT) {

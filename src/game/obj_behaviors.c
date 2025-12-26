@@ -68,8 +68,8 @@ s16 sPrevCheckMarioRoom = 0;
  */
 s8 sYoshiDead = FALSE;
 
-extern void *ccm_seg7_trajectory_snowman;
-extern void *inside_castle_seg7_trajectory_mips;
+extern const Trajectory ccm_seg7_trajectory_snowman[];
+extern const Trajectory *const inside_castle_seg7_trajectory_mips[];
 
 /**
  * Resets yoshi as spawned/despawned upon new file select.

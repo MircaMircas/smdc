@@ -2300,11 +2300,12 @@ static const Vtx vertex_triangle[] = {
     {{{     8,      8,      0}, 0, {     0,      0}, {0xff, 0xff, 0xff, 0xff}}},
     {{{     0,     16,      0}, 0, {     0,      0}, {0xff, 0xff, 0xff, 0xff}}},
 };
-
+//#define	G_CC_DECALFADE              0, 0, 0, TEXEL0, 0, 0, 0, ENVIRONMENT
+#define TRI_MODE 0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT
 // 0x0200EF60 - 0x0200EFB0
 const Gfx dl_draw_triangle[] = {
     gsSPClearGeometryMode(G_LIGHTING),
-    gsDPSetCombineMode(G_CC_FADE, G_CC_FADE),
+    gsDPSetCombineMode(TRI_MODE,TRI_MODE), //G_CC_DECALRGBA, G_CC_DECALRGBA), //G_CC_FADE, G_CC_FADE),
     gsDPSetRenderMode(G_RM_XLU_SURF, G_RM_XLU_SURF2),
     gsDPSetTextureFilter(G_TF_POINT),
     gsSPVertex(vertex_triangle, 3, 0),

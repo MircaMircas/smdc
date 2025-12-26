@@ -168,7 +168,7 @@ void mtxf_copy(Mat4 dest, Mat4 src) {
         *d++ = *s++;
     }
 #endif
-    shz_matrix_4x4_copy(dest, src);
+    shz_matrix_4x4_copy((shz_matrix_4x4_t *)dest, (shz_matrix_4x4_t *)src);
 }
 
 /**
@@ -186,7 +186,7 @@ void mtxf_identity(Mat4 mtx) {
     for (dest = (f32 *) mtx, i = 0; i < 4; dest += 5, i++) *dest = 1;
 #endif
     shz_xmtrx_init_identity();
-    shz_xmtrx_store_4x4_unaligned(mtx);
+    shz_xmtrx_store_4x4_unaligned((float *)mtx);
 
 }
 
@@ -227,6 +227,7 @@ f32 coss(u16 arg0) {
  */
 void mtxf_lookat(Mat4 mtx, Vec3f from, Vec3f to, s16 roll) {
     register f32 invLength;
+    f32 rs,rc;
     f32 dx;
     f32 dz;
     f32 xColY;
@@ -239,16 +240,22 @@ void mtxf_lookat(Mat4 mtx, Vec3f from, Vec3f to, s16 roll) {
     f32 yColX;
     f32 zColX;
 
+    sincoss(roll, &rs, &rc);
+
     dx = to[0] - from[0];
     dz = to[2] - from[2];
 
-    invLength = -shz_inv_sqrtf((dx*dx)+(dz*dz));// -1.0 / sqrtf(dx * dx + dz * dz);
+    invLength = -shz_inv_sqrtf((dx*dx)+(dz*dz));// 
+//    -1.0 / sqrtf(dx * dx + dz * dz);
     dx *= invLength;
     dz *= invLength;
 
-    yColY = coss(roll);
-    xColY = sins(roll) * dz;
-    zColY = -sins(roll) * dx;
+    yColY = rc;//
+  //  coss(roll);
+    xColY = dz * rs;//
+    //sins(roll) * dz;
+    zColY = dx * -rs;//
+    //-sins(roll) * dx;
 
     xColZ = to[0] - from[0];
     yColZ = to[1] - from[1];
@@ -281,17 +288,20 @@ void mtxf_lookat(Mat4 mtx, Vec3f from, Vec3f to, s16 roll) {
     mtx[0][0] = xColX;
     mtx[1][0] = yColX;
     mtx[2][0] = zColX;
-    mtx[3][0] = -(from[0] * xColX + from[1] * yColX + from[2] * zColX);
+    mtx[3][0] = -shz_dot6f(from[0], from[1], from[2], xColX, yColX, zColX);//
+//    -(from[0] * xColX + from[1] * yColX + from[2] * zColX);
 
     mtx[0][1] = xColY;
     mtx[1][1] = yColY;
     mtx[2][1] = zColY;
-    mtx[3][1] = -(from[0] * xColY + from[1] * yColY + from[2] * zColY);
+    mtx[3][1] = -shz_dot6f(from[0], from[1], from[2], xColY, yColY, zColY);//
+//    -(from[0] * xColY + from[1] * yColY + from[2] * zColY);
 
     mtx[0][2] = xColZ;
     mtx[1][2] = yColZ;
     mtx[2][2] = zColZ;
-    mtx[3][2] = -(from[0] * xColZ + from[1] * yColZ + from[2] * zColZ);
+    mtx[3][2] = -shz_dot6f(from[0], from[1], from[2], xColZ, yColZ, zColZ);//
+//    -(from[0] * xColZ + from[1] * yColZ + from[2] * zColZ);
 
     mtx[0][3] = 0;
     mtx[1][3] = 0;
@@ -304,14 +314,16 @@ void mtxf_lookat(Mat4 mtx, Vec3f from, Vec3f to, s16 roll) {
  * axis, and then translates.
  */
 void mtxf_rotate_zxy_and_translate(Mat4 dest, Vec3f translate, Vec3s rotate) {
-    register f32 sx = sins(rotate[0]);
-    register f32 cx = coss(rotate[0]);
+    /* register */ f32 sx;// = sins(rotate[0]);
+    /* register */ f32 cx;// = coss(rotate[0]);
+sincoss(rotate[0], &sx, &cx);
+    /* register */ f32 sy;// = sins(rotate[1]);
+    /* register */ f32 cy;// = coss(rotate[1]);
+sincoss(rotate[1], &sy, &cy);
 
-    register f32 sy = sins(rotate[1]);
-    register f32 cy = coss(rotate[1]);
-
-    register f32 sz = sins(rotate[2]);
-    register f32 cz = coss(rotate[2]);
+    /* register */ f32 sz;// = sins(rotate[2]);
+    /* register */ f32 cz;// = coss(rotate[2]);
+sincoss(rotate[2], &sz, &cz);
 
     dest[0][0] = cy * cz + sx * sy * sz;
     dest[1][0] = -cy * sz + sx * sy * cz;
@@ -337,14 +349,16 @@ void mtxf_rotate_zxy_and_translate(Mat4 dest, Vec3f translate, Vec3s rotate) {
  * axis, and then translates.
  */
 void mtxf_rotate_xyz_and_translate(Mat4 dest, Vec3f b, Vec3s c) {
-    register f32 sx = sins(c[0]);
-    register f32 cx = coss(c[0]);
+    /* register */ f32 sx;// = sins(c[0]);
+    /* register */ f32 cx;// = coss(c[0]);
+sincoss(c[0], &sx, &cx);
+    /* register */ f32 sy;// = sins(c[1]);
+    /* register */ f32 cy;// = coss(c[1]);
+sincoss(c[1], &sy, &cy);
 
-    register f32 sy = sins(c[1]);
-    register f32 cy = coss(c[1]);
-
-    register f32 sz = sins(c[2]);
-    register f32 cz = coss(c[2]);
+    /* register */ f32 sz;// = sins(c[2]);
+    /* register */ f32 cz;// = coss(c[2]);
+sincoss(c[2], &sz, &cz);
 
     dest[0][0] = cy * cz;
     dest[0][1] = cy * sz;
@@ -374,8 +388,10 @@ void mtxf_rotate_xyz_and_translate(Mat4 dest, Vec3f b, Vec3s c) {
  * 'angle' rotates the object while still facing the camera.
  */
 void mtxf_billboard(Mat4 dest, Mat4 mtx, Vec3f position, s16 angle) {
-    dest[0][0] = coss(angle);
-    dest[0][1] = sins(angle);
+//    dest[0][0] = coss(angle);
+//    dest[0][1] = sins(angle);
+    sincoss(angle, &dest[0][1], &dest[0][0]);
+
     dest[0][2] = 0;
     dest[0][3] = 0;
 
@@ -390,11 +406,15 @@ void mtxf_billboard(Mat4 dest, Mat4 mtx, Vec3f position, s16 angle) {
     dest[2][3] = 0;
 
     dest[3][0] =
-        mtx[0][0] * position[0] + mtx[1][0] * position[1] + mtx[2][0] * position[2] + mtx[3][0];
+shz_dot8f(mtx[0][0], mtx[1][0], mtx[2][0], mtx[3][0], position[0], position[1], position[2], 1.0f);
+    //        mtx[0][0] * position[0] + mtx[1][0] * position[1] + mtx[2][0] * position[2] + mtx[3][0];
     dest[3][1] =
-        mtx[0][1] * position[0] + mtx[1][1] * position[1] + mtx[2][1] * position[2] + mtx[3][1];
+shz_dot8f(mtx[0][1], mtx[1][1], mtx[2][1], mtx[3][1], position[0], position[1], position[2], 1.0f);
+//        mtx[0][1] * position[0] + mtx[1][1] * position[1] + mtx[2][1] * position[2] + mtx[3][1];
     dest[3][2] =
-        mtx[0][2] * position[0] + mtx[1][2] * position[1] + mtx[2][2] * position[2] + mtx[3][2];
+shz_dot8f(mtx[0][2], mtx[1][2], mtx[2][2], mtx[3][2], position[0], position[1], position[2], 1.0f);
+
+//        mtx[0][2] * position[0] + mtx[1][2] * position[1] + mtx[2][2] * position[2] + mtx[3][2];
     dest[3][3] = 1;
 }
 
@@ -406,11 +426,14 @@ void mtxf_billboard(Mat4 dest, Mat4 mtx, Vec3f position, s16 angle) {
  * 'pos' is the object's position in the world
  */
 void mtxf_align_terrain_normal(Mat4 dest, Vec3f upDir, Vec3f pos, s16 yaw) {
+    f32 ys,yc;
     Vec3f lateralDir;
     Vec3f leftDir;
     Vec3f forwardDir;
 
-    vec3f_set(lateralDir, sins(yaw), 0, coss(yaw));
+    sincoss(yaw, &ys, &yc);
+
+    vec3f_set(lateralDir, ys, 0.0f, yc);//sins(yaw), 0, coss(yaw));
     vec3f_normalize(upDir);
 
     vec3f_cross(leftDir, upDir, lateralDir);
@@ -526,9 +549,9 @@ void mtxf_align_terrain_triangle(Mat4 mtx, Vec3f pos, s16 yaw, f32 radius) {
 
 void mtxf_mul(Mat4 dest, Mat4 a, Mat4 b) {
 #if 1
-    shz_xmtrx_load_4x4_unaligned(b);
-    shz_xmtrx_apply_4x4_unaligned(a);
-    shz_xmtrx_store_4x4_unaligned(dest);
+    shz_xmtrx_load_4x4_unaligned((const float*)b);
+    shz_xmtrx_apply_4x4_unaligned((const float *)a);
+    shz_xmtrx_store_4x4_unaligned((float *)dest);
 #endif
 //    shz_xmtrx_load_4x4_apply_store(dest, b, a);
 
@@ -560,7 +583,7 @@ void mtxf_scale_vec3f(Mat4 dest, Mat4 mtx, Vec3f s) {
  * true for transformation matrices if the translation has a w component of 1.
  */
 void mtxf_mul_vec3s(Mat4 mtx, Vec3s b) {
-    shz_xmtrx_load_4x4_unaligned(mtx);
+    shz_xmtrx_load_4x4_unaligned((const float *)mtx);
 
     register f32 x = b[0];
     register f32 y = b[1];

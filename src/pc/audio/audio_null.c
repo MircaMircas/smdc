@@ -13,7 +13,7 @@ static int audio_null_get_desired_buffered(void) {
     return 0;
 }
 
-static void audio_null_play(UNUSED const uint8_t *buf, UNUSED size_t len) {
+static void audio_null_play(UNUSED uint8_t *buf, UNUSED uint8_t *buf2, UNUSED size_t len) {
 }
 
 struct AudioAPI audio_null = {

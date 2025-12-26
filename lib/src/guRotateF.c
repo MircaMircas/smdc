@@ -7,7 +7,7 @@ void guRotateF(float m[4][4], float a, float x, float y, float z) {
     float sp28;
     float sp24;
     float xx, yy, zz;
-    static float D_80365D70 = GU_PI / 180;
+    static float D_80365D70 = 0.01745329f; // GU_PI / 180;
 
     guNormalize(&x, &y, &z);
 

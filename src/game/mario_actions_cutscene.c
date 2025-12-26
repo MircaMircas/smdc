@@ -1293,7 +1293,7 @@ s32 act_bbh_enter_spin(struct MarioState *m) {
     if (cageDist > 20.0f) {
         forwardVel = 10.0f;
     } else {
-        forwardVel = cageDist / 2.0f;
+        forwardVel = cageDist * 0.5f; // / 2.0f;
     }
     if (forwardVel < 0.5f) {
         forwardVel = 0.0f;

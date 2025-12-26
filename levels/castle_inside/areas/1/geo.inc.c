@@ -23,7 +23,7 @@ const GeoLayout castle_geo_000F70[] = {
 
 
 
-extern const Gfx *fake_inside_castle_seg7_dl_07023DB0[];
+extern const Gfx fake_inside_castle_seg7_dl_07023DB0[];
 
 // 0x0E000F88
 const GeoLayout castle_geo_000F88[] = {

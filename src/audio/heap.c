@@ -579,7 +579,7 @@ void decrease_reverb_gain(void) {
 }
 #else
 void decrease_reverb_gain(void) {
-    gSynthesisReverb.reverbGain -= gSynthesisReverb.reverbGain / 4;
+    //gSynthesisReverb.reverbGain -= gSynthesisReverb.reverbGain / 4;
 }
 #endif
 
@@ -654,7 +654,7 @@ void wait_for_audio_frames(UNUSED s32 frames) {
 #endif
 }
 #endif
-
+#include <string.h>
 #ifndef VERSION_EU
 void audio_reset_session(struct AudioSessionSettings *preset) {
 #else
@@ -715,13 +715,13 @@ void audio_reset_session(void) {
 
         // Wait for the reverb to finish as well
         decrease_reverb_gain();
-        wait_for_audio_frames(3);
+        wait_for_audio_frames(1);
 
         // The audio interface is double buffered; thus, we have to take the
         // load lock for 2 frames for the buffers to free up before we can
         // repurpose memory. Make that 3 frames, just in case.
         gAudioLoadLock = AUDIO_LOCK_LOADING;
-        wait_for_audio_frames(3);
+        wait_for_audio_frames(1);
 
         remainingDmas = gCurrAudioFrameDmaCount;
         while (remainingDmas > 0) {
@@ -732,11 +732,12 @@ void audio_reset_session(void) {
         }
         gCurrAudioFrameDmaCount = 0;
 
-        for (j = 0; j < NUMAIBUFFERS; j++) {
-            for (k = 0; k < (s32) (AIBUFFER_LEN / sizeof(s16)); k++) {
-                gAiBuffers[j][k] = 0;
-            }
-        }
+//        for (j = 0; j < NUMAIBUFFERS; j++) {
+  //          for (k = 0; k < (s32) (AIBUFFER_LEN / sizeof(s16)); k++) {
+    //            gAiBuffers[j][k] = 0;
+      //      }
+        //}
+//        memset(gAiBuffers, 0, AIBUFFER_LEN);
     }
 #endif
 

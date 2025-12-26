@@ -254,7 +254,7 @@ f32 get_vibrato_freq_scale(struct VibratoState *vib) {
     }
 
     pitchChange = get_vibrato_pitch_change(vib);
-    extent = (f32) vib->extent*0.00024414f;// / US_FLOAT(4096.0);
+    extent = (f32) vib->extent * 0.00024414f;// / US_FLOAT(4096.0);
 
 #ifdef VERSION_EU
     result = US_FLOAT(1.0) + extent * (gPitchBendFrequencyScale[pitchChange + 128] - US_FLOAT(1.0));

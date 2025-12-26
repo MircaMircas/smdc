@@ -2,7 +2,9 @@
 #define GFX_WINDOW_MANAGER_API_H
 
 #include <stdint.h>
-#include <stdbool.h>
+//#include <stdbool.h>
+#undef bool
+#define bool uint8_t
 
 struct GfxWindowManagerAPI {
     void (*init)(const char *game_name, bool start_in_fullscreen);

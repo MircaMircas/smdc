@@ -1030,12 +1030,41 @@ static void gfx_opengl_init(void) {
 static void gfx_opengl_on_resize(void) {
 }
 extern s16 gCurrLevelNum;
+
+// All the transition data to be used in screen_transition.c
+struct WarpTransitionData
+{
+    /*0x00*/ u8 red;
+    /*0x01*/ u8 green;
+    /*0x02*/ u8 blue;
+
+    /*0x04*/ s16 startTexRadius;
+    /*0x06*/ s16 endTexRadius;
+    /*0x08*/ s16 startTexX;
+    /*0x0A*/ s16 startTexY;
+    /*0x0C*/ s16 endTexX;
+    /*0x0E*/ s16 endTexY;
+
+    /*0x10*/ s16 texTimer; // always 0, does seems to affect transition when disabled
+};
+struct WarpTransition
+{
+    /*0x00*/ u8 isActive;       // Is the transition active. (either TRUE or FALSE)
+    /*0x01*/ u8 type;           // Determines the type of transition to use (circle, star, etc.)
+    /*0x02*/ u8 time;           // Amount of time to complete the transition (in frames)
+    /*0x03*/ u8 pauseRendering; // Should the game stop rendering. (either TRUE or FALSE)
+    /*0x04*/ struct WarpTransitionData data;
+};extern struct WarpTransition gWarpTransition;
 static void gfx_opengl_start_frame(void) {
 //if (gCurrLevelNum == 7){ //LEVEL_HMC) {
 //clear_color = 0;
 //}
 //        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+////if(gWarpTransition.isActive) {
+    ////clear_color = 1;
+////}
     rgba5551_to_rgbf(clear_color, &clr, &clg, &clb);
+
     glClearColor(clr, clg, clb, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }

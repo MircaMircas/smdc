@@ -465,7 +465,7 @@ static void import_texture_ia16(int tile) {
 		src_width = width;
 	}
 
-	uint16_t* start = rdp.loaded_texture[tile].addr;
+	uint16_t* start = (uint16_t *)rdp.loaded_texture[tile].addr;
 	if (last_set_texture_image_width) {
 		start =
 			(uint16_t*) &rdp.loaded_texture[tile]
@@ -1126,7 +1126,7 @@ static void gfx_normalize_vector(float v[3]) {
 }
 
 static void gfx_transposed_matrix_mul(float res[3], const float a[3], const float b[4][4]) {
-    *((shz_vec3_t*) res) = shz_matrix4x4_trans_vec3_transpose(b, *((shz_vec3_t*) a));
+    *((shz_vec3_t*) res) = shz_matrix4x4_trans_vec3_transpose((const shz_matrix_4x4_t *)b, *((shz_vec3_t*) a));
 }
         #define recip127 0.00787402f
 
@@ -1160,15 +1160,15 @@ static void gfx_sp_matrix(uint8_t parameters, const int32_t *addr) {
 #else
     // For a modified GBI where fixed point values are replaced with floats
 //    memcpy(matrix, addr, sizeof(matrix));
-        shz_xmtrx_load_4x4_unaligned(addr);
-        shz_xmtrx_store_4x4(matrix);
+        shz_xmtrx_load_4x4_unaligned((const float*)addr);
+        shz_xmtrx_store_4x4((shz_matrix_4x4_t *)matrix);
 #endif
     
     if (parameters & G_MTX_PROJECTION) {
         if (parameters & G_MTX_LOAD) {
             n64_memcpy(rsp.P_matrix, matrix, sizeof(matrix));
         } else {
-            gfx_matrix_mul(rsp.P_matrix, (const float (*)[4])matrix, (const float (*)[4])rsp.P_matrix);
+            gfx_matrix_mul((shz_matrix_4x4_t *)rsp.P_matrix, (const shz_matrix_4x4_t *)matrix, (const shz_matrix_4x4_t *)rsp.P_matrix);
         }
 //        glMatrixMode(GL_PROJECTION);
   //      glLoadMatrixf((const float*)rsp.P_matrix);
@@ -1180,14 +1180,14 @@ static void gfx_sp_matrix(uint8_t parameters, const int32_t *addr) {
         if (parameters & G_MTX_LOAD) {
             n64_memcpy(rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], matrix, sizeof(matrix));
         } else {
-            gfx_matrix_mul(rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], (const float (*)[4])matrix, (const float (*)[4])rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1]);
+            gfx_matrix_mul((shz_matrix_4x4_t *)rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], (const shz_matrix_4x4_t *)matrix, (const shz_matrix_4x4_t *)rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1]);
         }
     //    glMatrixMode(GL_MODELVIEW);
       //  glLoadMatrixf((const float*)rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1]);
         rsp.lights_changed = 1;
     }
     matrix_dirty = 1;
-    gfx_matrix_mul(rsp.MP_matrix, (const float (*)[4])rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], (const float (*)[4])rsp.P_matrix);
+    gfx_matrix_mul((shz_matrix_4x4_t *)rsp.MP_matrix, (const shz_matrix_4x4_t *)rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], (const shz_matrix_4x4_t *)rsp.P_matrix);
 }
 
 static void gfx_sp_pop_matrix(uint32_t count) {
@@ -1198,7 +1198,7 @@ static void gfx_sp_pop_matrix(uint32_t count) {
     }
     if (rsp.modelview_matrix_stack_size > 0) {
         matrix_dirty = 1;
-        gfx_matrix_mul(rsp.MP_matrix, (const float (*)[4])rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], (const float (*)[4])rsp.P_matrix);
+        gfx_matrix_mul((shz_matrix_4x4_t *)rsp.MP_matrix, (const shz_matrix_4x4_t *)rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], (const shz_matrix_4x4_t *)rsp.P_matrix);
 //        glMatrixMode(GL_MODELVIEW);
   //      glLoadMatrixf((const float*)rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1]);
     }
@@ -1234,7 +1234,7 @@ inline static uint8_t trivial_reject(float x, float y, float z, float w) {
 
 static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx *vertices) {
     size_t i;
-    shz_xmtrx_load_4x4(&rsp.MP_matrix);
+    shz_xmtrx_load_4x4((const shz_matrix_4x4_t *)&rsp.MP_matrix);
     if (rsp.geometry_mode & G_LIGHTING) {
         if (rsp.lights_changed) {
             int i;

@@ -27,39 +27,6 @@
 #include "spawn_object.h"
 #include "spawn_sound.h"
 
-#include "sh4zam.h"
-
-
-
-static inline void sincoss(s16 arg0, f32* s, f32* c) {
-    register float __s __asm__("fr2");
-    register float __c __asm__("fr3");
-
-    asm("lds    %2,fpul\n\t"
-        "fsca    fpul,dr2\n\t"
-        : "=f"(__s), "=f"(__c)
-        : "r"(arg0)
-        : "fpul");
-
-    *s = __s;
-    *c = __c;
-}
-
-static inline void scaled_sincoss(s16 arg0, f32* s, f32* c, f32 scale) {
-    register float __s __asm__("fr2");
-    register float __c __asm__("fr3");
-
-    asm("lds    %2,fpul\n\t"
-        "fsca    fpul,dr2\n\t"
-        : "=f"(__s), "=f"(__c)
-        : "r"(arg0)
-        : "fpul");
-
-    *s = __s * scale;
-    *c = __c * scale;
-}
-
-
 s8 D_8032F0A0[] = { 0xF8, 0x08, 0xFC, 0x04 };
 s16 D_8032F0A4[] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
 static s8 sLevelsWithRooms[] = { LEVEL_BBH, LEVEL_CASTLE, LEVEL_HMC, -1 };
@@ -242,13 +209,9 @@ void obj_update_pos_from_parent_transformation(Mat4 a0, struct Object *a1) {
     sp8 = a1->oParentRelativePosY;
     sp4 = a1->oParentRelativePosZ;
 
-    a1->oPosX = shz_dot8f(spC, sp8, sp4, 1.0f, a0[0][0], a0[1][0], a0[2][0], a0[3][0]);
-    a1->oPosY = shz_dot8f(spC, sp8, sp4, 1.0f, a0[0][1], a0[1][1], a0[2][1], a0[3][1]);
-    a1->oPosZ = shz_dot8f(spC, sp8, sp4, 1.0f, a0[0][2], a0[1][2], a0[2][2], a0[3][2]);
-
-    //    spC * a0[0][0] + sp8 * a0[1][0] + sp4 * a0[2][0] + a0[3][0];
-//    a1->oPosY = spC * a0[0][1] + sp8 * a0[1][1] + sp4 * a0[2][1] + a0[3][1];
-//    a1->oPosZ = spC * a0[0][2] + sp8 * a0[1][2] + sp4 * a0[2][2] + a0[3][2];
+    a1->oPosX = spC * a0[0][0] + sp8 * a0[1][0] + sp4 * a0[2][0] + a0[3][0];
+    a1->oPosY = spC * a0[0][1] + sp8 * a0[1][1] + sp4 * a0[2][1] + a0[3][1];
+    a1->oPosZ = spC * a0[0][2] + sp8 * a0[1][2] + sp4 * a0[2][2] + a0[3][2];
 }
 
 void obj_apply_scale_to_matrix(struct Object *obj, Mat4 dst, Mat4 src) {
@@ -275,13 +238,27 @@ void obj_apply_scale_to_matrix(struct Object *obj, Mat4 dst, Mat4 src) {
 
 void create_transformation_from_matrices(Mat4 a0, Mat4 a1, Mat4 a2) {
     f32 spC, sp8, sp4;
-    shz_xmtrx_load_4x4_apply_store(a0, a1, a2);
-    spC = shz_dot6f(a2[3][0], a2[3][1], a2[3][2], a2[0][0], a2[0][1], a2[0][2]);
-    sp8 = shz_dot6f(a2[3][0], a2[3][1], a2[3][2], a2[1][0], a2[1][1], a2[1][2]);
-    sp4 = shz_dot6f(a2[3][0], a2[3][1], a2[3][2], a2[2][0], a2[2][1], a2[2][2]);
-    a0[3][0] -= spC;
-    a0[3][1] -= sp8;
-    a0[3][2] -= sp4;
+
+    spC = a2[3][0] * a2[0][0] + a2[3][1] * a2[0][1] + a2[3][2] * a2[0][2];
+    sp8 = a2[3][0] * a2[1][0] + a2[3][1] * a2[1][1] + a2[3][2] * a2[1][2];
+    sp4 = a2[3][0] * a2[2][0] + a2[3][1] * a2[2][1] + a2[3][2] * a2[2][2];
+
+    a0[0][0] = a1[0][0] * a2[0][0] + a1[0][1] * a2[0][1] + a1[0][2] * a2[0][2];
+    a0[0][1] = a1[0][0] * a2[1][0] + a1[0][1] * a2[1][1] + a1[0][2] * a2[1][2];
+    a0[0][2] = a1[0][0] * a2[2][0] + a1[0][1] * a2[2][1] + a1[0][2] * a2[2][2];
+
+    a0[1][0] = a1[1][0] * a2[0][0] + a1[1][1] * a2[0][1] + a1[1][2] * a2[0][2];
+    a0[1][1] = a1[1][0] * a2[1][0] + a1[1][1] * a2[1][1] + a1[1][2] * a2[1][2];
+    a0[1][2] = a1[1][0] * a2[2][0] + a1[1][1] * a2[2][1] + a1[1][2] * a2[2][2];
+
+    a0[2][0] = a1[2][0] * a2[0][0] + a1[2][1] * a2[0][1] + a1[2][2] * a2[0][2];
+    a0[2][1] = a1[2][0] * a2[1][0] + a1[2][1] * a2[1][1] + a1[2][2] * a2[1][2];
+    a0[2][2] = a1[2][0] * a2[2][0] + a1[2][1] * a2[2][1] + a1[2][2] * a2[2][2];
+
+    a0[3][0] = a1[3][0] * a2[0][0] + a1[3][1] * a2[0][1] + a1[3][2] * a2[0][2] - spC;
+    a0[3][1] = a1[3][0] * a2[1][0] + a1[3][1] * a2[1][1] + a1[3][2] * a2[1][2] - sp8;
+    a0[3][2] = a1[3][0] * a2[2][0] + a1[3][1] * a2[2][1] + a1[3][2] * a2[2][2] - sp4;
+
     a0[0][3] = 0;
     a0[1][3] = 0;
     a0[2][3] = 0;
@@ -313,7 +290,7 @@ f32 lateral_dist_between_objects(struct Object *obj1, struct Object *obj2) {
     f32 dx = obj1->oPosX - obj2->oPosX;
     f32 dz = obj1->oPosZ - obj2->oPosZ;
 
-    return shz_sqrtf_fsrra(dx * dx + dz * dz);
+    return sqrtf(dx * dx + dz * dz);
 }
 
 f32 dist_between_objects(struct Object *obj1, struct Object *obj2) {
@@ -321,7 +298,7 @@ f32 dist_between_objects(struct Object *obj1, struct Object *obj2) {
     f32 dy = obj1->oPosY - obj2->oPosY;
     f32 dz = obj1->oPosZ - obj2->oPosZ;
 
-    return shz_sqrtf_fsrra(dx * dx + dy * dy + dz * dz);
+    return sqrtf(dx * dx + dy * dy + dz * dz);
 }
 
 void cur_obj_forward_vel_approach_upward(f32 target, f32 increment) {
@@ -425,7 +402,7 @@ s16 obj_turn_toward_object(struct Object *obj, struct Object *target, s16 angleI
         case O_FACE_ANGLE_PITCH_INDEX:
             a = target->oPosX - obj->oPosX;
             c = target->oPosZ - obj->oPosZ;
-            a = shz_sqrtf_fsrra(a * a + c * c);
+            a = sqrtf(a * a + c * c);
 
             b = -obj->oPosY;
             d = -target->oPosY;
@@ -678,11 +655,10 @@ void obj_init_animation(struct Object *obj, s32 animIndex) {
  * i.e. a matrix representing a linear transformation over 3 space.
  */
 void linear_mtxf_mul_vec3f(Mat4 m, Vec3f dst, Vec3f v) {
-    shz_xmtrx_load_3x3(m);
-    shz_vec3_t out = shz_xmtrx_trans_vec3(shz_vec3_deref(v));
-    dst[0] = out.x;
-    dst[1] = out.y;
-    dst[2] = out.z;
+    s32 i;
+    for (i = 0; i < 3; i++) {
+        dst[i] = m[0][i] * v[0] + m[1][i] * v[1] + m[2][i] * v[2];
+    }
 }
 
 /**
@@ -694,11 +670,10 @@ void linear_mtxf_mul_vec3f(Mat4 m, Vec3f dst, Vec3f v) {
  * i.e. a matrix representing a linear transformation over 3 space.
  */
 void linear_mtxf_transpose_mul_vec3f(Mat4 m, Vec3f dst, Vec3f v) {
-    shz_xmtrx_load_3x3_transpose(m);
-    shz_vec3_t out = shz_xmtrx_trans_vec3(shz_vec3_deref(v));
-    dst[0] = out.x;
-    dst[1] = out.y;
-    dst[2] = out.z;
+    s32 i;
+    for (i = 0; i < 3; i++) {
+        dst[i] = m[i][0] * v[0] + m[i][1] * v[1] + m[i][2] * v[2];
+    }
 }
 
 void obj_apply_scale_to_transform(struct Object *obj) {
@@ -798,10 +773,8 @@ void cur_obj_hide(void) {
 }
 
 void cur_obj_set_pos_relative(struct Object *other, f32 dleft, f32 dy, f32 dforward) {
-    f32 facingZ;// = coss(other->oMoveAngleYaw);
-    f32 facingX;// = sins(other->oMoveAngleYaw);
-
-    sincoss(other->oMoveAngleYaw, &facingX, &facingZ);
+    f32 facingZ = coss(other->oMoveAngleYaw);
+    f32 facingX = sins(other->oMoveAngleYaw);
 
     f32 dz = dforward * facingZ - dleft * facingX;
     f32 dx = dforward * facingX + dleft * facingZ;
@@ -1294,7 +1267,7 @@ static s32 cur_obj_move_xz(f32 steepSlopeNormalY, s32 careAboutEdgesAndSteepSlop
 }
 
 static void cur_obj_move_update_underwater_flags(void) {
-    f32 decelY = (f32)(shz_sqrtf_fsrra(o->oVelY * o->oVelY) * (o->oDragStrength * 7.0f)) / 100.0L;
+    f32 decelY = (f32)(sqrtf(o->oVelY * o->oVelY) * (o->oDragStrength * 7.0f)) / 100.0L;
 
     if (o->oVelY > 0) {
         o->oVelY -= decelY;
@@ -1443,9 +1416,8 @@ s16 abs_angle_diff(s16 x0, s16 x1) {
 }
 
 void cur_obj_move_xz_using_fvel_and_yaw(void) {
-    scaled_sincoss(o->oMoveAngleYaw, &o->oVelX, &o->oVelZ, o->oForwardVel);
-//    o->oVelX = o->oForwardVel * sins(o->oMoveAngleYaw);
-//    o->oVelZ = o->oForwardVel * coss(o->oMoveAngleYaw);
+    o->oVelX = o->oForwardVel * sins(o->oMoveAngleYaw);
+    o->oVelZ = o->oForwardVel * coss(o->oMoveAngleYaw);
 
     o->oPosX += o->oVelX;
     o->oPosZ += o->oVelZ;
@@ -1460,9 +1432,8 @@ void cur_obj_move_y_with_terminal_vel(void) {
 }
 
 void cur_obj_compute_vel_xz(void) {
-//    o->oVelX = o->oForwardVel * sins(o->oMoveAngleYaw);
-//    o->oVelZ = o->oForwardVel * coss(o->oMoveAngleYaw);
-    scaled_sincoss(o->oMoveAngleYaw, &o->oVelX, &o->oVelZ, o->oForwardVel);
+    o->oVelX = o->oForwardVel * sins(o->oMoveAngleYaw);
+    o->oVelZ = o->oForwardVel * coss(o->oMoveAngleYaw);
 }
 
 f32 increment_velocity_toward_range(f32 value, f32 center, f32 zeroThreshold, f32 increment) {
@@ -1522,7 +1493,7 @@ f32 cur_obj_lateral_dist_from_mario_to_home(void) {
     f32 dx = o->oHomeX - gMarioObject->oPosX;
     f32 dz = o->oHomeZ - gMarioObject->oPosZ;
 
-    dist = shz_sqrtf_fsrra(dx * dx + dz * dz);
+    dist = sqrtf(dx * dx + dz * dz);
     return dist;
 }
 
@@ -1531,7 +1502,7 @@ f32 cur_obj_lateral_dist_to_home(void) {
     f32 dx = o->oHomeX - o->oPosX;
     f32 dz = o->oHomeZ - o->oPosZ;
 
-    dist = shz_sqrtf_fsrra(dx * dx + dz * dz);
+    dist = sqrtf(dx * dx + dz * dz);
     return dist;
 }
 
@@ -1694,7 +1665,7 @@ s32 cur_obj_advance_looping_anim(void) {
         spC++;
     }
 
-    sp4 = shz_divf((f32)(spC << 16), /* / */(f32) sp8);
+    sp4 = (spC << 16) / sp8;
 
     return sp4;
 }
@@ -1703,7 +1674,7 @@ static s32 cur_obj_detect_steep_floor(s16 steepAngleDegrees) {
     struct Surface *intendedFloor;
     f32 intendedX, intendedFloorHeight, intendedZ;
     f32 deltaFloorHeight;
-    f32 steepNormalY = coss((s16)(steepAngleDegrees *182.04444444f /* (0x10000 / 360) */));
+    f32 steepNormalY = coss((s16)(steepAngleDegrees * (0x10000 / 360)));
 
     if (o->oForwardVel != 0) {
         intendedX = o->oPosX + o->oVelX;
@@ -1841,7 +1812,7 @@ void cur_obj_move_standard(s16 steepSlopeAngleDegrees) {
             // clang-format on
         }
 
-        steepSlopeNormalY = coss(steepSlopeAngleDegrees *182.04444444f /* (0x10000 / 360) */);
+        steepSlopeNormalY = coss(steepSlopeAngleDegrees * (0x10000 / 360));
 
         cur_obj_compute_vel_xz();
         cur_obj_apply_drag_xz(dragStrength);
@@ -1852,7 +1823,7 @@ void cur_obj_move_standard(s16 steepSlopeAngleDegrees) {
         if (o->oForwardVel < 0) {
             negativeSpeed = TRUE;
         }
-        o->oForwardVel = shz_sqrtf_fsrra(sqr(o->oVelX) + sqr(o->oVelZ));
+        o->oForwardVel = sqrtf(sqr(o->oVelX) + sqr(o->oVelZ));
         if (negativeSpeed == TRUE) {
             o->oForwardVel = -o->oForwardVel;
         }
@@ -1891,10 +1862,8 @@ void cur_obj_move_using_fvel_and_gravity(void) {
 
 void obj_set_pos_relative(struct Object *obj, struct Object *other, f32 dleft, f32 dy,
                              f32 dforward) {
-    f32 facingZ;// = coss(other->oMoveAngleYaw);
-    f32 facingX;// = sins(other->oMoveAngleYaw);
-
-    sincoss(other->oMoveAngleYaw, &facingX, &facingZ);
+    f32 facingZ = coss(other->oMoveAngleYaw);
+    f32 facingX = sins(other->oMoveAngleYaw);
 
     f32 dz = dforward * facingZ - dleft * facingX;
     f32 dx = dforward * facingX + dleft * facingZ;
@@ -1935,17 +1904,11 @@ void obj_translate_local(struct Object *obj, s16 posIndex, s16 localTranslateInd
     f32 dz = obj->rawData.asF32[localTranslateIndex + 2];
 
     obj->rawData.asF32[posIndex + 0] +=
-    shz_dot6f(obj->transform[0][0], obj->transform[1][0], obj->transform[2][0], dx,dy,dz);
+        obj->transform[0][0] * dx + obj->transform[1][0] * dy + obj->transform[2][0] * dz;
     obj->rawData.asF32[posIndex + 1] +=
-    shz_dot6f(obj->transform[0][1], obj->transform[1][1], obj->transform[2][1], dx,dy,dz);
+        obj->transform[0][1] * dx + obj->transform[1][1] * dy + obj->transform[2][1] * dz;
     obj->rawData.asF32[posIndex + 2] +=
-    shz_dot6f(obj->transform[0][2], obj->transform[1][2], obj->transform[2][2], dx,dy,dz);
-
-//        obj->transform[0][0] * dx + obj->transform[1][0] * dy + obj->transform[2][0] * dz;
-  //  obj->rawData.asF32[posIndex + 1] +=
-    //    obj->transform[0][1] * dx + obj->transform[1][1] * dy + obj->transform[2][1] * dz;
-    //obj->rawData.asF32[posIndex + 2] +=
-      //  obj->transform[0][2] * dx + obj->transform[1][2] * dy + obj->transform[2][2] * dz;
+        obj->transform[0][2] * dx + obj->transform[1][2] * dy + obj->transform[2][2] * dz;
 }
 
 void obj_build_transform_from_pos_and_angle(struct Object *obj, s16 posIndex, s16 angleIndex) {
@@ -2053,15 +2016,13 @@ s32 cur_obj_follow_path(void) {
     objToNextX = targetWaypoint->pos[0] - o->oPosX;
     objToNextY = targetWaypoint->pos[1] - o->oPosY;
     objToNextZ = targetWaypoint->pos[2] - o->oPosZ;
-    objToNextXZ = shz_sqrtf_fsrra(sqr(objToNextX) + sqr(objToNextZ));
+    objToNextXZ = sqrtf(sqr(objToNextX) + sqr(objToNextZ));
 
     o->oPathedTargetYaw = atan2s(objToNextZ, objToNextX);
     o->oPathedTargetPitch = atan2s(objToNextXZ, -objToNextY);
 
     // If dot(prevToNext, objToNext) <= 0 (i.e. reached other side of target waypoint)
-    f32 somedot = shz_dot6f(prevToNextX, prevToNextY, prevToNextZ, objToNextX, objToNextY, objToNextZ);
-    if (somedot <= 0.0f) {
-        //prevToNextX * objToNextX + prevToNextY * objToNextY + prevToNextZ * objToNextZ <= 0.0f) {
+    if (prevToNextX * objToNextX + prevToNextY * objToNextY + prevToNextZ * objToNextZ <= 0.0f) {
         o->oPathedPrevWaypoint = targetWaypoint;
         if ((targetWaypoint + 1)->flags == WAYPOINT_FLAGS_END) {
             return PATH_REACHED_END;
@@ -2084,7 +2045,7 @@ void chain_segment_init(struct ChainSegment *segment) {
 }
 
 f32 random_f32_around_zero(f32 diameter) {
-    return random_float() * diameter - diameter*0.5f;// / 2;
+    return random_float() * diameter - diameter / 2;
 }
 
 void obj_scale_random(struct Object *obj, f32 rangeLength, f32 minScale) {
@@ -2107,12 +2068,10 @@ static void obj_build_vel_from_transform(struct Object *a0) {
     f32 spC = a0->oUnkC0;
     f32 sp8 = a0->oUnkBC;
     f32 sp4 = a0->oForwardVel;
-a0->oVelX = shz_dot6f(a0->transform[0][0], a0->transform[1][0], a0->transform[2][0], spC, sp8, sp4);
-a0->oVelY = shz_dot6f(a0->transform[0][1], a0->transform[1][1], a0->transform[2][1], spC, sp8, sp4);
-a0->oVelZ = shz_dot6f(a0->transform[0][2], a0->transform[1][2], a0->transform[2][2], spC, sp8, sp4);
-    //a0->oVelX = a0->transform[0][0] * spC + a0->transform[1][0] * sp8 + a0->transform[2][0] * sp4;
-    //a0->oVelY = a0->transform[0][1] * spC + a0->transform[1][1] * sp8 + a0->transform[2][1] * sp4;
-    //a0->oVelZ = a0->transform[0][2] * spC + a0->transform[1][2] * sp8 + a0->transform[2][2] * sp4;
+
+    a0->oVelX = a0->transform[0][0] * spC + a0->transform[1][0] * sp8 + a0->transform[2][0] * sp4;
+    a0->oVelY = a0->transform[0][1] * spC + a0->transform[1][1] * sp8 + a0->transform[2][1] * sp4;
+    a0->oVelZ = a0->transform[0][2] * spC + a0->transform[1][2] * sp8 + a0->transform[2][2] * sp4;
 }
 
 void cur_obj_set_pos_via_transform(void) {
@@ -2211,9 +2170,9 @@ s32 cur_obj_wait_then_blink(s32 timeUntilBlinking, s32 numBlinks) {
     s32 timeBlinking;
 
     if (o->oTimer >= timeUntilBlinking) {
-        if ((timeBlinking = o->oTimer - timeUntilBlinking)&1 /* % 2 != 0 */) {
+        if ((timeBlinking = o->oTimer - timeUntilBlinking) % 2 != 0) {
             o->header.gfx.node.flags |= GRAPH_RENDER_INVISIBLE;
-            if (timeBlinking >>1/* / 2  */> numBlinks) {
+            if (timeBlinking / 2 > numBlinks) {
                 done = TRUE;
             }
         } else {
@@ -2246,14 +2205,13 @@ void spawn_mist_particles_with_sound(u32 sp18) {
 void cur_obj_push_mario_away(f32 radius) {
     f32 marioRelX = gMarioObject->oPosX - o->oPosX;
     f32 marioRelZ = gMarioObject->oPosZ - o->oPosZ;
-    f32 marioDist = shz_sqrtf_fsrra(sqr(marioRelX) + sqr(marioRelZ));
+    f32 marioDist = sqrtf(sqr(marioRelX) + sqr(marioRelZ));
 
     if (marioDist < radius) {
         //! If this function pushes Mario out of bounds, it will trigger Mario's
         //  oob failsafe
-        f32 raddiv = shz_divf( (radius - marioDist) , radius);
-        gMarioStates[0].pos[0] += /* (radius - marioDist) / radius */ raddiv * marioRelX;
-        gMarioStates[0].pos[2] += /* (radius - marioDist) / radius */ raddiv * marioRelZ;
+        gMarioStates[0].pos[0] += (radius - marioDist) / radius * marioRelX;
+        gMarioStates[0].pos[2] += (radius - marioDist) / radius * marioRelZ;
     }
 }
 
@@ -2309,7 +2267,7 @@ void stub_obj_helpers_3(UNUSED s32 sp0, UNUSED s32 sp4) {
 
 void cur_obj_scale_over_time(s32 a0, s32 a1, f32 sp10, f32 sp14) {
     f32 sp4 = sp14 - sp10;
-    f32 sp0 = shz_divf((f32) o->oTimer, (f32)a1);// / a1;
+    f32 sp0 = (f32) o->oTimer / a1;
 
     if (a0 & 0x01) {
         o->header.gfx.scale[0] = sp4 * sp0 + sp10;
@@ -2343,13 +2301,13 @@ s32 cur_obj_is_mario_on_platform(void) {
 }
 
 s32 cur_obj_shake_y_until(s32 cycles, s32 amount) {
-    if (o->oTimer & 1/* % 2 != 0 */) {
+    if (o->oTimer % 2 != 0) {
         o->oPosY -= amount;
     } else {
         o->oPosY += amount;
     }
 
-    if (o->oTimer == cycles<<1/*  * 2 */) {
+    if (o->oTimer == cycles * 2) {
         return TRUE;
     } else {
         return FALSE;
@@ -2393,7 +2351,7 @@ s32 cur_obj_mario_far_away(void) {
     f32 dx = o->oHomeX - gMarioObject->oPosX;
     f32 dy = o->oHomeY - gMarioObject->oPosY;
     f32 dz = o->oHomeZ - gMarioObject->oPosZ;
-    f32 marioDistToHome = shz_mag_sqr3f(dx, dy, dz); //shz_sqrtf_fsrra(dx * dx + dy * dy + dz * dz);
+    f32 marioDistToHome = sqrtf(dx * dx + dy * dy + dz * dz);
 
     if (o->oDistanceToMario > 2000.0f && marioDistToHome > 2000.0f) {
         return TRUE;
