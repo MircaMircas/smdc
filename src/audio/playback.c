@@ -862,7 +862,7 @@ void note_release_and_take_ownership(struct Note *note, struct SequenceChannelLa
 #ifdef VERSION_EU
     note->adsr.fadeOutVel = gAudioBufferParameters.updatesPerFrameInv;
 #else
-    note->adsr.fadeOutVel = 0x8000 / gAudioUpdatesPerFrame;
+    note->adsr.fadeOutVel = (s16)shz_divf((f32)32768.0f,(f32)gAudioUpdatesPerFrame);// 0x8000 / gAudioUpdatesPerFrame;
 #endif
     note->adsr.action |= ADSR_ACTION_RELEASE;
 }

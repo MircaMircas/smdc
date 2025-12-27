@@ -586,14 +586,14 @@ struct Note
 
 struct NoteSynthesisBuffers
 {
-    s16 adpcmdecState[0x10];
-    s16 finalResampleState[0x10];
-    s16 mixEnvelopeState[0x28];
-    s16 panResampleState[0x10];
-    s16 panSamplesBuffer[0x20];
-    s16 dummyResampleState[0x10];
+    s16 __attribute__((aligned(32))) adpcmdecState[0x10];
+    s16 __attribute__((aligned(32))) finalResampleState[0x10];
+    s16 __attribute__((aligned(32))) mixEnvelopeState[0x28];
+    s16 __attribute__((aligned(32))) panResampleState[0x10];
+    s16 __attribute__((aligned(32))) panSamplesBuffer[0x20];
+    s16 __attribute__((aligned(32))) dummyResampleState[0x10];
 #ifndef VERSION_EU
-    s16 samples[0x40];
+    s16 __attribute__((aligned(32))) samples[0x40];
 #endif
 };
 

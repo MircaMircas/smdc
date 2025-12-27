@@ -654,12 +654,22 @@ void obj_init_animation(struct Object *obj, s32 animIndex) {
  * | 0 0 0 1 |
  * i.e. a matrix representing a linear transformation over 3 space.
  */
+#include "sh4zam.h"
 void linear_mtxf_mul_vec3f(Mat4 m, Vec3f dst, Vec3f v) {
+#if 0
     s32 i;
     for (i = 0; i < 3; i++) {
         dst[i] = m[0][i] * v[0] + m[1][i] * v[1] + m[2][i] * v[2];
     }
-}
+#endif
+    shz_vec3_t XYZ = shz_vec3_dot3(shz_vec3_deref(v),
+    (shz_vec3_t){.x=m[0][0],.y=m[1][0],.z=m[2][0]},
+    (shz_vec3_t){.x=m[0][1],.y=m[1][1],.z=m[2][1]},
+    (shz_vec3_t){.x=m[0][2],.y=m[1][2],.z=m[2][2]});
+    dst[0] = XYZ.x;
+    dst[1] = XYZ.y;
+    dst[2] = XYZ.z;
+}  
 
 /**
  * Multiply a vector by the transpose of a matrix of the form
@@ -670,10 +680,17 @@ void linear_mtxf_mul_vec3f(Mat4 m, Vec3f dst, Vec3f v) {
  * i.e. a matrix representing a linear transformation over 3 space.
  */
 void linear_mtxf_transpose_mul_vec3f(Mat4 m, Vec3f dst, Vec3f v) {
+#if 0
     s32 i;
     for (i = 0; i < 3; i++) {
         dst[i] = m[i][0] * v[0] + m[i][1] * v[1] + m[i][2] * v[2];
     }
+#endif
+    shz_vec3_t XYZ = shz_vec3_dot3(shz_vec3_deref(v),
+    shz_vec3_deref(m[0]), shz_vec3_deref(m[1]), shz_vec3_deref(m[2]));
+    dst[0] = XYZ.x;
+    dst[1] = XYZ.y;
+    dst[2] = XYZ.z;
 }
 
 void obj_apply_scale_to_transform(struct Object *obj) {

@@ -890,6 +890,7 @@ void audio_reset_session(void) {
     }
 
 #else
+    reverbWindowSize = 0;
     if (reverbWindowSize == 0) {
         gSynthesisReverb.useReverb = 0;
     } else {
