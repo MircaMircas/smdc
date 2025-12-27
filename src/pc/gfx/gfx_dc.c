@@ -156,8 +156,8 @@ static void gfx_dc_swap_buffers_end(void) {
 }
 
 /* Idk what this is for? */
-static double gfx_dc_get_time(void) {
-    return 0.0;
+static float gfx_dc_get_time(void) {
+    return 0.0f;
 }
 
 struct GfxWindowManagerAPI gfx_dc = { gfx_dc_init,

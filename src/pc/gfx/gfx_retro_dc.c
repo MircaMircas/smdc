@@ -66,7 +66,6 @@ int font_draw = 0;
 #define true 1
 #define false 0
 
-int doing_hmc_thing = 0;
 int doing_text_bg_box = 0;
 
 struct ShaderProgram {

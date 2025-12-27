@@ -17,7 +17,7 @@ struct GfxWindowManagerAPI {
     bool (*start_frame)(void);
     void (*swap_buffers_begin)(void);
     void (*swap_buffers_end)(void);
-    double (*get_time)(void); // For debug
+    float (*get_time)(void); // For debug
 };
 
 #endif
