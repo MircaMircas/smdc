@@ -287,6 +287,8 @@ static void audio_dc_play(uint8_t *bufL, uint8_t *bufR, size_t len) {
     if (audio_started) {
         snd_stream_poll(shnd);
     }
+
+    thd_pass();
 }
 
 struct AudioAPI audio_dc = {
