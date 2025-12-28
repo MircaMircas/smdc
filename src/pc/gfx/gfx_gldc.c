@@ -412,6 +412,12 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
 
     gfx_opengl_apply_shader(cur_shader);
 
+    if (cur_shader->texture_used[0]) {
+        glEnable(GL_TEXTURE_2D);
+    } else {
+        glDisable(GL_TEXTURE_2D);
+    }
+
     if (in_peach_scene) {
         if (cur_shader->shader_id == 0x01045045 || cur_shader->shader_id == 0x01045a00)
             doing_letter = 1;
@@ -420,20 +426,15 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
     } else {
         doing_letter = 0;
     }
-
-    // if there's two textures, set primary texture first
-    if (cur_shader->texture_used[1])
-        glBindTexture(GL_TEXTURE_2D, tmu_state[cur_shader->texture_ord[0]].tex);
     
     if (cur_shader->shader_id == 0x0000038D) {
         // Face fix. 
-        glEnable(GL_TEXTURE_2D);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
         glEnable(GL_BLEND);
     }
     
     /* Goddard specular */
-    if(cur_shader->shader_id == 0x551){
+    if(cur_shader->shader_id == 0x00000551){
         // draw goddard stuff twice
         // first, shaded polys only, no textures
         glDisable(GL_TEXTURE_2D);
@@ -456,7 +457,7 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     }
 
-    if (cur_shader->shader_id == 18874437) { // 0x1200045 skybox
+    if (cur_shader->shader_id == 0x1200045) { // skybox
         if (doing_skybox) {
             glDisable(GL_DEPTH_TEST);
             glDepthMask(GL_FALSE);
@@ -539,7 +540,7 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
 //        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     }
     
-    if (cur_shader->shader_id == 18874437) { // 0x1200045 skybox
+    if (cur_shader->shader_id == 0x1200045) { // skybox
         if (doing_skybox) {
             glEnable(GL_DEPTH_TEST);
             glDepthMask(GL_TRUE);
@@ -566,14 +567,16 @@ void gfx_opengl_draw_triangles_2d(void *buf_vbo, UNUSED size_t buf_vbo_len, UNUS
     gfx_opengl_2d_projection();
     glDisable(GL_FOG);
     glEnable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
 
     if (buf_vbo_num_tris) {
-        glEnable(GL_TEXTURE_2D);
-        if (cur_shader->texture_used[0] || cur_shader->texture_used[1])
+        if (cur_shader->texture_used[0] || cur_shader->texture_used[1]) {
+            glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, tmu_state[cur_shader->texture_ord[0]].tex);
-    } else {
+        }
+    }/*  else {
         glDisable(GL_TEXTURE_2D);
-    }
+    } */
 
     glDrawArrays(GL_QUADS, 0, 4);
 
@@ -645,9 +648,9 @@ static void gfx_opengl_init(void) {
     glKosInitConfig(&config);
     config.autosort_enabled = GL_TRUE;
     config.fsaa_enabled = GL_FALSE;
-    config.initial_op_capacity = 128;
-    config.initial_pt_capacity = 32;
-    config.initial_tr_capacity = 256;
+    config.initial_op_capacity = 2048+1024;
+    config.initial_pt_capacity = 512+512;
+    config.initial_tr_capacity = 2048+1024;
     config.initial_immediate_capacity = 0;
 
     if (vid_check_cable() != CT_VGA) {
@@ -704,8 +707,12 @@ static void gfx_opengl_on_resize(void) {
 static void gfx_opengl_start_frame(void) {
     fog_changed = 0;
     rgba5551_to_rgbf(clear_color, &clr, &clg, &clb);
+
+//    glDisable(GL_SCISSOR_TEST);
+//    glDepthMask(GL_TRUE);
     glClearColor(clr, clg, clb, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    glEnable(GL_SCISSOR_TEST);
 }
 
 static void gfx_opengl_end_frame(void) {

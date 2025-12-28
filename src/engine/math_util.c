@@ -404,7 +404,7 @@ void mtxf_billboard(Mat4 dest, Mat4 mtx, Vec3f position, s16 angle) {
     dest[2][1] = 0;
     dest[2][2] = 1;
     dest[2][3] = 0;
-
+#if 0
     dest[3][0] =
 shz_dot8f(mtx[0][0], mtx[1][0], mtx[2][0], mtx[3][0], position[0], position[1], position[2], 1.0f);
     //        mtx[0][0] * position[0] + mtx[1][0] * position[1] + mtx[2][0] * position[2] + mtx[3][0];
@@ -415,6 +415,17 @@ shz_dot8f(mtx[0][1], mtx[1][1], mtx[2][1], mtx[3][1], position[0], position[1], 
 shz_dot8f(mtx[0][2], mtx[1][2], mtx[2][2], mtx[3][2], position[0], position[1], position[2], 1.0f);
 
 //        mtx[0][2] * position[0] + mtx[1][2] * position[1] + mtx[2][2] * position[2] + mtx[3][2];
+#endif
+
+    dest[3][0] = shz_dot8f(position[0], position[1], position[2], 1.0f, 
+                mtx[0][0], mtx[1][0], mtx[2][0], mtx[3][0]);
+
+    dest[3][1] = shz_dot8f(position[0], position[1], position[2], 1.0f, 
+                mtx[0][1], mtx[1][1], mtx[2][1], mtx[3][1]);
+
+    dest[3][2] = shz_dot8f(position[0], position[1], position[2], 1.0f, 
+                mtx[0][2], mtx[1][2], mtx[2][2], mtx[3][2]);
+
     dest[3][3] = 1;
 }
 
@@ -433,7 +444,7 @@ void mtxf_align_terrain_normal(Mat4 dest, Vec3f upDir, Vec3f pos, s16 yaw) {
 
     sincoss(yaw, &ys, &yc);
 
-    vec3f_set(lateralDir, ys, 0.0f, yc);//sins(yaw), 0, coss(yaw));
+    vec3f_set(lateralDir, ys, 0.0f, yc); // sins(yaw), 0, coss(yaw));
     vec3f_normalize(upDir);
 
     vec3f_cross(leftDir, upDir, lateralDir);
@@ -482,14 +493,24 @@ void mtxf_align_terrain_triangle(Mat4 mtx, Vec3f pos, s16 yaw, f32 radius) {
     Vec3f zColumn;
     f32 avgY;
     f32 minY = -radius * 3;
-
-    point0[0] = pos[0] + radius * sins(yaw + 0x2AAA);
-    point0[2] = pos[2] + radius * coss(yaw + 0x2AAA);
-    point1[0] = pos[0] + radius * sins(yaw + 0x8000);
-    point1[2] = pos[2] + radius * coss(yaw + 0x8000);
-    point2[0] = pos[0] + radius * sins(yaw + 0xD555);
-    point2[2] = pos[2] + radius * coss(yaw + 0xD555);
-
+    f32 ysa, yca;
+    f32 ysb, ycb;
+    f32 ysc, ycc;
+    f32 ys, yc;
+    scaled_sincoss(yaw + 0x2AAA, &ysa, &yca, radius);
+    point0[0] = pos[0];// + radius * sins(yaw + 0x2AAA);
+    point0[2] = pos[2];// + radius * coss(yaw + 0x2AAA);
+    scaled_sincoss(yaw + 0x8000, &ysb, &ycb, radius);
+    point0[0] += ysa;
+    point0[1] += yca;
+    point1[0] = pos[0];// + radius * sins(yaw + 0x8000);
+    point1[2] = pos[2];// + radius * coss(yaw + 0x8000);
+    scaled_sincoss(yaw + 0xD555, &ysc, &ycc, radius);
+    point1[0] += ysb;
+    point1[1] += ycb;
+    point2[0] = pos[0] + ysc;// + radius * sins(yaw + 0xD555);
+    point2[2] = pos[2] + ycc;// + radius * coss(yaw + 0xD555);
+    sincoss(yaw, &ys, &yc);
     point0[1] = find_floor(point0[0], pos[1] + 150, point0[2], &sp74);
     point1[1] = find_floor(point1[0], pos[1] + 150, point1[2], &sp74);
     point2[1] = find_floor(point2[0], pos[1] + 150, point2[2], &sp74);
@@ -506,9 +527,9 @@ void mtxf_align_terrain_triangle(Mat4 mtx, Vec3f pos, s16 yaw, f32 radius) {
         point2[1] = pos[1];
     }
 
-    avgY = (point0[1] + point1[1] + point2[1]) / 3;
+    avgY = (point0[1] + point1[1] + point2[1]) * 0.3333f; // / 3;
 
-    vec3f_set(forward, sins(yaw), 0, coss(yaw));
+    vec3f_set(forward, ys, 0, yc); // sins(yaw), 0, coss(yaw));
     find_vector_perpendicular_to_plane(yColumn, point0, point1, point2);
     vec3f_normalize(yColumn);
     vec3f_cross(xColumn, yColumn, forward);

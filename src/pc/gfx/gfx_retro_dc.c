@@ -1129,9 +1129,6 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
         rendering_state.textures[0]->cmt = cmt;
     }
 
-    bool use_texture = used_textures[0] || used_textures[1];
-    uint32_t tex_width = (rdp.texture_tile.lrs - rdp.texture_tile.uls + 4) / 4;
-    uint32_t tex_height = (rdp.texture_tile.lrt - rdp.texture_tile.ult + 4) / 4;
     uint8_t lit = l_clip_rej[0] & 0x80;
 
     uint32_t color_r, color_g, color_b, color_a;
@@ -1239,18 +1236,22 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
                     use_shade = 0;
                     break;
                 default:
-                    color_a = 255;
-//                    if (!lit) {
-                        color_r = color_g = color_b = 255;
-//                    }
+                    color_r = color_g = color_b = color_a = 255;
                     use_shade = 0;
                     break;
             }
         }
     }
-    float recip_tw = shz_fast_invf(tex_width);
-    float recip_th = shz_fast_invf(tex_height);
 
+    float recip_tw;
+    float recip_th;;
+    if (usetex) {
+        uint32_t tex_width = (rdp.texture_tile.lrs - rdp.texture_tile.uls + 4) / 4;
+        uint32_t tex_height = (rdp.texture_tile.lrt - rdp.texture_tile.ult + 4) / 4;
+
+        recip_tw = shz_fast_invf(tex_width);
+        recip_th = shz_fast_invf(tex_height);
+    }
     packedc = PACK_ARGB8888(color_r, color_g, color_b, color_a);
 
     for (i = 0; i < 3; i++) {
@@ -1265,7 +1266,7 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
         }
         //buf_vbo[buf_vbo_len++] = z;
         
-        if (use_texture) {
+        if (usetex) {
             float u = (v_arr[i]->u - (rdp.texture_tile.uls << 3)) * 0.03125f;// / 32.0f;
             float v = (v_arr[i]->v - (rdp.texture_tile.ult << 3)) * 0.03125f;// / 32.0f;
             if ((rdp.other_mode_h & (3U << G_MDSFT_TEXTFILT)) != G_TF_POINT) {
@@ -1402,132 +1403,70 @@ static void __attribute__((noinline)) gfx_sp_quad_2d(uint8_t vtx1_idx, uint8_t v
     uint8_t used_textures[2];
     gfx_rapi->shader_get_info(prg, &num_inputs, used_textures);
     uint8_t linear_filter = 1;
-
-    if (used_textures[0]) {
-        if (rdp.textures_changed[0]) {
-            import_texture(0);
-            rdp.textures_changed[0] = 0;
-        }
-        linear_filter =  ((rdp.other_mode_h & (3U << G_MDSFT_TEXTFILT)) != G_TF_POINT);
-        gfx_rapi->set_sampler_parameters(0, linear_filter, rdp.texture_tile.cms, rdp.texture_tile.cmt);
-        rendering_state.textures[0]->linear_filter = linear_filter;
-        rendering_state.textures[0]->cms = rdp.texture_tile.cms;
-        rendering_state.textures[0]->cmt = rdp.texture_tile.cmt;
-    }
-
     uint8_t use_texture = !do_ext_fill && used_textures[0];
 
     dc_fast_t* tmpv = v2d;
 
     if (use_texture) {
-            uint32_t tex_width = ((rdp.texture_tile.lrs - rdp.texture_tile.uls + 4) * 0.25f);
-            uint32_t tex_height = ((rdp.texture_tile.lrt - rdp.texture_tile.ult + 4) * 0.25f);
-            float recip_tex_width = shz_fast_invf((float) tex_width);
-            float recip_tex_height = shz_fast_invf((float) tex_height);
-            float offs = linear_filter ? 0.5f : 0.0f;
-            float uls = (float) (rdp.texture_tile.ult * 0.25f) - offs;
-            float ult = (float) (rdp.texture_tile.ult * 0.25f) - offs;
-            float u;
-            float v;
+        if (rdp.textures_changed[0]) {
+            import_texture(0);
+            rdp.textures_changed[0] = 0;
+        }
+        linear_filter = ((rdp.other_mode_h & (3U << G_MDSFT_TEXTFILT)) != G_TF_POINT);
+        gfx_rapi->set_sampler_parameters(0, linear_filter, rdp.texture_tile.cms, rdp.texture_tile.cmt);
+        rendering_state.textures[0]->linear_filter = linear_filter;
+        rendering_state.textures[0]->cms = rdp.texture_tile.cms;
+        rendering_state.textures[0]->cmt = rdp.texture_tile.cmt;
+        uint32_t tex_width = ((rdp.texture_tile.lrs - rdp.texture_tile.uls + 4) * 0.25f);
+        uint32_t tex_height = ((rdp.texture_tile.lrt - rdp.texture_tile.ult + 4) * 0.25f);
+        float recip_tex_width = shz_fast_invf((float) tex_width);
+        float recip_tex_height = shz_fast_invf((float) tex_height);
+        float offs = linear_filter ? 0.5f : 0.0f;
+        float uls = (float) (rdp.texture_tile.ult * 0.25f) - offs;
+        float ult = (float) (rdp.texture_tile.ult * 0.25f) - offs;
+        float u;
+        float v;
 
-            // / 32
-            u = (tmpv->texture.u * 0.03125f) - uls;
-            tmpv->texture.u = (u * recip_tex_width);
-            v = (tmpv->texture.v * 0.03125f) - ult;
-            tmpv++->texture.v = (v * recip_tex_height);
+        // / 32
+        u = (tmpv->texture.u * 0.03125f) - uls;
+        tmpv->texture.u = (u * recip_tex_width);
+        v = (tmpv->texture.v * 0.03125f) - ult;
+        tmpv++->texture.v = (v * recip_tex_height);
 
-            u = (tmpv->texture.u * 0.03125f) - uls;
-            tmpv->texture.u = (u * recip_tex_width);
-            v = (tmpv->texture.v * 0.03125f) - ult;
-            tmpv++->texture.v = (v * recip_tex_height);
+        u = (tmpv->texture.u * 0.03125f) - uls;
+        tmpv->texture.u = (u * recip_tex_width);
+        v = (tmpv->texture.v * 0.03125f) - ult;
+        tmpv++->texture.v = (v * recip_tex_height);
 
-            u = (tmpv->texture.u * 0.03125f) - uls;
-            tmpv->texture.u = u * recip_tex_width ;
-            v = (tmpv->texture.v * 0.03125f) - ult;
-            tmpv++->texture.v = v * recip_tex_height;
+        u = (tmpv->texture.u * 0.03125f) - uls;
+        tmpv->texture.u = u * recip_tex_width;
+        v = (tmpv->texture.v * 0.03125f) - ult;
+        tmpv++->texture.v = v * recip_tex_height;
 
-            u = (tmpv->texture.u * 0.03125f) - uls;
-            tmpv->texture.u = u * recip_tex_width ;
-            v = (tmpv->texture.v * 0.03125f) - ult;
-            tmpv->texture.v = v * recip_tex_height ;
-        
+        u = (tmpv->texture.u * 0.03125f) - uls;
+        tmpv->texture.u = u * recip_tex_width;
+        v = (tmpv->texture.v * 0.03125f) - ult;
+        tmpv->texture.v = v * recip_tex_height;
     }
 
     uint32_t rectcolor = 0xffffffff;
-    uint32_t color_r = 0;
-    uint32_t color_g = 0;
-    uint32_t color_b = 0;
-    uint32_t color_a = 0;
-#if 0
-    if (num_inputs > 1) {
-        int i0 = comb->shader_input_mapping[0][1] == CC_PRIM;
-        int i2 = comb->shader_input_mapping[0][0] == CC_ENV;
 
-        int i3 = comb->shader_input_mapping[0][0] == CC_PRIM;
-        int i4 = comb->shader_input_mapping[0][1] == CC_ENV;
-
-        if (i0 && i2) {
-            color_r = 255 - rdp.env_color.r;
-            color_g = 255 - rdp.env_color.g;
-            color_b = 255 - rdp.env_color.b;
-            color_a = rdp.prim_color.a;
-
-            rectcolor = PACK_ARGB8888(color_r, color_g, color_b, color_a);
-        } else if (i3 && i4) {
-            color_r = rdp.prim_color.r;
-            color_g = rdp.prim_color.g;
-            color_b = rdp.prim_color.b;
-            color_a = rdp.prim_color.a;
-
-            color_r *= ((rdp.env_color.r + 255));
-            color_g *= ((rdp.env_color.g + 255));
-            color_b *= ((rdp.env_color.b + 255));
-            color_a *= rdp.env_color.a;
-
-            color_r >>= 8;
-            color_g >>= 8;
-            color_b >>= 8;
-            color_a >>= 8;
-
-            float rn, gn, bn;
-            uint32_t max_c = MAX4(255, color_r, color_g, color_b);
-            float maxc = shz_div_posf(255.0f, (float) max_c);
-
-            rn = (float) color_r * maxc;
-            gn = (float) color_g * maxc;
-            bn = (float) color_b * maxc;
-            color_r = (uint32_t) rn;
-            color_g = (uint32_t) gn;
-            color_b = (uint32_t) bn;
-
-            rectcolor = PACK_ARGB8888(color_r, color_g, color_b, color_a);
-        } else {
-            goto thenext2dthing;
-        }
-    } else 
-#endif     
-    {
-//    thenext2dthing:
-        int k;
-        for (k = 0; k < 1 + (use_alpha ? 1 : 0); k++) {
-            switch (comb->shader_input_mapping[k][0]) {
-                case CC_PRIM:
-                    rectcolor = PACK_ARGB8888(rdp.prim_color.r, rdp.prim_color.g, rdp.prim_color.b, k ? rdp.prim_color.a : 255);
-                    break;
-                case CC_SHADE:
-//                    if (!use_alpha)
-//                        v2d[0].color.array.a = 255;
-//                    else 
-                    v2d[0].color.array.a = k ? v2d[0].color.array.a : 255;
-                    rectcolor = v2d[0].color.packed;
-                    break;
-                case CC_ENV:
-                    rectcolor = PACK_ARGB8888(rdp.env_color.r, rdp.env_color.g, rdp.env_color.b, k ? rdp.env_color.a : 255);
-                    break;
-                default:
-                    rectcolor = 0xffffffff;
-                    break;
-            }
+    int k;
+    for (k = 0; k < 1 + (use_alpha ? 1 : 0); k++) {
+        switch (comb->shader_input_mapping[k][0]) {
+            case CC_PRIM:
+                rectcolor = PACK_ARGB8888(rdp.prim_color.r, rdp.prim_color.g, rdp.prim_color.b, k ? rdp.prim_color.a : 255);
+                break;
+            case CC_SHADE:
+                v2d[0].color.array.a = k ? v2d[0].color.array.a : 255;
+                rectcolor = v2d[0].color.packed;
+                break;
+            case CC_ENV:
+                rectcolor = PACK_ARGB8888(rdp.env_color.r, rdp.env_color.g, rdp.env_color.b, k ? rdp.env_color.a : 255);
+                break;
+            default:
+                rectcolor = 0xffffffff;
+                break;
         }
     }
 

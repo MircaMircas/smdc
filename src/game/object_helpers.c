@@ -27,6 +27,8 @@
 #include "spawn_object.h"
 #include "spawn_sound.h"
 
+#include "sh4zam.h"
+
 s8 D_8032F0A0[] = { 0xF8, 0x08, 0xFC, 0x04 };
 s16 D_8032F0A4[] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
 static s8 sLevelsWithRooms[] = { LEVEL_BBH, LEVEL_CASTLE, LEVEL_HMC, -1 };
@@ -290,7 +292,7 @@ f32 lateral_dist_between_objects(struct Object *obj1, struct Object *obj2) {
     f32 dx = obj1->oPosX - obj2->oPosX;
     f32 dz = obj1->oPosZ - obj2->oPosZ;
 
-    return sqrtf(dx * dx + dz * dz);
+    return shz_sqrtf_fsrra(dx * dx + dz * dz);
 }
 
 f32 dist_between_objects(struct Object *obj1, struct Object *obj2) {
@@ -298,7 +300,8 @@ f32 dist_between_objects(struct Object *obj1, struct Object *obj2) {
     f32 dy = obj1->oPosY - obj2->oPosY;
     f32 dz = obj1->oPosZ - obj2->oPosZ;
 
-    return sqrtf(dx * dx + dy * dy + dz * dz);
+    return shz_sqrtf_fsrra(shz_mag_sqr3f(dx, dy, dz));
+    //sqrtf(dx * dx + dy * dy + dz * dz);
 }
 
 void cur_obj_forward_vel_approach_upward(f32 target, f32 increment) {
@@ -402,7 +405,7 @@ s16 obj_turn_toward_object(struct Object *obj, struct Object *target, s16 angleI
         case O_FACE_ANGLE_PITCH_INDEX:
             a = target->oPosX - obj->oPosX;
             c = target->oPosZ - obj->oPosZ;
-            a = sqrtf(a * a + c * c);
+            a = shz_sqrtf_fsrra(a * a + c * c);
 
             b = -obj->oPosY;
             d = -target->oPosY;
@@ -654,7 +657,6 @@ void obj_init_animation(struct Object *obj, s32 animIndex) {
  * | 0 0 0 1 |
  * i.e. a matrix representing a linear transformation over 3 space.
  */
-#include "sh4zam.h"
 void linear_mtxf_mul_vec3f(Mat4 m, Vec3f dst, Vec3f v) {
 #if 0
     s32 i;
@@ -681,7 +683,7 @@ void linear_mtxf_mul_vec3f(Mat4 m, Vec3f dst, Vec3f v) {
  * i.e. a matrix representing a linear transformation over 3 space.
  */
 void linear_mtxf_transpose_mul_vec3f(Mat4 m, Vec3f dst, Vec3f v) {
-#if 1
+#if 0
     s32 i;
     for (i = 0; i < 3; i++) {
         dst[i] = m[i][0] * v[0] + m[i][1] * v[1] + m[i][2] * v[2];
@@ -1286,7 +1288,7 @@ static s32 cur_obj_move_xz(f32 steepSlopeNormalY, s32 careAboutEdgesAndSteepSlop
 }
 
 static void cur_obj_move_update_underwater_flags(void) {
-    f32 decelY = (f32)(sqrtf(o->oVelY * o->oVelY) * (o->oDragStrength * 7.0f)) / 100.0L;
+    f32 decelY = (f32)(shz_sqrtf_fsrra(o->oVelY * o->oVelY) * (o->oDragStrength * 0.07f)); // 7.0f)) / 100.0L;
 
     if (o->oVelY > 0) {
         o->oVelY -= decelY;
@@ -1512,7 +1514,7 @@ f32 cur_obj_lateral_dist_from_mario_to_home(void) {
     f32 dx = o->oHomeX - gMarioObject->oPosX;
     f32 dz = o->oHomeZ - gMarioObject->oPosZ;
 
-    dist = sqrtf(dx * dx + dz * dz);
+    dist = shz_sqrtf_fsrra(dx * dx + dz * dz);
     return dist;
 }
 
@@ -1521,7 +1523,7 @@ f32 cur_obj_lateral_dist_to_home(void) {
     f32 dx = o->oHomeX - o->oPosX;
     f32 dz = o->oHomeZ - o->oPosZ;
 
-    dist = sqrtf(dx * dx + dz * dz);
+    dist = shz_sqrtf_fsrra(dx * dx + dz * dz);
     return dist;
 }
 
@@ -1831,7 +1833,7 @@ void cur_obj_move_standard(s16 steepSlopeAngleDegrees) {
             // clang-format on
         }
 
-        steepSlopeNormalY = coss(steepSlopeAngleDegrees * (0x10000 / 360));
+        steepSlopeNormalY = coss(steepSlopeAngleDegrees * 182 /* (0x10000 / 360) */);
 
         cur_obj_compute_vel_xz();
         cur_obj_apply_drag_xz(dragStrength);
@@ -1842,7 +1844,7 @@ void cur_obj_move_standard(s16 steepSlopeAngleDegrees) {
         if (o->oForwardVel < 0) {
             negativeSpeed = TRUE;
         }
-        o->oForwardVel = sqrtf(sqr(o->oVelX) + sqr(o->oVelZ));
+        o->oForwardVel = shz_sqrtf_fsrra(sqr(o->oVelX) + sqr(o->oVelZ));
         if (negativeSpeed == TRUE) {
             o->oForwardVel = -o->oForwardVel;
         }
@@ -2035,13 +2037,14 @@ s32 cur_obj_follow_path(void) {
     objToNextX = targetWaypoint->pos[0] - o->oPosX;
     objToNextY = targetWaypoint->pos[1] - o->oPosY;
     objToNextZ = targetWaypoint->pos[2] - o->oPosZ;
-    objToNextXZ = sqrtf(sqr(objToNextX) + sqr(objToNextZ));
+    objToNextXZ = shz_sqrtf_fsrra(sqr(objToNextX) + sqr(objToNextZ));
 
     o->oPathedTargetYaw = atan2s(objToNextZ, objToNextX);
     o->oPathedTargetPitch = atan2s(objToNextXZ, -objToNextY);
 
     // If dot(prevToNext, objToNext) <= 0 (i.e. reached other side of target waypoint)
-    if (prevToNextX * objToNextX + prevToNextY * objToNextY + prevToNextZ * objToNextZ <= 0.0f) {
+    if (shz_dot6f(prevToNextX, prevToNextY, prevToNextZ, objToNextX, objToNextY, objToNextZ) <= 0.0f) {
+//    if (prevToNextX * objToNextX + prevToNextY * objToNextY + prevToNextZ * objToNextZ <= 0.0f) {
         o->oPathedPrevWaypoint = targetWaypoint;
         if ((targetWaypoint + 1)->flags == WAYPOINT_FLAGS_END) {
             return PATH_REACHED_END;
@@ -2064,7 +2067,7 @@ void chain_segment_init(struct ChainSegment *segment) {
 }
 
 f32 random_f32_around_zero(f32 diameter) {
-    return random_float() * diameter - diameter / 2;
+    return random_float() * diameter - diameter * 0.5f; // / 2;
 }
 
 void obj_scale_random(struct Object *obj, f32 rangeLength, f32 minScale) {
@@ -2088,9 +2091,14 @@ static void obj_build_vel_from_transform(struct Object *a0) {
     f32 sp8 = a0->oUnkBC;
     f32 sp4 = a0->oForwardVel;
 
-    a0->oVelX = a0->transform[0][0] * spC + a0->transform[1][0] * sp8 + a0->transform[2][0] * sp4;
-    a0->oVelY = a0->transform[0][1] * spC + a0->transform[1][1] * sp8 + a0->transform[2][1] * sp4;
-    a0->oVelZ = a0->transform[0][2] * spC + a0->transform[1][2] * sp8 + a0->transform[2][2] * sp4;
+    shz_vec3_t a0vec = shz_vec3_dot3((shz_vec3_t) { .x = spC, .y = sp8, .z = sp4 },
+    (shz_vec3_t) { .x = a0->transform[0][0], .y = a0->transform[1][0], .z = a0->transform[2][0] },
+    (shz_vec3_t) { .x = a0->transform[0][1], .y = a0->transform[1][1], .z = a0->transform[2][1] },
+    (shz_vec3_t) { .x = a0->transform[0][2], .y = a0->transform[1][2], .z = a0->transform[2][2] });
+
+    a0->oVelX = a0vec.x; // a0->transform[0][0] * spC + a0->transform[1][0] * sp8 + a0->transform[2][0] * sp4;
+    a0->oVelY = a0vec.y; // a0->transform[0][1] * spC + a0->transform[1][1] * sp8 + a0->transform[2][1] * sp4;
+    a0->oVelZ = a0vec.z; // a0->transform[0][2] * spC + a0->transform[1][2] * sp8 + a0->transform[2][2] * sp4;
 }
 
 void cur_obj_set_pos_via_transform(void) {
