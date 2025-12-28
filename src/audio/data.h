@@ -23,14 +23,14 @@ extern u16 D_80332388[128]; // unused
 #ifdef VERSION_EU
 extern f32 gPitchBendFrequencyScale[256];
 #else
-extern f32 gPitchBendFrequencyScale[255];
+extern f32 __attribute__((aligned(32))) gPitchBendFrequencyScale[255];
 #endif
-extern f32 gNoteFrequencies[128];
+extern f32 __attribute__((aligned(32))) gNoteFrequencies[128];
 
-extern u8 gDefaultShortNoteVelocityTable[16];
-extern u8 gDefaultShortNoteDurationTable[16];
-extern s8 gVibratoCurve[16];
-extern struct AdsrEnvelope gDefaultEnvelope[3];
+extern u8 __attribute__((aligned(32))) gDefaultShortNoteVelocityTable[16];
+extern u8 __attribute__((aligned(32))) gDefaultShortNoteDurationTable[16];
+extern s8 __attribute__((aligned(32))) gVibratoCurve[16];
+extern struct AdsrEnvelope __attribute__((aligned(32))) gDefaultEnvelope[3];
 
 #ifdef VERSION_EU
 extern s16 gEuUnknownWave7[256];

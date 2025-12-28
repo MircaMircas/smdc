@@ -23,7 +23,7 @@
 #define MEM_BARRIER_PREF(ptr) asm volatile("pref @%0" : : "r"((ptr)) : "memory")
 
 void n64_memcpy(void* dst, const void* src, size_t size) {
-    __builtin_prefetch(src);
+//    __builtin_prefetch(src);
     uint8_t* bdst = (uint8_t*) dst;
     uint8_t* bsrc = (uint8_t*) src;
     uint16_t* sdst = (uint16_t*) dst;
@@ -40,9 +40,9 @@ void n64_memcpy(void* dst, const void* src, size_t size) {
 //    __builtin_prefetch(bsrc);
     if ((!(((uintptr_t) bdst | (uintptr_t) bsrc) & 3))) {
         while (words_to_copy--) {
-            if ((words_to_copy & 3) == 0) {
-                __builtin_prefetch(wsrc + 8);
-            }
+//            if ((words_to_copy & 3) == 0) {
+//                __builtin_prefetch(wsrc + 8);
+//            }
             *wdst++ = *wsrc++;
         }
 
@@ -63,9 +63,9 @@ void n64_memcpy(void* dst, const void* src, size_t size) {
         }
     } else if ((!(((uintptr_t) sdst | (uintptr_t) ssrc) & 1))) {
         while (shorts_to_copy--) {
-            if ((shorts_to_copy & 7) == 0) {
-                __builtin_prefetch(ssrc + 16);
-            }
+//            if ((shorts_to_copy & 7) == 0) {
+//                __builtin_prefetch(ssrc + 16);
+//            }
             *sdst++ = *ssrc++;
         }
 

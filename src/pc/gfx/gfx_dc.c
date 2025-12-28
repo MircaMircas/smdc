@@ -123,7 +123,7 @@ static bool gfx_dc_start_frame(void) {
     }
     // skip if frame took longer than 1 / 30 = 33.3 ms
     if (elapsed > FRAME_TIME_MS) {
-        skip_debounce = 1; // every other
+        skip_debounce = 3; // every other
          // skip a max of once every 4 frames
         last_time = cur_time;
         return false;
@@ -150,9 +150,9 @@ static void gfx_dc_swap_buffers_end(void) {
 #endif
         DelayThread(FRAME_TIME_MS - elapsed);
         last_time += (FRAME_TIME_MS - elapsed);
-    } else {
+    }/*  else {
         thd_pass();
-    }
+    } */
 }
 
 /* Idk what this is for? */

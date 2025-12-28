@@ -706,7 +706,8 @@ void vec3f_set_dist_and_angle(Vec3f from, Vec3f to, f32 dist, s16 pitch, s16 yaw
     float tx,ty,tz;
 
     scaled_sincoss(pitch, &ps, &pc, dist);
-
+    sincoss(yaw, &ys, &yc);
+#if 0
     tx = from[0];// + dist * coss(pitch) * sins(yaw);
     ty = from[1];// + dist * sins(pitch);
     tz = from[2];// + dist * coss(pitch) * coss(yaw);
@@ -720,6 +721,11 @@ void vec3f_set_dist_and_angle(Vec3f from, Vec3f to, f32 dist, s16 pitch, s16 yaw
     to[0] = tx;
     to[1] = ty;
     to[2] = tz;
+#endif
+    to[0] = from[0] + pc * ys;//dist * coss(pitch) * sins(yaw);
+    to[1] = from[1] + ps;//dist * sins(pitch);
+    to[2] = from[2] + pc * yc;//dist * coss(pitch) * coss(yaw);
+
 }
 #endif
 #if 0
@@ -782,6 +788,7 @@ f32 approach_f32(f32 current, f32 target, f32 inc, f32 dec) {
  * the resulting angle is in range [0, 0x2000] (1/8 of a circle).
  */
 static u16 atan2_lookup(f32 y, f32 x) {
+#if 1
     u16 ret;
 
     if (x == 0.f) {
@@ -790,6 +797,9 @@ static u16 atan2_lookup(f32 y, f32 x) {
         ret = gArctanTable[(s32)(y / x * 1024 + 0.5f)];
     }
     return ret;
+#else
+    return shz_atan2f(y, x) * 10430.37806022f;
+#endif
 }
 
 /**

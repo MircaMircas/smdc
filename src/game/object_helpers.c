@@ -661,7 +661,7 @@ void linear_mtxf_mul_vec3f(Mat4 m, Vec3f dst, Vec3f v) {
     for (i = 0; i < 3; i++) {
         dst[i] = m[0][i] * v[0] + m[1][i] * v[1] + m[2][i] * v[2];
     }
-#endif
+#else
     shz_vec3_t XYZ = shz_vec3_dot3(shz_vec3_deref(v),
     (shz_vec3_t){.x=m[0][0],.y=m[1][0],.z=m[2][0]},
     (shz_vec3_t){.x=m[0][1],.y=m[1][1],.z=m[2][1]},
@@ -669,6 +669,7 @@ void linear_mtxf_mul_vec3f(Mat4 m, Vec3f dst, Vec3f v) {
     dst[0] = XYZ.x;
     dst[1] = XYZ.y;
     dst[2] = XYZ.z;
+#endif
 }  
 
 /**
@@ -680,17 +681,18 @@ void linear_mtxf_mul_vec3f(Mat4 m, Vec3f dst, Vec3f v) {
  * i.e. a matrix representing a linear transformation over 3 space.
  */
 void linear_mtxf_transpose_mul_vec3f(Mat4 m, Vec3f dst, Vec3f v) {
-#if 0
+#if 1
     s32 i;
     for (i = 0; i < 3; i++) {
         dst[i] = m[i][0] * v[0] + m[i][1] * v[1] + m[i][2] * v[2];
     }
-#endif
+#else
     shz_vec3_t XYZ = shz_vec3_dot3(shz_vec3_deref(v),
     shz_vec3_deref(m[0]), shz_vec3_deref(m[1]), shz_vec3_deref(m[2]));
     dst[0] = XYZ.x;
     dst[1] = XYZ.y;
     dst[2] = XYZ.z;
+#endif
 }
 
 void obj_apply_scale_to_transform(struct Object *obj) {
@@ -2222,13 +2224,14 @@ void spawn_mist_particles_with_sound(u32 sp18) {
 void cur_obj_push_mario_away(f32 radius) {
     f32 marioRelX = gMarioObject->oPosX - o->oPosX;
     f32 marioRelZ = gMarioObject->oPosZ - o->oPosZ;
-    f32 marioDist = sqrtf(sqr(marioRelX) + sqr(marioRelZ));
+    f32 marioDist = shz_sqrtf_fsrra(sqr(marioRelX) + sqr(marioRelZ));
 
     if (marioDist < radius) {
         //! If this function pushes Mario out of bounds, it will trigger Mario's
         //  oob failsafe
-        gMarioStates[0].pos[0] += (radius - marioDist) / radius * marioRelX;
-        gMarioStates[0].pos[2] += (radius - marioDist) / radius * marioRelZ;
+        f32 mscale = shz_divf((radius - marioDist) , radius);
+        gMarioStates[0].pos[0] += /* (radius - marioDist) / radius */ mscale * marioRelX;
+        gMarioStates[0].pos[2] += /* (radius - marioDist) / radius */ mscale * marioRelZ;
     }
 }
 
@@ -2284,18 +2287,20 @@ void stub_obj_helpers_3(UNUSED s32 sp0, UNUSED s32 sp4) {
 
 void cur_obj_scale_over_time(s32 a0, s32 a1, f32 sp10, f32 sp14) {
     f32 sp4 = sp14 - sp10;
-    f32 sp0 = (f32) o->oTimer / a1;
+    f32 sp0 = shz_divf((f32) o->oTimer , (f32)a1);
+
+    f32 scaleval = sp4 * sp0 + sp10;
 
     if (a0 & 0x01) {
-        o->header.gfx.scale[0] = sp4 * sp0 + sp10;
+        o->header.gfx.scale[0] = scaleval; // sp4 * sp0 + sp10;
     }
 
     if (a0 & 0x02) {
-        o->header.gfx.scale[1] = sp4 * sp0 + sp10;
+        o->header.gfx.scale[1] = scaleval; // sp4 * sp0 + sp10;
     }
 
     if (a0 & 0x04) {
-        o->header.gfx.scale[2] = sp4 * sp0 + sp10;
+        o->header.gfx.scale[2] = scaleval; // sp4 * sp0 + sp10;
     }
 }
 
@@ -2303,7 +2308,7 @@ void cur_obj_set_pos_to_home_with_debug(void) {
     o->oPosX = o->oHomeX + gDebugInfo[5][0];
     o->oPosY = o->oHomeY + gDebugInfo[5][1];
     o->oPosZ = o->oHomeZ + gDebugInfo[5][2];
-    cur_obj_scale(gDebugInfo[5][3] / 100.0f + 1.0l);
+    cur_obj_scale(gDebugInfo[5][3] * 0.01f /* / 100.0f */ + 1.0l);
 }
 
 void stub_obj_helpers_4(void) {
@@ -2368,7 +2373,7 @@ s32 cur_obj_mario_far_away(void) {
     f32 dx = o->oHomeX - gMarioObject->oPosX;
     f32 dy = o->oHomeY - gMarioObject->oPosY;
     f32 dz = o->oHomeZ - gMarioObject->oPosZ;
-    f32 marioDistToHome = sqrtf(dx * dx + dy * dy + dz * dz);
+    f32 marioDistToHome = shz_sqrtf_fsrra(shz_mag_sqr3f(dx, dy, dz)); //sqrtf(dx * dx + dy * dy + dz * dz);
 
     if (o->oDistanceToMario > 2000.0f && marioDistToHome > 2000.0f) {
         return TRUE;

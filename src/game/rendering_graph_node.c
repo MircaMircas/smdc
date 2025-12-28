@@ -13,6 +13,34 @@
 
 #include "sh4zam.h"
 
+static inline void sincoss(s16 arg0, f32* s, f32* c) {
+    register float __s __asm__("fr2");
+    register float __c __asm__("fr3");
+
+    asm("lds    %2,fpul\n\t"
+        "fsca    fpul,dr2\n\t"
+        : "=f"(__s), "=f"(__c)
+        : "r"(arg0)
+        : "fpul");
+
+    *s = __s;
+    *c = __c;
+}
+
+static inline void scaled_sincoss(s16 arg0, f32* s, f32* c, f32 scale) {
+    register float __s __asm__("fr2");
+    register float __c __asm__("fr3");
+
+    asm("lds    %2,fpul\n\t"
+        "fsca    fpul,dr2\n\t"
+        : "=f"(__s), "=f"(__c)
+        : "r"(arg0)
+        : "fpul");
+
+    *s = __s * scale;
+    *c = __c * scale;
+}
+
 /**
  * This file contains the code that processes the scene graph for rendering.
  * The scene graph is responsible for drawing everything except the HUD / text boxes.
@@ -692,8 +720,9 @@ static void geo_process_shadow(struct GraphNodeShadow *node) {
                 gCurrAnimAttribute -= 6;
 
                 // simple matrix rotation so the shadow offset rotates along with the object
-                sinAng = sins(gCurGraphNodeObject->angle[1]);
-                cosAng = coss(gCurGraphNodeObject->angle[1]);
+                sincoss(gCurGraphNodeObject->angle[1], &sinAng, &cosAng);
+                //sinAng = sins(gCurGraphNodeObject->angle[1]);
+                //cosAng = coss(gCurGraphNodeObject->angle[1]);
 
                 shadowPos[0] += animOffset[0] * cosAng + animOffset[2] * sinAng;
                 shadowPos[2] += -animOffset[0] * sinAng + animOffset[2] * cosAng;
@@ -770,9 +799,14 @@ static int obj_is_in_view(struct GraphNodeObject *node, Mat4 matrix) {
     // ! @bug The aspect ratio is not accounted for. When the fov value is 45,
     // the horizontal effective fov is actually 60 degrees, so you can see objects
     // visibly pop in or out at the edge of the screen.
-    halfFov = (gCurGraphNodeCamFrustum->fov / 2.0f + 1.0f) * 32768.0f / 180.0f + 0.5f;
+//    halfFov = (gCurGraphNodeCamFrustum->fov / 2.0f + 1.0f) * 32768.0f / 180.0f + 0.5f;
+    halfFov = (gCurGraphNodeCamFrustum->fov * 0.5f + 1.0f) * 182.04444444f + 0.5f;
 
-    hScreenEdge = -matrix[3][2] * sins(halfFov) / coss(halfFov);
+    f32 hs,hc;
+    sincoss(halfFov, &hs, &hc);
+    f32 ht = shz_divf(hs, hc);
+
+    hScreenEdge = -matrix[3][2] * ht; // sins(halfFov) / coss(halfFov);
     // -matrix[3][2] is the depth, which gets multiplied by tan(halfFov) to get
     // the amount of units between the center of the screen and the horizontal edge
     // given the distance from the object to the camera.
@@ -900,9 +934,9 @@ void geo_process_held_object(struct GraphNodeHeldObject *node) {
     if (node->objNode != NULL && node->objNode->header.gfx.sharedChild != NULL) {
         s32 hasAnimation = (node->objNode->header.gfx.node.flags & GRAPH_RENDER_HAS_ANIMATION) != 0;
 
-        translation[0] = node->translation[0] / 4.0f;
-        translation[1] = node->translation[1] / 4.0f;
-        translation[2] = node->translation[2] / 4.0f;
+        translation[0] = node->translation[0] * 0.25f; // / 4.0f;
+        translation[1] = node->translation[1] * 0.25f; // / 4.0f;
+        translation[2] = node->translation[2] * 0.25f; // / 4.0f;
 
         mtxf_translate(mat, translation);
         mtxf_copy(gMatStack[gMatStackIndex + 1], *gCurGraphNodeObject->throwMatrix);
@@ -1065,8 +1099,10 @@ void geo_process_root(struct GraphNodeRoot *node, Vp *b, Vp *c, s32 clearColor) 
         initialMatrix = alloc_display_list(sizeof(*initialMatrix));
         gMatStackIndex = 0;
         gCurAnimType = 0;
-        vec3s_set(viewport->vp.vtrans, node->x * 4, node->y * 4, 511);
-        vec3s_set(viewport->vp.vscale, node->width * 4, node->height * 4, 511);
+//        vec3s_set(viewport->vp.vtrans, node->x * 4, node->y * 4, 511);
+//        vec3s_set(viewport->vp.vscale, node->width * 4, node->height * 4, 511);
+        vec3s_set(viewport->vp.vtrans, node->x << 2, node->y << 2, 511);
+        vec3s_set(viewport->vp.vscale, node->width << 2, node->height << 2, 511);
         if (b != NULL) {
             clear_frame_buffer(clearColor);
             make_viewport_clip_rect(b);

@@ -25,6 +25,8 @@
 #define true 1
 #define false 0
 
+static int fog_changed = 0;
+
 enum MixType {
     SH_MT_NONE,
     SH_MT_TEXTURE,
@@ -113,11 +115,13 @@ float gl_fog_start;
 float gl_fog_end;
 
 void gfx_opengl_change_fog(void) {
-    float fog_scale = 0.75f;
+    if (!fog_changed) {
+        fog_changed = 1;
 
-    glFogi(GL_FOG_MODE, GL_LINEAR);
-    glFogf(GL_FOG_START, (GLfloat)gl_fog_start * fog_scale * 0.9f);
-    glFogf(GL_FOG_END, (GLfloat)gl_fog_end * fog_scale);
+        glFogi(GL_FOG_MODE, GL_LINEAR);
+        glFogf(GL_FOG_START, (GLfloat)gl_fog_start * 0.675f);
+        glFogf(GL_FOG_END, (GLfloat)gl_fog_end * 0.75f);
+    }
 }
 
 static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
@@ -125,7 +129,6 @@ static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
     glVertexPointer(3, GL_FLOAT, sizeof(dc_fast_t), &cur_buf[0].vert);
     glTexCoordPointer(2, GL_FLOAT, sizeof(dc_fast_t), &cur_buf[0].texture);
     glColorPointer(GL_BGRA, GL_UNSIGNED_BYTE, sizeof(dc_fast_t), &cur_buf[0].color);
-
     // have texture(s), specify same texcoords for every active texture
     if (prg->texture_used[0] || prg->texture_used[1]) {
         glEnable(GL_TEXTURE_2D);
@@ -252,7 +255,7 @@ static void gfx_opengl_select_texture(int tile, uint32_t texture_id) {
 }
 
 /* Used for rescaling textures ROUGHLY into pow2 dims */
-static unsigned int __attribute__((aligned(32))) scaled[64 * 64]; /* 8kb */
+static uint16_t __attribute__((aligned(32))) scaled[64 * 64]; /* 8kb */
 
 extern void reset_texcache(void);
 
@@ -261,7 +264,6 @@ void nuke_everything(void) {
     reset_texcache();
 }
 
-//extern uint32_t pvr_mem_available(void);
 static void gfx_opengl_upload_texture(const uint8_t *rgba32_buf, int width, int height, unsigned int type) {
     unsigned int intFormat;
     if (type == GL_UNSIGNED_SHORT_1_5_5_5_REV) {
@@ -558,16 +560,12 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
 extern void gfx_opengl_2d_projection(void);
 extern void gfx_opengl_reset_projection(void);
 void gfx_opengl_draw_triangles_2d(void *buf_vbo, UNUSED size_t buf_vbo_len, UNUSED size_t buf_vbo_num_tris) {
-    dc_fast_t *tris = buf_vbo;
+    cur_buf = (void*)buf_vbo;
 
     gfx_opengl_apply_shader(cur_shader);
     gfx_opengl_2d_projection();
     glDisable(GL_FOG);
     glEnable(GL_BLEND);
-
-    glVertexPointer(3, GL_FLOAT, sizeof(dc_fast_t), &tris[0].vert);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(dc_fast_t), &tris[0].texture);
-    glColorPointer(GL_BGRA, GL_UNSIGNED_BYTE, sizeof(dc_fast_t), &tris[0].color);
 
     if (buf_vbo_num_tris) {
         glEnable(GL_TEXTURE_2D);
@@ -704,6 +702,7 @@ static void gfx_opengl_on_resize(void) {
 }
 
 static void gfx_opengl_start_frame(void) {
+    fog_changed = 0;
     rgba5551_to_rgbf(clear_color, &clr, &clg, &clb);
     glClearColor(clr, clg, clb, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

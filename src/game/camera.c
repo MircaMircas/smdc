@@ -3601,41 +3601,29 @@ void unused_object_angle_to_vec3s(Vec3s dst, struct Object *o) {
  */
 void evaluate_cubic_spline(f32 u, Vec3f Q, Vec3f a0, Vec3f a1, Vec3f a2, Vec3f a3) {
     f32 B[4];
-//    f32 x;
-//    f32 y;
-//    f32 z;
-//    UNUSED u8 unused[16];
 
-    if (u > 1.f) {
-        u = 1.f;
+    if (u > 1.0f) {
+        u = 1.0f;
     }
+    f32 invu = 1.0f - u;
+    f32 invucube = invu * invu * invu;
+    f32 usquare = u * u;
+    f32 ucube = usquare * u;
 
-    B[0] = (1.f - u) * (1.f - u) * (1.f - u) * 0.16666667f; //  / 6.f;
-    B[1] = u * u * u * 0.5f  - u * u + 0.6666667f;
-    B[2] = -u * u * u * 0.5f  + u * u * 0.5f  + u * 0.5f  + 0.16666667f;
-    B[3] = u * u * u * 0.16666667f; // / 6.f;
 
-    Q[0] = shz_dot8f(B[0], B[1], B[2], B[3], a0[0], a1[0], a2[0], a3[0]);
- //   B[0] * a0[0] + B[1] * a1[0] + B[2] * a2[0] + B[3] * a3[0];
-   //Q[1] = B[0] * a0[1] + B[1] * a1[1] + B[2] * a2[1] + B[3] * a3[1];
-   // Q[2] = B[0] * a0[2] + B[1] * a1[2] + B[2] * a2[2] + B[3] * a3[2];
-    Q[1] = shz_dot8f(B[0], B[1], B[2], B[3], a0[1], a1[1], a2[1], a3[1]);
-    Q[2] = shz_dot8f(B[0], B[1], B[2], B[3], a0[2], a1[2], a2[2], a3[2]);
+    B[0] = invucube * 0.16666667f;
+    B[1] = (ucube * 0.5f) - usquare + 0.6666667f;
+    B[2] = -(ucube * 0.5f) + (usquare * 0.5f) + (u * 0.5f) + 0.16666667f;
+    B[3] = ucube * 0.16666667f;
 
-#if 0
-    // Unused code
-    B[0] = -0.5f * u * u + u - 0.33333333f;
-    B[1] = 1.5f * u * u - 2.f * u - 0.5f;
-    B[2] = -1.5f * u * u + u + 1.f;
-    B[3] = 0.5f * u * u - 0.16666667f;
+    shz_vec3_t Qout = shz_vec4_dot3(shz_vec4_deref(B),
+    (shz_vec4_t) { .x = a0[0], .y = a1[0], .z = a2[0], .w = a3[0] }, 
+    (shz_vec4_t) { .x = a0[1], .y = a1[1], .z = a2[1], .w = a3[1] }, 
+    (shz_vec4_t) { .x = a0[2], .y = a1[2], .z = a2[2], .w = a3[2] });
 
-    x = B[0] * a0[0] + B[1] * a1[0] + B[2] * a2[0] + B[3] * a3[0];
-    y = B[0] * a0[1] + B[1] * a1[1] + B[2] * a2[1] + B[3] * a3[1];
-    z = B[0] * a0[2] + B[1] * a1[2] + B[2] * a2[2] + B[3] * a3[2];
-
-    unusedSplinePitch = atan2s(sqrtf(x * x + z * z), y);
-    unusedSplineYaw = atan2s(z, x);
-#endif
+    Q[0] = Qout.x;
+    Q[1] = Qout.y;
+    Q[2] = Qout.z;
 }
 
 /**
@@ -4564,7 +4552,7 @@ s16 calculate_pitch(Vec3f from, Vec3f to) {
 
 s16 calculate_yaw(Vec3f from, Vec3f to) {
     f32 dx = to[0] - from[0];
-    UNUSED f32 dy = to[1] - from[1];
+//    UNUSED f32 dy = to[1] - from[1];
     f32 dz = to[2] - from[2];
     s16 yaw = atan2s(dz, dx);
 

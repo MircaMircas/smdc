@@ -2865,10 +2865,15 @@ void render_course_complete_lvl_info_and_hud_str(void) {
         gDPSetEnvColor(gDisplayListHead++, 0, 0, 0, gDialogTextAlpha);
         print_generic_string(65, 165, textCourse);
         print_generic_string(CRS_NUM_X2, 165, strCourseNum);
+
+        create_dl_translation_matrix(MENU_MTX_PUSH, 0.0f, 0.0f, 5.0f);
+
         gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, gDialogTextAlpha);
         print_generic_string(63, 167, textCourse);
         print_generic_string(CRS_NUM_X3, 167, strCourseNum);
         gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
+        gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
+
     } else if (gLastCompletedCourseNum == COURSE_BITDW || gLastCompletedCourseNum == COURSE_BITFS) {
         name = segmented_to_virtual(courseNameTbl[gLastCompletedCourseNum - 1]);
         gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
@@ -2880,12 +2885,14 @@ void render_course_complete_lvl_info_and_hud_str(void) {
 #ifndef VERSION_EU
         print_generic_string(TXT_CLEAR_X1, 130, textClear);
 #endif
+        create_dl_translation_matrix(MENU_MTX_PUSH, 0.0f, 0.0f, 5.0f);
         gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, gDialogTextAlpha);
         print_generic_string(TXT_NAME_X2, 132, name);
 #ifndef VERSION_EU
         print_generic_string(TXT_CLEAR_X2, 132, textClear);
 #endif
         gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
+        gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
         print_hud_course_complete_string(HUD_PRINT_CONGRATULATIONS);
         print_hud_course_complete_coins(118, 111);
         play_star_fanfare_and_flash_hud(2, 0); //! 2 isn't defined, originally for key hud?
@@ -2906,12 +2913,14 @@ void render_course_complete_lvl_info_and_hud_str(void) {
 #if defined(VERSION_JP) || defined(VERSION_SH)
     print_generic_string(220, 145, textCatch);
 #endif
+        create_dl_translation_matrix(MENU_MTX_PUSH, 0.0f, 0.0f, 5.0f);
     gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, gDialogTextAlpha);
     print_generic_string(74, 147, name);
 #if defined(VERSION_JP) || defined(VERSION_SH)
     print_generic_string(218, 147, textCatch);
 #endif
     gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
+        gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
 }
 
 #if defined(VERSION_JP) || defined(VERSION_SH)

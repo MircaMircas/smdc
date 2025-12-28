@@ -111,13 +111,13 @@ void *AudioSynthesisThread(UNUSED void *arg) {
 
     while (1) {
         while (vblticker <= last_vbltick)
-            genwait_wait((void*)&vblticker, NULL, 5, NULL);
+            genwait_wait((void*)&vblticker, NULL, 4, NULL);
         last_vbltick = vblticker;
-//irq_disable();
+irq_disable();
         const int num_audio_samples = 448; // ((gSysFrameCount & 3) < 2) ? SAMPLES_HIGH : SAMPLES_LOW;
         create_next_audio_buffer(audio_buffer[0],audio_buffer[1], num_audio_samples);
         audio_api->play((u8 *)audio_buffer[0], (u8 *)audio_buffer[1],num_audio_samples * 2 * 2);
-//irq_enable();
+irq_enable();
     }
     return NULL;
 }

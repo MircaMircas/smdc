@@ -547,7 +547,7 @@ void aSetVolumeImpl(uint8_t flags, int16_t v, int16_t t, int16_t r) {
 
 void aDMEMMoveImpl(uint16_t in_addr, uint16_t out_addr, int nbytes) {
     nbytes = ROUND_UP_16(nbytes);
-    /* memmove */n64_memcpy(rspa.buf.as_u8 + out_addr, rspa.buf.as_u8 + in_addr, nbytes);
+    memmove/* n64_memcpy */(rspa.buf.as_u8 + out_addr, rspa.buf.as_u8 + in_addr, nbytes);
 }
 
 void aSetLoopImpl(ADPCM_STATE *adpcm_loop_state) {

@@ -81,9 +81,11 @@ struct AudioSessionSettings gAudioSessionPresets[18] = {
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 #endif
+
+#if 0
 // gAudioCosineTable[k] = round((2**15 - 1) * cos(pi/2 * k / 127)). Unused.
 #ifndef VERSION_EU
-u16 gAudioCosineTable[128] = {
+u16__attribute__((aligned(32)))  gAudioCosineTable[128] = {
     0x7FFF, 32764, 32757, 32744, 32727, 32704, 32677, 32644, 32607, 32564, 32517, 32464, 32407,
     32344,  32277, 32205, 32127, 32045, 31958, 31866, 31770, 31668, 31561, 31450, 31334, 31213,
     31087,  30957, 30822, 30682, 30537, 30388, 30234, 30075, 29912, 29744, 29572, 29395, 29214,
@@ -96,15 +98,16 @@ u16 gAudioCosineTable[128] = {
     4042,   3640,  3237,  2833,  2429,  2025,  1620,  1216,  810,   405,   0,
 };
 #endif
+#endif
 
 // Transforms a pitch scale factor in -127..127 into a frequency scale factor
 // between -1 and +1 octave.
 // gPitchBendFrequencyScale[k] = 0.5 * 2^(k/127)
 #ifdef VERSION_EU
-f32 gPitchBendFrequencyScale[256] = {
+f32 __attribute__((aligned(32))) gPitchBendFrequencyScale[256] = {
     0.5f,
 #else
-f32 gPitchBendFrequencyScale[255] = {
+f32 __attribute__((aligned(32))) gPitchBendFrequencyScale[255] = {
 #endif
     0.5f,      0.502736f, 0.505488f, 0.508254f, 0.511036f, 0.513833f, 0.516645f, 0.519472f, 0.522315f,
     0.525174f, 0.528048f, 0.530938f, 0.533843f, 0.536765f, 0.539702f, 0.542656f, 0.545626f, 0.548612f,
@@ -143,7 +146,7 @@ f32 gPitchBendFrequencyScale[255] = {
 // The 39 in the formula refers to piano key 40 (middle C, at 256 Hz) being
 // the reference frequency, which is assigned value 1.
 // clang-format off
-f32 gNoteFrequencies[128] = {
+f32 __attribute__((aligned(32))) gNoteFrequencies[128] = {
     0.105112f,  0.111362f,  0.117984f,  0.125f, 0.132433f, 0.140308f,  0.148651f,  0.15749f,  0.166855f, 0.176777f, 0.187288f,  0.198425f,
     0.210224f,  0.222725f,  0.235969f,  0.25f,  0.264866f, 0.280616f,  0.297302f,  0.31498f,  0.33371f,  0.353553f, 0.374577f,  0.39685f,
     0.420448f,  0.445449f,  0.471937f,  0.5f,   0.529732f, 0.561231f,  0.594604f,  0.629961f, 0.66742f,  0.707107f, 0.749154f,  0.793701f,
@@ -159,21 +162,21 @@ f32 gNoteFrequencies[128] = {
 // clang-format on
 
 // goes up by ~12 at each step for the first 4 values (starting from 0), then by ~6
-u8 gDefaultShortNoteVelocityTable[16] = {
+u8 __attribute__((aligned(32))) gDefaultShortNoteVelocityTable[16] = {
     12, 25, 38, 51, 57, 64, 71, 76, 83, 89, 96, 102, 109, 115, 121, 127,
 };
 
 // goes down by 26 at each step for the first 4 values (starting from 255), then by ~12
-u8 gDefaultShortNoteDurationTable[16] = {
+u8 __attribute__((aligned(32))) gDefaultShortNoteDurationTable[16] = {
     229, 203, 177, 151, 139, 126, 113, 100, 87, 74, 61, 48, 36, 23, 10, 0,
 };
 
 #ifndef VERSION_EU
 // gVibratoCurve[k] = k*8
-s8 gVibratoCurve[16] = { 0, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120 };
+s8 __attribute__((aligned(32))) gVibratoCurve[16] = { 0, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120 };
 #endif
 
-struct AdsrEnvelope gDefaultEnvelope[] = {
+struct AdsrEnvelope __attribute__((aligned(32))) gDefaultEnvelope[] = {
     { BSWAP16(4), BSWAP16(26800/* 32000 */) },    // go from 0 to 32000 over the course of 16ms
     { BSWAP16(1000), BSWAP16(26800/* 32000 */) }, // stay there for 4.16 seconds
     { BSWAP16(ADSR_HANG), 0 }          // then continue staying there
