@@ -1027,7 +1027,8 @@ void audio_init() {
 
     // Load bank sets for each sequence (assets/bank_sets.s)
     gAlBankSets = soundAlloc(&gAudioInitPool, 0x100);
-    audio_dma_copy_immediate((uintptr_t) gBankSetsData, gAlBankSets, 0x100);
+    // warning: ‘memcpy’ reading 256 bytes from a region of size 160 [-Wstringop-overread]
+    audio_dma_copy_immediate((uintptr_t) gBankSetsData, gAlBankSets, 160); // 0x100);
 
     init_sequence_players();
     gAudioLoadLock = AUDIO_LOCK_NOT_LOADING;

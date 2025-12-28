@@ -23,7 +23,7 @@
 #define MEM_BARRIER_PREF(ptr) asm volatile("pref @%0" : : "r"((ptr)) : "memory")
 
 void n64_memcpy(void* dst, const void* src, size_t size) {
-//    __builtin_prefetch(src);
+    __builtin_prefetch(src);
     uint8_t* bdst = (uint8_t*) dst;
     uint8_t* bsrc = (uint8_t*) src;
     uint16_t* sdst = (uint16_t*) dst;
@@ -41,7 +41,7 @@ void n64_memcpy(void* dst, const void* src, size_t size) {
     if ((!(((uintptr_t) bdst | (uintptr_t) bsrc) & 3))) {
         while (words_to_copy--) {
 //            if ((words_to_copy & 3) == 0) {
-//                __builtin_prefetch(wsrc + 8);
+            __builtin_prefetch(wsrc + 8);
 //            }
             *wdst++ = *wsrc++;
         }
@@ -64,7 +64,7 @@ void n64_memcpy(void* dst, const void* src, size_t size) {
     } else if ((!(((uintptr_t) sdst | (uintptr_t) ssrc) & 1))) {
         while (shorts_to_copy--) {
 //            if ((shorts_to_copy & 7) == 0) {
-//                __builtin_prefetch(ssrc + 16);
+            __builtin_prefetch(ssrc + 16);
 //            }
             *sdst++ = *ssrc++;
         }
@@ -210,16 +210,9 @@ static void cb_read_data(int N, void *dst, size_t n) {
 }
 
 // --- KOS Stream Audio Callback (Consumer): Called by KOS when the AICA needs more data ---
-#define NUM_BUFFER_BLOCKS (2)
 
-void mute_stream(void) {
-    snd_stream_volume(shnd, 0); // Set maximum volume
-}
-
-void unmute_stream(void) {
-    snd_stream_volume(shnd, 160); // Set maximum volume
-}
-
+// this is a direct callback. it takes separate left and right channel buffers
+// which means we no longer need to interleave in the n64 audio code
 static size_t audio_cb(UNUSED snd_stream_hnd_t hnd, uintptr_t l, uintptr_t r, size_t req) {
     cb_read_data(0, (void*)l , req >> 1);
     cb_read_data(1, (void*)r , req >> 1);
@@ -262,31 +255,25 @@ static bool audio_dc_init(void) {
     // Set maximum volume
     snd_stream_volume(shnd, 160); 
 
+    snd_stream_start(shnd, DC_AUDIO_FREQUENCY, DC_STEREO_AUDIO);
     printf("Sound init complete!\n");
 
     return true;
 }
 
 static int audio_dc_buffered(void) {
-    return 1088;
+    return 0;
 }
 
 static int audio_dc_get_desired_buffered(void) {
-    return 1100;
+    return 0;
 }
 
 static void audio_dc_play(uint8_t *bufL, uint8_t *bufR, size_t len) {
     cb_write_data(0, bufL, len >> 1);
     cb_write_data(1, bufR, len >> 1);
 
-    if ((!audio_started)) {
-        audio_started = true;
-        snd_stream_start(shnd, DC_AUDIO_FREQUENCY, DC_STEREO_AUDIO);
-    }
-    
-    if (audio_started) {
-        snd_stream_poll(shnd);
-    }
+    snd_stream_poll(shnd);
 
     thd_pass();
 }
