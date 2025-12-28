@@ -392,7 +392,7 @@ static void over_skybox_setup_post(void) {
 
 extern int water_bomb;
 extern int doing_skybox;
-
+extern u16 gCutsceneMsgFade;
 extern int in_trilerp;
 extern int doing_peach;
 extern int doing_bowser;
@@ -506,7 +506,7 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
     if (doing_letter) {
         dc_fast_t *fast_vbo = (dc_fast_t*)buf_vbo;
         for(unsigned int i=0;i<3*buf_vbo_num_tris;i++)
-            fast_vbo[i].vert.z -= 10000.0f;
+            fast_vbo[i].color.array.a = gCutsceneMsgFade;
     }
 
     if (font_draw) {
