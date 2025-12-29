@@ -547,7 +547,7 @@ endif
 ifeq ($(TARGET_DC),1)
   #Notes from neo
   #-gdwarf-2 -gstrict-dwarf -g3 --ffunction-sections -fdata-sections -Wl,-gc-sections
-  PLATFORM_CFLAGS  := $(KOS_CFLAGS) -Os -flto=auto -DTARGET_DC -Wall -Wextra -DNDEBUG -Werror -Wno-missing-braces -Wno-old-style-declaration -Wno-unused-variable -Wno-unused-parameter
+  PLATFORM_CFLAGS  := $(KOS_CFLAGS) -Os -flto=auto -DTARGET_DC -Wall -Wextra -DNDEBUG -Werror -Wno-missing-braces -Wno-old-style-declaration -Wno-unused-variable -Wno-unused-parameter -fno-strict-aliasing
 
 ifeq ($(FOR_DCLOAD),1)
   PLATFORM_CFLAGS += -DFOR_DCLOAD=1
