@@ -73,6 +73,35 @@
 #define MOVTEX_ATTR_COLORED_S 7
 #define MOVTEX_ATTR_COLORED_T 8
 
+#include "sh4zam.h"
+static inline void sincoss(s16 arg0, f32* s, f32* c) {
+    register float __s __asm__("fr2");
+    register float __c __asm__("fr3");
+
+    asm("lds    %2,fpul\n\t"
+        "fsca    fpul,dr2\n\t"
+        : "=f"(__s), "=f"(__c)
+        : "r"(arg0)
+        : "fpul");
+
+    *s = __s;
+    *c = __c;
+}
+
+static inline void scaled_sincoss(s16 arg0, f32* s, f32* c, f32 scale) {
+    register float __s __asm__("fr2");
+    register float __c __asm__("fr3");
+
+    asm("lds    %2,fpul\n\t"
+        "fsca    fpul,dr2\n\t"
+        : "=f"(__s), "=f"(__c)
+        : "r"(arg0)
+        : "fpul");
+
+    *s = __s * scale;
+    *c = __c * scale;
+}
+
 /**
  * An object containing all info for a mesh with moving textures.
  * Contains the vertices that are animated, but also the display list which
@@ -353,13 +382,16 @@ Gfx *geo_movtex_pause_control(s32 callContext, UNUSED struct GraphNode *node, UN
  */
 void movtex_make_quad_vertex(Vtx *verts, s32 index, s16 x, s16 y, s16 z, s16 rot, s16 rotOffset,
                              f32 scale, u8 alpha) {
-    s16 s = 32.0f * (32.0f * scale - 1.0f) * sins(rot + rotOffset);
-    s16 t = 32.0f * (32.0f * scale - 1.0f) * coss(rot + rotOffset);
-
+    f32 sc_scale = 32.0f * (32.0f * scale - 1.0f);
+    f32 rs, rc;
+    scaled_sincoss(rot + rotOffset, &rs, &rc, sc_scale);
+    s16 s = (s16)rs; // 32.0f * (32.0f * scale - 1.0f) * sins(rot + rotOffset);
+    s16 t = (s16)rc; // 32.0f * (32.0f * scale - 1.0f) * coss(rot + rotOffset);
+    // default alpha was too "thick"
     if (gMovtexVtxColor == MOVTEX_VTX_COLOR_YELLOW) {
-        make_vertex(verts, index, x, y, z, s, t, 255, 255, 0, alpha);
+        make_vertex(verts, index, x, y, z, s, t, 255, 255, 0, alpha >> 1);
     } else if (gMovtexVtxColor == MOVTEX_VTX_COLOR_RED) {
-        make_vertex(verts, index, x, y, z, s, t, 255, 0, 0, alpha);
+        make_vertex(verts, index, x, y, z, s, t, 255, 0, 0, alpha >> 1);
     } else {
         make_vertex(verts, index, x, y, z, s, t, 255, 255, 255, alpha);
     }
@@ -445,13 +477,9 @@ Gfx *movtex_gen_from_quad(s16 y, struct MovtexQuad *quad) {
     // Only add commands to change the texture when necessary
     if (textureId != gMovetexLastTextureId) {
         if (textureId == TEXTURE_MIST) { // an ia16 texture
-            if (0) {
-            }
             gLoadBlockTexture(gfx++, 32, 32, G_IM_FMT_IA, gMovtexIdToTexture[textureId]);
         } else { // any rgba16 texture
             gLoadBlockTexture(gfx++, 32, 32, G_IM_FMT_RGBA, gMovtexIdToTexture[textureId]);
-            if (0) {
-            }
         }
         gMovetexLastTextureId = textureId;
     }
@@ -481,7 +509,7 @@ Gfx *movtex_gen_from_quad_array(s16 y, void *quadArrSegmented) {
     for (i = 0; i < numLists; i++) {
         // quadArr is an array of s16, so sizeof(MovtexQuad) gets divided by 2
         subList = movtex_gen_from_quad(
-            y, (struct MovtexQuad *) (&quadArr[i * (sizeof(struct MovtexQuad) / 2) + 1]));
+            y, (struct MovtexQuad *) (&quadArr[i * (sizeof(struct MovtexQuad) >> 1) + 1]));
         if (subList != NULL) {
             gSPDisplayList(gfx++, VIRTUAL_TO_PHYSICAL(subList));
         }
@@ -774,26 +802,26 @@ void movtex_write_vertex_index(Vtx *verts, s32 index, s16 *movtexVerts, struct M
             baseT = movtexVerts[MOVTEX_ATTR_NOCOLOR_T];
             offS = movtexVerts[index * 5 + MOVTEX_ATTR_NOCOLOR_S];
             offT = movtexVerts[index * 5 + MOVTEX_ATTR_NOCOLOR_T];
-            s = baseS + ((offS * 32) * 32U);
-            t = baseT + ((offT * 32) * 32U);
+            s = baseS + (offS << 10);//((offS * 32) * 32U);
+            t = baseT + (offT << 10);//((offT * 32) * 32U);
             r1 = d->r;
             g1 = d->g;
             b1 = d->b;
             make_vertex(verts, index, x, y, z, s, t, r1, g1, b1, alpha);
             break;
         case MOVTEX_LAYOUT_COLORED:
-            x = movtexVerts[index * 8 + MOVTEX_ATTR_X];
-            y = movtexVerts[index * 8 + MOVTEX_ATTR_Y];
-            z = movtexVerts[index * 8 + MOVTEX_ATTR_Z];
+            x = movtexVerts[(index << 3/* * 8 */) + MOVTEX_ATTR_X];
+            y = movtexVerts[(index << 3/* * 8 */) + MOVTEX_ATTR_Y];
+            z = movtexVerts[(index << 3/* * 8 */) + MOVTEX_ATTR_Z];
             baseS = movtexVerts[7];
             baseT = movtexVerts[8];
-            offS = movtexVerts[index * 8 + 7];
-            offT = movtexVerts[index * 8 + 8];
-            s = baseS + ((offS * 32) * 32U);
-            t = baseT + ((offT * 32) * 32U);
-            r2 = movtexVerts[index * 8 + MOVTEX_ATTR_COLORED_R];
-            g2 = movtexVerts[index * 8 + MOVTEX_ATTR_COLORED_G];
-            b2 = movtexVerts[index * 8 + MOVTEX_ATTR_COLORED_B];
+            offS = movtexVerts[(index << 3/* * 8 */) + 7];
+            offT = movtexVerts[(index << 3/* * 8 */) + 8];
+            s = baseS + (offS << 10);//((offS * 32) * 32U);
+            t = baseT + (offT << 10);//((offT * 32) * 32U);
+            r2 = movtexVerts[(index << 3/* * 8 */) + MOVTEX_ATTR_COLORED_R];
+            g2 = movtexVerts[(index << 3/* * 8 */) + MOVTEX_ATTR_COLORED_G];
+            b2 = movtexVerts[(index << 3/* * 8 */) + MOVTEX_ATTR_COLORED_B];
             make_vertex(verts, index, x, y, z, s, t, r2, g2, b2, alpha);
             break;
     }

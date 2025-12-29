@@ -50,7 +50,7 @@ Vtx *vertex_transition_color(struct WarpTransitionData *transData, u8 alpha) {
     u8 g = transData->green;
     u8 b = transData->blue;
 
-    clear_color = ((r >> 3)<<11) | ((g>>3)<<6) | ((b>>3)<<1) | 1;
+//    clear_color = ((r >> 3)<<11) | ((g>>3)<<6) | ((b>>3)<<1) | 1;
 
     if (verts != NULL) {
         make_vertex(verts, 0, GFX_DIMENSIONS_FROM_LEFT_EDGE(0), 0, -1, 0, 0, r, g, b, alpha);
@@ -175,7 +175,7 @@ s32 render_textured_transition(s8 fadeTimer, s8 transTime, struct WarpTransition
     s16 centerTransY = center_tex_transition_y(transData, texTransTime, texTransPos);
     s16 texTransRadius = calc_tex_transition_radius(fadeTimer, transTime, transData);
     Vtx *verts = alloc_display_list(8 * sizeof(*verts));
-    clear_color = 1;
+//    clear_color = 1;
     if (verts != NULL) {
         load_tex_transition_vertex(verts, fadeTimer, transData, centerTransX, centerTransY, texTransRadius, transTexType);
         gSPDisplayList(gDisplayListHead++, dl_proj_mtx_fullscreen)
