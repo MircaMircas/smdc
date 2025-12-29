@@ -354,6 +354,7 @@ void end_master_display_list(void) {
     create_task_structure();
 }
 
+// framebuffer drawing... we *could* do this on DC
 void draw_reset_bars(void) {
 #if !(defined(TARGET_DC) || defined(TARGET_PSP))
     s32 sp24;
@@ -410,19 +411,19 @@ void config_gfx_pool(void) {
 
 /** Handles vsync. */
 void display_and_vsync(void) {
-    profiler_log_thread5_time(BEFORE_DISPLAY_LISTS);
+    //profiler_log_thread5_time(BEFORE_DISPLAY_LISTS);
     //osRecvMesg(&D_80339CB8, &D_80339BEC, OS_MESG_BLOCK);
     if (D_8032C6A0 != NULL) {
         D_8032C6A0();
         D_8032C6A0 = NULL;
     }
     send_display_list(&gGfxPool->spTask);
-    profiler_log_thread5_time(AFTER_DISPLAY_LISTS);
+    //profiler_log_thread5_time(AFTER_DISPLAY_LISTS);
     //osRecvMesg(&gGameVblankQueue, &D_80339BEC, OS_MESG_BLOCK);
 #if !(defined(TARGET_DC) || defined(TARGET_PSP))
     osViSwapBuffer((void *) PHYSICAL_TO_VIRTUAL(gPhysicalFrameBuffers[sCurrFBNum]));
 #endif
-    profiler_log_thread5_time(THREAD5_END);
+    //profiler_log_thread5_time(THREAD5_END);
     //osRecvMesg(&gGameVblankQueue, &D_80339BEC, OS_MESG_BLOCK);
     if (++sCurrFBNum == 3) {
         sCurrFBNum = 0;
@@ -694,7 +695,7 @@ void game_loop_one_iteration(void) {
             return;
 #endif
         }
-        profiler_log_thread5_time(THREAD5_START);
+        //profiler_log_thread5_time(THREAD5_START);
 
         // if any controllers are plugged in, start read the data for when
         // read_controller_inputs is called later.

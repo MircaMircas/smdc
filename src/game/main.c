@@ -216,7 +216,7 @@ void interrupt_gfx_sptask(void) {
 void start_gfx_sptask(void) {
     if (gActiveSPTask == NULL && sCurrentDisplaySPTask != NULL
         && sCurrentDisplaySPTask->state == SPTASK_STATE_NOT_STARTED) {
-        profiler_log_gfx_time(TASKS_QUEUED);
+        //profiler_log_gfx_time(TASKS_QUEUED);
         start_sptask(M_GFXTASK);
     }
 }
@@ -253,7 +253,7 @@ void handle_vblank(void) {
         if (gActiveSPTask != NULL) {
             interrupt_gfx_sptask();
         } else {
-            profiler_log_vblank_time();
+            //profiler_log_vblank_time();
             if (sAudioEnabled != 0) {
                 start_sptask(M_AUDTASK);
             } else {
@@ -263,7 +263,7 @@ void handle_vblank(void) {
     } else {
         if (gActiveSPTask == NULL && sCurrentDisplaySPTask != NULL
             && sCurrentDisplaySPTask->state != SPTASK_STATE_FINISHED) {
-            profiler_log_gfx_time(TASKS_QUEUED);
+            //profiler_log_gfx_time(TASKS_QUEUED);
             start_sptask(M_GFXTASK);
         }
     }
@@ -293,11 +293,11 @@ void handle_sp_complete(void) {
             // The gfx task completed before we had time to interrupt it.
             // Mark it finished, just like below.
             curSPTask->state = SPTASK_STATE_FINISHED;
-            profiler_log_gfx_time(RSP_COMPLETE);
+            //profiler_log_gfx_time(RSP_COMPLETE);
         }
 
         // Start the audio task, as expected by handle_vblank.
-        profiler_log_vblank_time();
+        //profiler_log_vblank_time();
         if (sAudioEnabled != 0) {
             start_sptask(M_AUDTASK);
         } else {
@@ -307,11 +307,11 @@ void handle_sp_complete(void) {
         curSPTask->state = SPTASK_STATE_FINISHED;
         if (curSPTask->task.t.type == M_AUDTASK) {
             // After audio tasks come gfx tasks.
-            profiler_log_vblank_time();
+            //profiler_log_vblank_time();
             if (sCurrentDisplaySPTask != NULL
                 && sCurrentDisplaySPTask->state != SPTASK_STATE_FINISHED) {
                 if (sCurrentDisplaySPTask->state != SPTASK_STATE_INTERRUPTED) {
-                    profiler_log_gfx_time(TASKS_QUEUED);
+                    //profiler_log_gfx_time(TASKS_QUEUED);
                 }
                 start_sptask(M_GFXTASK);
             }
@@ -323,7 +323,7 @@ void handle_sp_complete(void) {
             // The SP process is done, but there is still a Display Processor notification
             // that needs to arrive before we can consider the task completely finished and
             // null out sCurrentDisplaySPTask. That happens in handle_dp_complete.
-            profiler_log_gfx_time(RSP_COMPLETE);
+            //profiler_log_gfx_time(RSP_COMPLETE);
         }
     }
 }
@@ -333,7 +333,7 @@ void handle_dp_complete(void) {
     if (sCurrentDisplaySPTask->msgqueue != NULL) {
         osSendMesg(sCurrentDisplaySPTask->msgqueue, sCurrentDisplaySPTask->msg, OS_MESG_NOBLOCK);
     }
-    profiler_log_gfx_time(RDP_COMPLETE);
+    //profiler_log_gfx_time(RDP_COMPLETE);
     sCurrentDisplaySPTask->state = SPTASK_STATE_FINISHED_DP;
     sCurrentDisplaySPTask = NULL;
 }

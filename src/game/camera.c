@@ -2193,9 +2193,9 @@ s16 update_default_camera(struct Camera *c) {
         if (xzDist >= 250) {
             sStatusFlags &= ~CAM_FLAG_BEHIND_MARIO_POST_DOOR;
         }
-        if (ABS((sMarioCamState->faceAngle[1] - yaw) / 2) < 0x1800) {
+        if (ABS((sMarioCamState->faceAngle[1] - yaw) /* / 2 */) < 0x3000 /* 0x1800 */) {
             sStatusFlags &= ~CAM_FLAG_BEHIND_MARIO_POST_DOOR;
-            yaw = sCameraYawAfterDoorCutscene + DEGREES(180);
+            yaw = sCameraYawAfterDoorCutscene + 32767; // DEGREES(180);
             dist = 800.f;
             sStatusFlags |= CAM_FLAG_BLOCK_SMOOTH_MOVEMENT;
         }
@@ -3599,6 +3599,7 @@ void unused_object_angle_to_vec3s(Vec3s dst, struct Object *o) {
  *
  * The spline is described at www2.cs.uregina.ca/~anima/408/Notes/Interpolation/UniformBSpline.htm
  */
+#if 1
 void evaluate_cubic_spline(f32 u, Vec3f Q, Vec3f a0, Vec3f a1, Vec3f a2, Vec3f a3) {
     f32 B[4];
 
@@ -3625,6 +3626,41 @@ void evaluate_cubic_spline(f32 u, Vec3f Q, Vec3f a0, Vec3f a1, Vec3f a2, Vec3f a
     Q[1] = Qout.y;
     Q[2] = Qout.z;
 }
+#else
+void evaluate_cubic_spline(f32 u, Vec3f Q, Vec3f a0, Vec3f a1, Vec3f a2, Vec3f a3) {
+    f32 B[4];
+    f32 x;
+    f32 y;
+    f32 z;
+    UNUSED u8 unused[16];
+
+    if (u > 1.f) {
+        u = 1.f;
+    }
+
+    B[0] = (1.f - u) * (1.f - u) * (1.f - u) / 6.f;
+    B[1] = u * u * u / 2.f - u * u + 0.6666667f;
+    B[2] = -u * u * u / 2.f + u * u / 2.f + u / 2.f + 0.16666667f;
+    B[3] = u * u * u / 6.f;
+
+    Q[0] = B[0] * a0[0] + B[1] * a1[0] + B[2] * a2[0] + B[3] * a3[0];
+    Q[1] = B[0] * a0[1] + B[1] * a1[1] + B[2] * a2[1] + B[3] * a3[1];
+    Q[2] = B[0] * a0[2] + B[1] * a1[2] + B[2] * a2[2] + B[3] * a3[2];
+
+    // Unused code
+    B[0] = -0.5f * u * u + u - 0.33333333f;
+    B[1] = 1.5f * u * u - 2.f * u - 0.5f;
+    B[2] = -1.5f * u * u + u + 1.f;
+    B[3] = 0.5f * u * u - 0.16666667f;
+
+    x = B[0] * a0[0] + B[1] * a1[0] + B[2] * a2[0] + B[3] * a3[0];
+    y = B[0] * a0[1] + B[1] * a1[1] + B[2] * a2[1] + B[3] * a3[1];
+    z = B[0] * a0[2] + B[1] * a1[2] + B[2] * a2[2] + B[3] * a3[2];
+
+    unusedSplinePitch = atan2s(sqrtf(x * x + z * z), y);
+    unusedSplineYaw = atan2s(z, x);
+}
+#endif
 
 /**
  * Computes the point that is `progress` percent of the way through segment `splineSegment` of `spline`,
@@ -3647,6 +3683,7 @@ void evaluate_cubic_spline(f32 u, Vec3f Q, Vec3f a0, Vec3f a1, Vec3f a2, Vec3f a
  * @return 1 if the point has reached the end of the spline, when `progress` reaches 1.0 or greater, and
  * the 4th CutsceneSplinePoint in the current segment away from spline[splineSegment] has an index of -1.
  */
+#if 1
 s32 move_point_along_spline(Vec3f p, struct CutsceneSplinePoint spline[], s16 *splineSegment, f32 *progress) {
     s32 finished = 0;
     Vec3f controlPoints[4];
@@ -3704,6 +3741,63 @@ s32 move_point_along_spline(Vec3f p, struct CutsceneSplinePoint spline[], s16 *s
     }
     return finished;
 }
+#else
+s32 move_point_along_spline(Vec3f p, struct CutsceneSplinePoint spline[], s16 *splineSegment, f32 *progress) {
+    s32 finished = 0;
+    Vec3f controlPoints[4];
+    s32 i = 0;
+    f32 u = *progress;
+    f32 progressChange;
+    f32 firstSpeed = 0;
+    f32 secondSpeed = 0;
+    s32 segment = *splineSegment;
+
+    if (*splineSegment < 0) {
+        segment = 0;
+        u = 0;
+    }
+    if (spline[segment].index == -1 || spline[segment + 1].index == -1 || spline[segment + 2].index == -1) {
+        return 1;
+    }
+
+    for (i = 0; i < 4; i++) {
+        controlPoints[i][0] = spline[segment + i].point[0];
+        controlPoints[i][1] = spline[segment + i].point[1];
+        controlPoints[i][2] = spline[segment + i].point[2];
+    }
+    evaluate_cubic_spline(u, p, controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3]);
+
+    if (spline[*splineSegment + 1].speed != 0) {
+        firstSpeed = 1.0f / spline[*splineSegment + 1].speed;
+    }
+    if (spline[*splineSegment + 2].speed != 0) {
+        secondSpeed = 1.0f / spline[*splineSegment + 2].speed;
+    }
+    progressChange = (secondSpeed - firstSpeed) * *progress + firstSpeed;
+
+#ifdef VERSION_EU
+    if (gCamera->cutscene == CUTSCENE_INTRO_PEACH) {
+        progressChange += progressChange * 0.19f;
+    }
+    if (gCamera->cutscene == CUTSCENE_CREDITS) {
+        progressChange += progressChange * 0.15f;
+    }
+    if (gCamera->cutscene == CUTSCENE_ENDING) {
+        progressChange += progressChange * 0.1f;
+    }
+#endif
+
+    if (1 <= (*progress += progressChange)) {
+        (*splineSegment)++;
+        if (spline[*splineSegment + 3].index == -1) {
+            *splineSegment = 0;
+            finished = 1;
+        }
+        *progress -= 1;
+    }
+    return finished;
+}
+#endif
 
 /**
  * If `selection` is 0, just get the current selection
@@ -3843,7 +3937,7 @@ void shake_camera_handheld(Vec3f pos, Vec3f focus) {
             for (i = 0; i < 3; i++) {
                 vec3s_copy(sHandheldShakeSpline[i].point, sHandheldShakeSpline[i + 1].point);
             }
-            random_vec3s(sHandheldShakeSpline[3].point, sHandheldShakeMag, sHandheldShakeMag, sHandheldShakeMag / 2);
+            random_vec3s(sHandheldShakeSpline[3].point, sHandheldShakeMag, sHandheldShakeMag, sHandheldShakeMag >> 1/* / 2 */);
             sHandheldShakeTimer -= 1.f;
 
             // Code dead, this is set to be 0 before it is used.
@@ -5356,21 +5450,26 @@ void set_focus_rel_mario(struct Camera *c, f32 leftRight, f32 yOff, f32 forwBack
  * @warning Flips the Z axis, so that relative to `rotation`, -Z moves forwards and +Z moves backwards.
  */
 void offset_rotated(Vec3f dst, Vec3f from, Vec3f to, Vec3s rotation) {
-    Vec3f unusedCopy;
+    //Vec3f unusedCopy;
     Vec3f pitchRotated;
+    f32 s0, c0;
+    f32 s1, c1;
 
-    vec3f_copy(unusedCopy, from);
+    sincoss(rotation[0], &s0, &c0);
+    sincoss(rotation[1], &s1, &c1);
+
+    //vec3f_copy(unusedCopy, from);
 
     // First rotate the direction by rotation's pitch
     //! The Z axis is flipped here.
-    pitchRotated[2] = -(to[2] * coss(rotation[0]) - to[1] * sins(rotation[0]));
-    pitchRotated[1] =   to[2] * sins(rotation[0]) + to[1] * coss(rotation[0]);
+    pitchRotated[2] = -(to[2] * c0 /* coss(rotation[0])*/ - to[1] * s0/* sins(rotation[0])*/);
+    pitchRotated[1] =   to[2] * s0/* sins(rotation[0])*/ + to[1] * c0/* coss(rotation[0]) */;
     pitchRotated[0] =   to[0];
 
     // Rotate again by rotation's yaw
-    dst[0] = from[0] + pitchRotated[2] * sins(rotation[1]) + pitchRotated[0] * coss(rotation[1]);
+    dst[0] = from[0] + pitchRotated[2] * s1/* sins(rotation[1]) */ + pitchRotated[0] * c1/* coss(rotation[1]) */;
     dst[1] = from[1] + pitchRotated[1];
-    dst[2] = from[2] + pitchRotated[2] * coss(rotation[1]) - pitchRotated[0] * sins(rotation[1]);
+    dst[2] = from[2] + pitchRotated[2] * c1/* coss(rotation[1]) */ - pitchRotated[0] * s1/* sins(rotation[1]) */;
 }
 
 /**
@@ -5390,7 +5489,7 @@ void determine_pushing_or_pulling_door(s16 *rotation) {
     if (sMarioCamState->action == ACT_PULLING_DOOR) {
         *rotation = 0;
     } else {
-        *rotation = DEGREES(180);
+        *rotation = 32767;// DEGREES(180);
     }
 }
 

@@ -842,7 +842,7 @@ struct LevelCommand *level_script_execute(struct LevelCommand *cmd) {
         LevelScriptJumpTable[sCurrentCmd->type]();
     }
 
-    profiler_log_thread5_time(LEVEL_SCRIPT_EXECUTE);
+    //profiler_log_thread5_time(LEVEL_SCRIPT_EXECUTE);
     init_render_image();
     render_game();
     end_master_display_list();
