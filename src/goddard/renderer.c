@@ -782,9 +782,9 @@ f64 gd_cos_d(f64 x) {
 
 /* 249B2C -> 249BA4 */
 f64 gd_sqrt_d(f64 x) {
-/*     if (x < 1.0e-7) {
-        return 0.0;
-    } */
+     if (x < 1.0e-7f) {
+        return 0.0f;
+    }
     return shz_sqrtf_fsrra(x);
 }
 
@@ -796,14 +796,14 @@ f64 Unknown8019B3D4(UNUSED f64 x) {
 /* 249BCC -> 24A19C */
 void gd_printf(const char *format, ...) {
     s32 i; // 15c
-    UNUSED u32 pad158;
+//    UNUSED u32 pad158;
     char c; // 157
     char f; // 156
-    UNUSED u32 pad150;
+//    UNUSED u32 pad150;
     char buf[0x100]; // 50
     char *csr = buf; // 4c
     char spec[8];    // 44; goddard specifier string
-    UNUSED u32 pad40;
+//    UNUSED u32 pad40;
     union PrintVal val; // 38;
     va_list args;       // 34
 
@@ -1061,7 +1061,7 @@ void Unknown8019C288(s32 stickX, s32 stickY) {
     struct GdControl *ctrl = &gGdCtrl; // 4
 
     ctrl->stickXf = (f32) stickX;
-    ctrl->stickYf = (f32)(stickY / 2);
+    ctrl->stickYf = (f32)(stickY >> 1/* / 2 */);
 }
 
 /* 24AAA8 -> 24AAE0; orig name: func_8019C2D8 */
@@ -1134,7 +1134,7 @@ struct ObjView *make_view_withgrp(char *name, struct ObjGroup *grp) {
 
 /* 24AD14 -> 24AEB8 */
 void gdm_maketestdl(s32 id) {
-    UNUSED u32 pad[3];
+//    UNUSED u32 pad[3];
 
     add_to_stacktrace("gdm_maketestdl");
     switch (id) {
@@ -1729,8 +1729,11 @@ void func_8019F318(struct ObjCamera *cam, f32 arg1, f32 arg2, f32 arg3, f32 arg4
     LookAt *lookat; // 5c
 
     arg7 *= RAD_PER_DEG;
+    f32 s7,c7;
+    s7 = sinf(arg7);
+    c7 = cosf(arg7);
 
-    gd_mat4f_lookat(&cam->unkE8, arg1, arg2, arg3, arg4, arg5, arg6, gd_sin_d(arg7), gd_cos_d(arg7),
+    gd_mat4f_lookat(&cam->unkE8, arg1, arg2, arg3, arg4, arg5, arg6, s7, c7, //gd_sin_d(arg7), gd_cos_d(arg7),
                   0.0f);
     // 8019F3C8
     mat4_to_mtx(&cam->unkE8, &DL_CURRENT_MTX(sCurrentGdDl));
@@ -1880,11 +1883,11 @@ void func_801A0038(void) {
 
 /* 24E840 -> 24E9BC */
 void func_801A0070(void) {
-    UNUSED u32 pad;
+//    UNUSED u32 pad;
     s32 i;               // 28
-    UNUSED s32 startvtx; // 24
+//    UNUSED s32 startvtx; // 24
 
-    startvtx = D_801BB0CC;
+//    startvtx = D_801BB0CC;
     if (D_801BB0BC != 0) {
         gSPVertex(next_gfx(), osVirtualToPhysical(&sCurrentGdDl->vtx[D_801BB0CC]), D_801BB0BC, 0);
         for (i = 0; i < D_801BB0C4; i++) {
@@ -1957,45 +1960,54 @@ void func_801A0478(s32 idx, // material GdDl number; offsets into hilite array
                    struct GdVec3f *arg4,   // vector to light source?
                    struct GdColour *colour // light color
 ) {
-    UNUSED u32 pad2[24];
+    //    UNUSED u32 pad2[24];
     Hilite *hilite; // 4c
     struct GdVec3f sp40;
     f32 sp3C; // magnitude of sp40
-    f32 sp38;
-    f32 sp34;
-    UNUSED u32 pad[6];
+//    f32 sp38;
+//    f32 sp34;
+//    UNUSED u32 pad[6];
 
-    sp38 = 32.0f; // x scale factor?
-    sp34 = 32.0f; // y scale factor?
+//    sp38 = 32.0f; // x scale factor?
+//    sp34 = 32.0f; // y scale factor?
+#if 0
     if (idx >= 0xc8) {
         fatal_printf("too many hilites");
     }
+#endif
     hilite = &sHilites[idx];
 
-    gDPSetPrimColor(next_gfx(), 0, 0, (s32)(colour->r * 255.0f), (s32)(colour->g * 255.0f),
-                    (s32)(colour->b * 255.0f), 255);
+    gDPSetPrimColor(next_gfx(), 0, 0, (s32) (colour->r * 255.0f), (s32) (colour->g * 255.0f),
+                    (s32) (colour->b * 255.0f), 255);
     sp40.z = cam->unkE8[0][2] + arg4->x;
     sp40.y = cam->unkE8[1][2] + arg4->y;
     sp40.x = cam->unkE8[2][2] + arg4->z;
     sp3C = shz_vec3_magnitude_inv(shz_vec3_deref(&sp40.x));
-//    sp3C = sqrtf(SQ(sp40.z) + SQ(sp40.y) + SQ(sp40.x));
-    if (sp3C < 10.0f) { //0.1) {
-//        sp3C = 1.0 / sp3C; //? 1.0f
+    if (sp3C < 10.0f) {
         sp40.z *= sp3C;
         sp40.y *= sp3C;
         sp40.x *= sp3C;
 
         hilite->h.x1 =
-            (((sp40.z * cam->unkE8[0][0]) + (sp40.y * cam->unkE8[1][0]) + (sp40.x * cam->unkE8[2][0]))
-             * sp38 * 2.0f)
-            + (sp38 * 4.0f);
+            (shz_dot6f(sp40.z, sp40.y, sp40.x,
+                       cam->unkE8[0][0], cam->unkE8[1][0], cam->unkE8[2][0])
+             * 64.0f /* sp38 * 2.0f */)
+            + 128.0f; //(sp38 * 4.0f);
+
+        //            (((sp40.z * cam->unkE8[0][0]) + (sp40.y * cam->unkE8[1][0]) + (sp40.x * cam->unkE8[2][0]))
+        //             * sp38 * 2.0f)
+        //            + (sp38 * 4.0f);
         hilite->h.y1 =
-            (((sp40.z * cam->unkE8[0][1]) + (sp40.y * cam->unkE8[1][1]) + (sp40.x * cam->unkE8[2][1]))
-             * sp34 * 2.0f)
-            + (sp34 * 4.0f);
+            (shz_dot6f(sp40.z, sp40.y, sp40.x,
+                       cam->unkE8[0][1], cam->unkE8[1][1], cam->unkE8[2][1])
+             * 64.0f /* sp34 * 2.0f */)
+            + 128.0f; //(sp34 * 4.0f);
+                      //            (((sp40.z * cam->unkE8[0][1]) + (sp40.y * cam->unkE8[1][1]) + (sp40.x * cam->unkE8[2][1]))
+                      //             * sp34 * 2.0f)
+                      //            + (sp34 * 4.0f);
     } else {
-        hilite->h.x1 = sp38 * 2.0f;
-        hilite->h.y1 = sp34 * 2.0f;
+        hilite->h.x1 = 64.0f; // sp38 * 2.0f;
+        hilite->h.y1 = 64.0f; // sp34 * 2.0f;
     }
 }
 
@@ -2123,8 +2135,8 @@ void set_Vtx_norm_buf_2(struct GdVec3f *norm) {
     sVtxCvrtNormBuf[2] = (s8)(norm->z * 127.0f);
 
     //? are these stub functions?
-    return; // @ 801A17A0
-    return; // @ 801A17A8
+//    return; // @ 801A17A0
+//    return; // @ 801A17A8
 }
 
 /* 24FF80 -> 24FFDC; orig name: func_801A17B0 */
@@ -2380,11 +2392,11 @@ void parse_p1_controller(void) {
     }
     // deadzone checks?
     if (ABS(gdctrl->stickX) >= 6) {
-        gdctrl->csrX += gdctrl->stickX * 0.1; //? 0.1f
+        gdctrl->csrX += gdctrl->stickX * 0.1f; //? 0.1f
     }
 
     if (ABS(gdctrl->stickY) >= 6) {
-        gdctrl->csrY -= gdctrl->stickY * 0.1; //? 0.1f
+        gdctrl->csrY -= gdctrl->stickY * 0.1f; //? 0.1f
     }
     // border checks? is this for the cursor finger movement?
     if ((f32) gdctrl->csrX < (sScreenView2->parent->upperLeft.x + 16.0f)) {
@@ -2414,13 +2426,15 @@ void parse_p1_controller(void) {
 
 /* 251A1C -> 251AC4 */
 void Unknown801A324C(f32 arg0) {
+#if 0
     return;
 
-    if (D_801BD768.x * D_801A86CC.x + arg0 * 2.0f > 160.0) //? 160.0f
+    if (D_801BD768.x * D_801A86CC.x + arg0 * 2.0f > 160.0f) //? 160.0f
     {
         func_801A3370(D_801BD758.x - D_801BD768.x, -20.0f, 0.0f);
         D_801BD768.x = D_801BD758.x;
     }
+#endif
 }
 
 /* 251AC4 -> 251AF4 */
@@ -2501,7 +2515,7 @@ s32 gd_getproperty(s32 prop, UNUSED void *arg1) {
 
 /* 251E18 -> 2522B0 */
 void gd_setproperty(enum GdProperty prop, f32 f1, f32 f2, f32 f3) {
-    UNUSED f32 sp3C = 1.0f;
+//    UNUSED f32 sp3C = 1.0f;
     s32 parm; // 38
 
     switch (prop) {
@@ -2609,11 +2623,11 @@ void gd_create_ortho_matrix(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f) {
 /* 25245C -> 25262C */
 void gd_create_perspective_matrix(f32 fovy, f32 aspect, f32 near, f32 far) {
     u16 perspNorm;
-    UNUSED u32 unused1;
+//    UNUSED u32 unused1;
     uintptr_t perspecMtx;
     uintptr_t rotMtx;
-    UNUSED u32 unused2;
-    UNUSED f32 unusedf = 0.0625f;
+//    UNUSED u32 unused2;
+//    UNUSED f32 unusedf = 0.0625f;
 
     sGdPerspTimer += 0.1;
     guPerspective(&DL_CURRENT_MTX(sCurrentGdDl), &perspNorm, fovy, aspect, near, far, 1.0f);
@@ -2727,8 +2741,8 @@ void func_801A4424(UNUSED void *arg0) {
 
 /* 252C08 -> 252C70 */
 void func_801A4438(f32 x, f32 y, f32 z) {
-    D_801BB0E8.x = x - (sActiveView->lowerRight.x / 2.0f);
-    D_801BB0E8.y = (sActiveView->lowerRight.y / 2.0f) - y;
+    D_801BB0E8.x = x - (sActiveView->lowerRight.x * 0.5f /* / 2.0f */);
+    D_801BB0E8.y = (sActiveView->lowerRight.y * 0.5f /* / 2.0f */) - y;
     D_801BB0E8.z = z;
 }
 
@@ -2878,7 +2892,7 @@ void func_801A4918(void) {
           && y > sMenuView->upperLeft.y && y < sMenuView->upperLeft.y + sMenuView->lowerRight.y)) {
         return;
     }
-    ydiff = (y - sMenuView->upperLeft.y) / 25.0f;
+    ydiff = (y - sMenuView->upperLeft.y) * 0.04f; // / 25.0f;
 
     if (ydiff < sItemsInMenu) {
         sMenuGadgets[ydiff]->drawFlags |= OBJ_USE_ENV_COLOUR;
@@ -3231,7 +3245,7 @@ void func_801A5BE8(struct ObjView *view) {
 union ObjVarVal *cvrt_val_to_kb(union ObjVarVal *dst, union ObjVarVal src) {
     union ObjVarVal temp;
 
-    temp.f = src.f / 1024.0; //? 1024.0f
+    temp.f = src.f * 0.00097656f; // / 1024.0; //? 1024.0f
     return (*dst = temp, dst);
 }
 
@@ -3686,22 +3700,22 @@ void func_801A71CC(struct ObjNet *net) {
 
     gd_print_plane("making zones for net=", (const struct GdPlaneF *)&net->unkBC);
 
-    sp64.x = (ABS(net->unkBC.p0.x) + ABS(net->unkBC.p1.x)) / 16.0f;
-    sp64.z = (ABS(net->unkBC.p0.z) + ABS(net->unkBC.p1.z)) / 16.0f;
+    sp64.x = (ABS(net->unkBC.p0.x) + ABS(net->unkBC.p1.x)) * 0.0625f; // / 16.0f;
+    sp64.z = (ABS(net->unkBC.p0.z) + ABS(net->unkBC.p1.z)) * 0.0625f; // / 16.0f;
 
-    spA8 = net->unkBC.p0.z + sp64.z / 2.0f;
+    spA8 = net->unkBC.p0.z + sp64.z * 0.5f; // / 2.0f;
 
     for (i = 0; i < 16; i++) {
-        spAC = net->unkBC.p0.x + sp64.x / 2.0f;
+        spAC = net->unkBC.p0.x + sp64.x * 0.5f; // / 2.0f;
 
         for (j = 0; j < 16; j++) {
-            sp90.p0.x = spAC - (sp64.x / 2.0f);
+            sp90.p0.x = spAC - (sp64.x * 0.5f); // / 2.0f;
             sp90.p0.y = 0.0f;
-            sp90.p0.z = spA8 - (sp64.z / 2.0f);
+            sp90.p0.z = spA8 - (sp64.z * 0.5f); // / 2.0f;
 
-            sp90.p1.x = spAC + (sp64.x / 2.0f);
+            sp90.p1.x = spAC + (sp64.x * 0.5f); // / 2.0f;
             sp90.p1.y = 0.0f;
-            sp90.p1.z = spA8 + (sp64.z / 2.0f);
+            sp90.p1.z = spA8 + (sp64.z * 0.5f); // / 2.0f;
 
             sp88 = make_zone(NULL, &sp90, NULL);
             addto_group(net->unk21C, &sp88->header);

@@ -145,7 +145,7 @@ void Unknown801781DC(struct ObjZone *zone) {
         if (sp2C > 600.0f) {
             sp2C = 600.0f;
         }
-        sp2C = 1.0 - sp2C / 600.0;
+        sp2C = 1.0f - sp2C * 0.00166667f; // / 600.0;
         unk->unk30->normal.x = sp2C * light->colour.r;
         unk->unk30->normal.y = sp2C * light->colour.g;
         unk->unk30->normal.z = sp2C * light->colour.b;
@@ -280,7 +280,7 @@ void draw_light(struct ObjLight *light) {
         sp94.y = -light->unk80.y;
         sp94.z = -light->unk80.z;
         gd_create_origin_lookat(&sp54, &sp94, 0.0f);
-        uMultiplier = light->unk38 / 45.0;
+        uMultiplier = light->unk38 * 0.02222222f; // / 45.0;
         shape = D_801A82E4;
         uMatPtr = &sp54;
     } else {
@@ -683,7 +683,7 @@ void func_80179B64(struct ObjGroup *group) {
                                     | OBJ_TYPE_JOINTS | OBJ_TYPE_BONES,
                                 (applyproc_t) Unknown80179ACC, group);
 }
-
+#include "sh4zam.h"
 /* 22836C -> 228498 */
 void func_80179B9C(struct GdVec3f *pos, struct ObjCamera *cam, struct ObjView *view) {
     gd_rotate_and_translate_vec3f(pos, (const Mat4f *)&cam->unkE8);
@@ -691,10 +691,12 @@ void func_80179B9C(struct GdVec3f *pos, struct ObjCamera *cam, struct ObjView *v
         return;
     }
 
-    pos->x *= 256.0 / -pos->z;
-    pos->y *= 256.0 / pos->z;
-    pos->x += view->lowerRight.x / 2.0f;
-    pos->y += view->lowerRight.y / 2.0f;
+    f32 recipz256 = shz_divf(256.0f, pos->z);
+
+    pos->x *= -recipz256; // 256.0 / -pos->z;
+    pos->y *= recipz256; // 256.0 / pos->z;
+    pos->x += view->lowerRight.x * 0.5f; // / 2.0f;
+    pos->y += view->lowerRight.y * 0.5f; // / 2.0f;
 }
 
 /**
@@ -858,7 +860,7 @@ void draw_particle(struct GdObj *obj) {
     if (ptc->unk5C > 0) {
         white = sColourPalette[0];
         black = sWhiteBlack[1];
-        sp58 = ptc->unk5C / 10.0;
+        sp58 = ptc->unk5C * 0.1f; // / 10.0;
         sLightColours[0].r = (white->r - black->r) * sp58 + black->r;
         sLightColours[0].g = (white->g - black->g) * sp58 + black->g;
         sLightColours[0].b = (white->b - black->b) * sp58 + black->b;
@@ -899,7 +901,7 @@ void draw_bone(struct GdObj *obj) {
     // dead code
     scale.x = 1.0f;
     scale.y = 1.0f;
-    scale.z = bone->unkF8 / 50.0f;
+    scale.z = bone->unkF8 * 0.02f; // / 50.0f;
 
     if (bone->header.drawFlags & OBJ_USE_ENV_COLOUR) {
         colour = 8;
@@ -1023,11 +1025,11 @@ void Proc8017A980(struct ObjLight *light) {
     sp24 = light->unk30;
     if (light->flags & LIGHT_UNK02) {
         sp20 = -gd_dot_vec3f(&sLightPositionCache[light->id], &light->unk80);
-        sp1C = 1.0 - light->unk38 / 90.0;
+        sp1C = 1.0f - light->unk38 * 0.01111111f; // / 90.0;
         if (sp20 > sp1C) {
-            sp20 = (sp20 - sp1C) * (1.0 / (1.0 - sp1C));
-            if (sp20 > 1.0) {
-                sp20 = 1.0;
+            sp20 = (sp20 - sp1C) * shz_fast_invf(1.0f - sp1C); // (1.0 / (1.0 - sp1C));
+            if (sp20 > 1.0f) {
+                sp20 = 1.0f;
             } else if (sp20 < 0.0f) {
                 sp20 = 0.0f;
             }
@@ -1204,10 +1206,12 @@ void calc_vtx_normal(struct ObjVertex *vtx, struct ObjGroup *facegrp) {
         }
         faceLink = faceLink->next;
     }
+
     if (facesAdded != 0) {
-        vtx->normal.x /= facesAdded;
-        vtx->normal.y /= facesAdded;
-        vtx->normal.z /= facesAdded;
+        f32 invFacesAdded = shz_fast_invf(facesAdded);
+        vtx->normal.x *= invFacesAdded; // /= facesAdded;
+        vtx->normal.y *= invFacesAdded; // /= facesAdded;
+        vtx->normal.z *= invFacesAdded; // /= facesAdded;
     }
 }
 

@@ -490,7 +490,7 @@ f32 func_8018D560(void) {
         sSecondarySeed = temp;
     }
 
-    val = (sPrimarySeed & 0xFFFF) / 65535.0; // 65535.0f
+    val = (sPrimarySeed & 0xFFFF) * 0.00001526f; // / 65535.0; // 65535.0f
 
     return val;
 }

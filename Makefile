@@ -524,7 +524,7 @@ ifeq ($(TARGET_DC),1)
   LD  := $(CC)
   OBJDUMP := sh-elf-objdump
   OBJCOPY := sh-elf-objcopy
-  CC_CHECK_CFLAGS += -DPSP_LEGACY_TYPES_DEFINED -DPSP_LEGACY_VOLATILE_TYPES_DEFINED
+  #CC_CHECK_CFLAGS += -DPSP_LEGACY_TYPES_DEFINED -DPSP_LEGACY_VOLATILE_TYPES_DEFINED
 endif
 
 # Platform-specific compiler and linker flags

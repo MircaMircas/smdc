@@ -637,7 +637,7 @@ struct ObjView *make_view(const char *name, s32 flags, s32 a2, s32 ulx, s32 uly,
     newView->unk48 = 1.0f;
     newView->unk4C = 1.0f;
 
-    newView->colour.r = newView->id * 0.1; //? 0.1f, unless the extra precision was wanted for the tenth
+    newView->colour.r = newView->id * 0.1f; //? 0.1f, unless the extra precision was wanted for the tenth
     newView->colour.g = 0.06f;
     newView->colour.b = 1.0f;
 
@@ -1121,12 +1121,12 @@ void func_8017E584(struct ObjNet *a0, struct GdVec3f *a1, struct GdVec3f *a2) {
     gd_cross_vec3f(&sp70, a1, &sp94);
     sp2C = (f32) gd_sqrt_d((sp94.x * sp94.x) + (sp94.z * sp94.z));
 
-    if (sp2C > 1000.0) { //? 1000.0f
+    if (sp2C > 1000.0f) { //? 1000.0f
         sp2C = 1000.0f;
     }
 
-    sp2C /= 1000.0;    //? 1000.0f
-    sp2C = 1.0 - sp2C; //? 1.0f - sp2C
+    sp2C *= 0.001f; // /= 1000.0;    //? 1000.0f
+    sp2C = 1.0f - sp2C; //? 1.0f - sp2C
 
     sp88.x = a2->x * sp2C;
     sp88.y = a2->y * sp2C;
@@ -1161,9 +1161,9 @@ void func_8017E838(struct ObjNet *a0, struct GdVec3f *a1, struct GdVec3f *a2) {
     sp64.y -= sp18.y;
     sp64.z -= sp18.z;
 
-    sp64.x *= 0.01; //? 0.01f;
-    sp64.y *= 0.01; //? 0.01f;
-    sp64.z *= 0.01; //? 0.01f;
+    sp64.x *= 0.01f; //? 0.01f;
+    sp64.y *= 0.01f; //? 0.01f;
+    sp64.z *= 0.01f; //? 0.01f;
 
     gd_cross_vec3f(a2, &sp64, &sp70);
     gd_clamp_vec3f(&sp70, 5.0f);
@@ -1717,7 +1717,7 @@ void drag_picked_object(struct GdObj *inputObj) {
     }
 
     sp28 = gd_vec3f_magnitude(&gViewUpdateCamera->unk40);
-    sp28 /= 1000.0f;
+    sp28 *= 0.001f; // /= 1000.0f;
 
     spD0.x = ((f32)(ctrl->csrX - ctrl->csrXatApress)) * sp28;
     spD0.y = ((f32) - (ctrl->csrY - ctrl->csrYatApress)) * sp28;
@@ -1903,8 +1903,8 @@ void func_8018100C(struct ObjLight *light) {
     UNUSED u32 pad1C[3];
 
     if (light->unk40 == 3) {
-        if (light->unk30 > 0.0) { //? 0.0f
-            light->unk30 -= 0.2;  //? 0.2f
+        if (light->unk30 > 0.0f) { //? 0.0f
+            light->unk30 -= 0.2f;  //? 0.2f
         }
 
         if (light->unk30 < 0.0f) {
@@ -1939,8 +1939,8 @@ void func_8018100C(struct ObjLight *light) {
 
     return;
     // more unreachable
-    D_801A81C0 += 1.0; //? 1.0f
-    D_801A81C4 += 0.6; //? 0.6f
+    D_801A81C0 += 1.0f; //? 1.0f
+    D_801A81C4 += 0.6f; //? 0.6f
 
     gd_set_identity_mat4(&mtx);
     gd_absrot_mat4(&mtx, GD_Y_AXIS, light->unk68.y);
