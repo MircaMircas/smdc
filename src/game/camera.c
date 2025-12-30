@@ -4693,14 +4693,15 @@ f32 calc_hor_dist(Vec3f a, Vec3f b) {
  * Rotates a vector in the horizontal plane and copies it to a new vector.
  */
 void rotate_in_xz(Vec3f dst, Vec3f src, s16 yaw) {
-    Vec3f tempVec;
     f32 ys,yc;
     sincoss(yaw, &ys, &yc);
+    f32 x = src[0];
+    f32 y = src[1];
+    f32 z = src[2];
 
-    vec3f_copy(tempVec, src);
-    dst[0] = tempVec[2] * ys/* sins(yaw) */ + tempVec[0] * yc/* coss(yaw) */;
-    dst[1] = tempVec[1];
-    dst[2] = tempVec[2] * yc/* coss(yaw) */ - tempVec[0] * ys/* sins(yaw) */;
+    dst[0] = z * ys/* sins(yaw) */ + x * yc/* coss(yaw) */;
+    dst[1] = y;
+    dst[2] = z * yc/* coss(yaw) */ - x * ys/* sins(yaw) */;
 }
 
 /**
@@ -4710,14 +4711,16 @@ void rotate_in_xz(Vec3f dst, Vec3f src, s16 yaw) {
  * space. If possible, use vec3f_set_dist_and_angle()
  */
 void rotate_in_yz(Vec3f dst, Vec3f src, s16 pitch) {
-    Vec3f tempVec;
     f32 ps,pc;
     sincoss(pitch, &ps, &pc);
+    f32 x = src[0];
+    f32 y = src[1];
+    f32 z = src[2];
 
-    vec3f_copy(tempVec, src);
-    dst[2] = -(tempVec[2] * pc/* coss(pitch) */ - tempVec[1] * ps/* sins(pitch) */);
-    dst[1] =   tempVec[2] * ps/* sins(pitch) */ + tempVec[1] * pc/* coss(pitch) */;
-    dst[0] =   tempVec[0];
+//    vec3f_copy(tempVec, src);
+    dst[2] = -(z * pc/* coss(pitch) */ - y * ps/* sins(pitch) */);
+    dst[1] =   z * ps/* sins(pitch) */ + y * pc/* coss(pitch) */;
+    dst[0] =   x;
 }
 
 /**

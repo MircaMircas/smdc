@@ -27,8 +27,9 @@ extern f32 __attribute__((aligned(32))) gPitchBendFrequencyScale[255];
 #endif
 extern f32 __attribute__((aligned(32))) gNoteFrequencies[128];
 
-extern u8 __attribute__((aligned(32))) gDefaultShortNoteVelocityTable[16];
-extern u8 __attribute__((aligned(32))) gDefaultShortNoteDurationTable[16];
+extern u8 __attribute__((aligned(32))) gDefaultShortNoteTables[32];
+//extern u8 __attribute__((aligned(32))) gDefaultShortNoteVelocityTable[16];
+//extern u8 __attribute__((aligned(32))) gDefaultShortNoteDurationTable[16];
 extern s8 __attribute__((aligned(32))) gVibratoCurve[16];
 extern struct AdsrEnvelope __attribute__((aligned(32))) gDefaultEnvelope[3];
 

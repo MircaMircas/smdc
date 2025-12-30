@@ -76,16 +76,16 @@ void gd_mat4f_lookat(Mat4f *mtx, f32 xFrom, f32 yFrom, f32 zFrom, f32 xTo, f32 y
     yColY = d.x * colX.z - d.z * colX.x;
     xColY = d.z * colX.y - d.y * colX.z;
 
-    invLength = shz_vec3_magnitude_inv((shz_vec3_t) { .x = xColY, .y = yColY, .z = zColY });
+    invLength = shz_vec3_magnitude_inv(shz_vec3_init(xColY, yColY, zColY));
 
     zColY *= invLength;
     yColY *= invLength;
     xColY *= invLength;
 
-    shz_vec3_t mtx_w = shz_vec3_dot3((shz_vec3_t) { .x = xFrom, .y = yFrom, .z = zFrom },
-                                     (shz_vec3_t) { .x = colX.z, .y = colX.y, .z = colX.x },
-                                     (shz_vec3_t) { .x = zColY, .y = yColY, .z = xColY },
-                                     (shz_vec3_t) { .x = d.z, .y = d.y, .z = d.x });
+    shz_vec3_t mtx_w = shz_vec3_dot3(shz_vec3_init(xFrom, yFrom, zFrom),
+        shz_vec3_init(colX.z, colX.y, colX.x),
+        shz_vec3_init(zColY, yColY, xColY),
+        shz_vec3_init(d.z, d.y, d.x));
 
     (*mtx)[0][0] = colX.z;
     (*mtx)[1][0] = colX.y;

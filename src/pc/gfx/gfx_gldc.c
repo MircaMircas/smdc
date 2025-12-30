@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glext.h>
@@ -130,7 +131,7 @@ static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
     glTexCoordPointer(2, GL_FLOAT, sizeof(dc_fast_t), &cur_buf[0].texture);
     glColorPointer(GL_BGRA, GL_UNSIGNED_BYTE, sizeof(dc_fast_t), &cur_buf[0].color);
     // have texture(s), specify same texcoords for every active texture
-    if (prg->texture_used[0] || prg->texture_used[1]) {
+    if (prg->texture_used[0]) { //} || prg->texture_used[1]) {
         glEnable(GL_TEXTURE_2D);
     } else {
         glDisable(GL_TEXTURE_2D);
@@ -495,8 +496,8 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
             if (!trilerp_a) return;
             for (size_t i=0;i<3*buf_vbo_num_tris;i++) {
                 fast_vbo[i].color.array.a = trilerp_a;
-                fast_vbo[i].vert.y += 0.1f;
-                fast_vbo[i].vert.z += 0.1f;
+                fast_vbo[i].vert.y -= 1.0f;
+                fast_vbo[i].vert.z -= 1.0f;
             }
         } else if (doing_bowser) {
             if (trilerp_a == 255) return;

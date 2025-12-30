@@ -2029,8 +2029,8 @@ void init_sequence_player(u32 player) {
     seqPlayer->transposition = 0;
     seqPlayer->muteBehavior = MUTE_BEHAVIOR_STOP_SCRIPT | MUTE_BEHAVIOR_STOP_NOTES | MUTE_BEHAVIOR_SOFTEN;
     seqPlayer->noteAllocPolicy = 0;
-    seqPlayer->shortNoteVelocityTable = gDefaultShortNoteVelocityTable;
-    seqPlayer->shortNoteDurationTable = gDefaultShortNoteDurationTable;
+    seqPlayer->shortNoteVelocityTable = &gDefaultShortNoteTables[0]; //gDefaultShortNoteVelocityTable;
+    seqPlayer->shortNoteDurationTable = &gDefaultShortNoteTables[16]; //gDefaultShortNoteDurationTable;
     seqPlayer->fadeVolume = 1.0f;
 #ifdef VERSION_EU
     seqPlayer->fadeVolumeScale = 1.0f;

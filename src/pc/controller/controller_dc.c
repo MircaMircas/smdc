@@ -1,5 +1,3 @@
-#if defined(TARGET_DC)
-
 #include <stdbool.h>
 #include <PR/ultratypes.h>
 //#include <ultra64.h>
@@ -116,5 +114,3 @@ static void controller_dc_read(OSContPad *pad) {
 }
 
 struct ControllerAPI controller_dc = { controller_dc_init, controller_dc_read };
-
-#endif

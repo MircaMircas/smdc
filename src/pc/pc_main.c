@@ -78,8 +78,6 @@ void send_display_list(struct SPTask *spTask) {
     gfx_run((Gfx *)spTask->task.t.data_ptr);
 }
 
-#define TARGET_DC 1
-#if defined(TARGET_DC)
 #include <kos.h>
 #undef bool
 #undef true
@@ -95,14 +93,10 @@ void vblfunc(uint32_t c, void *d) {
     vblticker++;
     genwait_wake_one((void*)&vblticker);
 }    
-//OSThread gSpinThread;
-//uint8_t somestack[4096];
 
-
-#if defined(TARGET_DC)
 #define SAMPLES_HIGH 448 
 //464
-#define SAMPLES_LOW 448
+//#define SAMPLES_LOW 448
 //432
 s16 audio_buffer[2][SAMPLES_HIGH * 2 * 2 * 3] __attribute__((aligned(64)));
 
@@ -111,18 +105,17 @@ void *AudioSynthesisThread(UNUSED void *arg) {
 
     while (1) {
         while (vblticker <= last_vbltick)
-            genwait_wait((void*)&vblticker, NULL, 5, NULL);
+            genwait_wait((void*)&vblticker, NULL, 3, NULL);
         last_vbltick = vblticker;
-        irq_disable();
+// if you notice the sound starts skipping, re-enable the irq_disable/enable around synthesis
+//        irq_disable();
         // num samples is 448
         create_next_audio_buffer(audio_buffer[0], audio_buffer[1], 448);
         audio_api->play((u8 *)audio_buffer[0], (u8 *)audio_buffer[1], 1792);
-        irq_enable();
+//        irq_enable();
     }
     return NULL;
 }
-#endif
-#endif
 
 extern int gProcessAudio;
 void produce_one_frame(void) {
@@ -130,39 +123,6 @@ void produce_one_frame(void) {
     game_loop_one_iteration();
     gfx_end_frame();
 }
-
-#ifdef TARGET_WEB
-static void em_main_loop(void) {
-}
-
-static void request_anim_frame(void (*func)(double time)) {
-    EM_ASM(requestAnimationFrame(function(time) {
-        dynCall("vd", $0, [time]);
-    }), func);
-}
-
-static void on_anim_frame(double time) {
-    static double target_time;
-
-    time *= 0.03; // milliseconds to frame count (33.333 ms -> 1)
-
-    if (time >= target_time + 10.0) {
-        // We are lagging 10 frames behind, probably due to coming back after inactivity,
-        // so reset, with a small margin to avoid potential jitter later.
-        target_time = time - 0.010;
-    }
-
-    for (int i = 0; i < 2; i++) {
-        // If refresh rate is 15 Hz or something we might need to generate two frames
-        if (time >= target_time) {
-            produce_one_frame();
-            target_time = target_time + 1.0;
-        }
-    }
-
-    request_anim_frame(on_anim_frame);
-}
-#endif
 
 static void save_config(void) {
     configfile_save(CONFIG_FILE);
@@ -172,68 +132,32 @@ static void on_fullscreen_changed(bool is_now_fullscreen) {
     configFullscreen = is_now_fullscreen;
 }
 
-
-#if (defined(TARGET_DC) || defined(TARGET_PSP))
 void *main_pc_pool = NULL;
 void *main_pc_pool_gd = NULL;
-#endif
+
+static u8 pool[0x165000+0x70800] __attribute__((aligned(16384)));
+
 void main_func(void) {
-#if !(defined(TARGET_DC) || defined(TARGET_PSP))
-    static u32 pool[0x165000/8 / 4 * sizeof(void *) * 2];
-#else
-    static u8 pool[0x165000+0x70800] __attribute__((aligned(4)));
     main_pc_pool = &pool;
     main_pc_pool_gd = &pool[0x165000];
-#endif
+
     main_pool_init(pool, pool + sizeof(pool) / sizeof(pool[0]));
     gEffectsMemoryPool = mem_pool_init(0x4000, MEMORY_POOL_LEFT);
 
     configfile_load(CONFIG_FILE);
     atexit(save_config);
 
-#ifdef TARGET_WEB
-    emscripten_set_main_loop(em_main_loop, 0, 0);
-    request_anim_frame(on_anim_frame);
-#endif
-
     rendering_api = &gfx_opengl_api;
-        wm_api = &gfx_dc;
+    wm_api = &gfx_dc;
 
     gfx_init(wm_api, rendering_api, "Super Mario 64", configFullscreen);
     
     wm_api->set_fullscreen_changed_callback(on_fullscreen_changed);
-//    wm_api->set_keyboard_callbacks(keyboard_on_key_down, keyboard_on_key_up, keyboard_on_all_keys_up);
     
-#if HAVE_WASAPI
-    if (audio_api == NULL && audio_wasapi.init()) {
-        audio_api = &audio_wasapi;
-    }
-#endif
-#if defined(TARGET_PSP)
-    if (audio_api == NULL && audio_psp.init()) {
-        audio_api = &audio_psp;
-    }
-#endif
-#if defined(TARGET_DC)
     if (audio_api == NULL && audio_dc.init()) {
         audio_api = &audio_dc;
     }
-#endif
-#if HAVE_PULSE_AUDIO
-    if (audio_api == NULL && audio_pulse.init()) {
-        audio_api = &audio_pulse;
-    }
-#endif
-#if HAVE_ALSA
-    if (audio_api == NULL && audio_alsa.init()) {
-        audio_api = &audio_alsa;
-    }
-#endif
-#ifdef TARGET_WEB
-    if (audio_api == NULL && audio_sdl.init()) {
-        audio_api = &audio_sdl;
-    }
-#endif
+
     if (audio_api == NULL) {
         audio_api = &audio_null;
     }
@@ -241,40 +165,30 @@ void main_func(void) {
     audio_init();
     sound_init();
 
-#if defined(TARGET_DC)
     vblank_handler_add(&vblfunc, NULL);
     kthread_attr_t audio_attr;
     audio_attr.create_detached = 1;
 	audio_attr.stack_size = 32768;
 	audio_attr.stack_ptr = NULL;
-	audio_attr.prio = PRIO_DEFAULT - 1;
+	audio_attr.prio = PRIO_DEFAULT + 1;
 	audio_attr.label = "AudioSynthesis";
     thd_create_ex(&audio_attr, &AudioSynthesisThread, NULL);
-#endif
 
     thread5_game_loop(NULL);
-#ifdef TARGET_WEB
-    /*for (int i = 0; i < atoi(argv[1]); i++) {
-        game_loop_one_iteration();
-    }*/
-    inited = 1;
-#else
+
     inited = 1;
 
     while (1) {
         gSysFrameCount++;
-        wm_api->main_loop(produce_one_frame);
+    gfx_start_frame();
+    game_loop_one_iteration();
+    gfx_end_frame();
+
+        //        wm_api->main_loop(produce_one_frame);
     }
-#endif
 }
 
-#if defined(_WIN32) || defined(_WIN64)
-#include <windows.h>
-int WINAPI WinMain(UNUSED HINSTANCE hInstance, UNUSED HINSTANCE hPrevInstance, UNUSED LPSTR pCmdLine, UNUSED int nCmdShow) {
-    main_func();
-    return 0;
-}
-#else
+
 #include <kos.h>
 int main(UNUSED int argc, UNUSED char *argv[]) {
     mmu_init_basic();
@@ -283,4 +197,3 @@ int main(UNUSED int argc, UNUSED char *argv[]) {
     main_func();
     return 0;
 }
-#endif

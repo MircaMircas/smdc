@@ -665,9 +665,10 @@ void linear_mtxf_mul_vec3f(Mat4 m, Vec3f dst, Vec3f v) {
     }
 #else
     shz_vec3_t XYZ = shz_vec3_dot3(shz_vec3_deref(v),
-    (shz_vec3_t){.x=m[0][0],.y=m[1][0],.z=m[2][0]},
-    (shz_vec3_t){.x=m[0][1],.y=m[1][1],.z=m[2][1]},
-    (shz_vec3_t){.x=m[0][2],.y=m[1][2],.z=m[2][2]});
+        shz_vec3_init(m[0][0], m[1][0], m[2][0]),
+        shz_vec3_init(m[0][1], m[1][1], m[2][1]),
+        shz_vec3_init(m[0][2], m[1][2], m[2][2]));
+
     dst[0] = XYZ.x;
     dst[1] = XYZ.y;
     dst[2] = XYZ.z;
@@ -690,7 +691,10 @@ void linear_mtxf_transpose_mul_vec3f(Mat4 m, Vec3f dst, Vec3f v) {
     }
 #else
     shz_vec3_t XYZ = shz_vec3_dot3(shz_vec3_deref(v),
-    shz_vec3_deref(m[0]), shz_vec3_deref(m[1]), shz_vec3_deref(m[2]));
+        shz_vec3_deref(m[0]),
+        shz_vec3_deref(m[1]),
+        shz_vec3_deref(m[2]));
+
     dst[0] = XYZ.x;
     dst[1] = XYZ.y;
     dst[2] = XYZ.z;
@@ -2091,14 +2095,14 @@ static void obj_build_vel_from_transform(struct Object *a0) {
     f32 sp8 = a0->oUnkBC;
     f32 sp4 = a0->oForwardVel;
 
-    shz_vec3_t a0vec = shz_vec3_dot3((shz_vec3_t) { .x = spC, .y = sp8, .z = sp4 },
-    (shz_vec3_t) { .x = a0->transform[0][0], .y = a0->transform[1][0], .z = a0->transform[2][0] },
-    (shz_vec3_t) { .x = a0->transform[0][1], .y = a0->transform[1][1], .z = a0->transform[2][1] },
-    (shz_vec3_t) { .x = a0->transform[0][2], .y = a0->transform[1][2], .z = a0->transform[2][2] });
+    shz_vec3_t a0vec = shz_vec3_dot3(shz_vec3_init(spC, sp8, sp4),
+        shz_vec3_init(a0->transform[0][0], a0->transform[1][0], a0->transform[2][0]),
+        shz_vec3_init(a0->transform[0][1], a0->transform[1][1], a0->transform[2][1]),
+        shz_vec3_init(a0->transform[0][2], a0->transform[1][2], a0->transform[2][2]));
 
-    a0->oVelX = a0vec.x; // a0->transform[0][0] * spC + a0->transform[1][0] * sp8 + a0->transform[2][0] * sp4;
-    a0->oVelY = a0vec.y; // a0->transform[0][1] * spC + a0->transform[1][1] * sp8 + a0->transform[2][1] * sp4;
-    a0->oVelZ = a0vec.z; // a0->transform[0][2] * spC + a0->transform[1][2] * sp8 + a0->transform[2][2] * sp4;
+    a0->oVelX = a0vec.x;
+    a0->oVelY = a0vec.y;
+    a0->oVelZ = a0vec.z;
 }
 
 void cur_obj_set_pos_via_transform(void) {

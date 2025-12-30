@@ -943,6 +943,14 @@ $(BUILD_DIR)/$(TARGET).objdump: $(ELF)
 	$(OBJDUMP) -D $< > $@
 
 else
+
+$(BUILD_DIR)/src/audio/seqplayer.o: OPT_FLAGS := -O3
+$(BUILD_DIR)/src/audio/synthesis.o: OPT_FLAGS := -O3
+$(BUILD_DIR)/src/engine/math_util.o: OPT_FLAGS := -O3
+$(BUILD_DIR)/src/pc/mixer.o: OPT_FLAGS := -O3
+$(BUILD_DIR)/src/pc/gfx/gfx_gldc.o: OPT_FLAGS := -O3
+$(BUILD_DIR)/src/pc/gfx/gfx_retro_dc.o: OPT_FLAGS := -O3
+
 ifeq ($(TARGET_DC),1)
 # Unused for now, might be later
 include $(KOS_BASE)/Makefile.rules

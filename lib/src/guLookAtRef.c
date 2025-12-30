@@ -111,20 +111,25 @@ void guLookAtReflectF(float mf[4][4], LookAt *l, float xEye, float yEye, float z
     l->l[1].l.colc[2] = 0x00;
     l->l[1].l.pad2 = 0x00;
 
+    shz_vec3_t eyedots = shz_vec3_dot3(shz_vec3_init(xEye, yEye, zEye),
+        shz_vec3_init(xRight, yRight, zRight),
+        shz_vec3_init(xUp, yUp, zUp),
+        shz_vec3_init(xLook, yLook, zLook));
+
     mf[0][0] = xRight;
     mf[1][0] = yRight;
     mf[2][0] = zRight;
-    mf[3][0] = -(xEye * xRight + yEye * yRight + zEye * zRight);
+    mf[3][0] = -eyedots.x; // -(xEye * xRight + yEye * yRight + zEye * zRight);
 
     mf[0][1] = xUp;
     mf[1][1] = yUp;
     mf[2][1] = zUp;
-    mf[3][1] = -(xEye * xUp + yEye * yUp + zEye * zUp);
+    mf[3][1] = -eyedots.y; // -(xEye * xUp + yEye * yUp + zEye * zUp);
 
     mf[0][2] = xLook;
     mf[1][2] = yLook;
     mf[2][2] = zLook;
-    mf[3][2] = -(xEye * xLook + yEye * yLook + zEye * zLook);
+    mf[3][2] = -eyedots.z; // -(xEye * xLook + yEye * yLook + zEye * zLook);
 
     mf[0][3] = 0;
     mf[1][3] = 0;

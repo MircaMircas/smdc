@@ -155,6 +155,7 @@ void audio_dma_partial_copy_async(uintptr_t *devAddr, u8 **vAddr, ssize_t *remai
 }
 
 void decrease_sample_dma_ttls() {
+#if 0
     u32 i;
 
     for (i = 0; i < sSampleDmaListSize1; i++) {
@@ -186,7 +187,7 @@ void decrease_sample_dma_ttls() {
             }
         }
     }
-
+#endif
     sUnused80226B40 = 0;
 }
 

@@ -37,10 +37,6 @@ OSMesgQueue D_80339CB8;
 OSMesg D_80339CD0;
 OSMesg D_80339CD4;
 struct VblankHandler gGameVblankHandler;
-//#if !(defined(TARGET_DC) || defined(TARGET_PSP))
-uintptr_t gPhysicalFrameBuffers[3];
-uintptr_t gPhysicalZBuffer;
-//#endif
 void *D_80339CF0;
 void *D_80339CF4;
 struct MarioAnimation D_80339D10;
@@ -61,14 +57,7 @@ struct DemoInput *gCurrDemoInput = NULL; // demo input sequence
 u16 gDemoInputListID = 0;
 struct DemoInput gRecordedDemoInput = { 0 }; // possibly removed in EU. TODO: Check
 
-#if defined(TARGET_PSP)
-#define SECONDS_PER_CYCLE (1.0f/1000000.0f) /* psp tick rate obtained from sceRtcGetTickResolution() */
-#elif defined(TARGET_DC)
-#define SECONDS_PER_CYCLE (1.0f/1000000.0f) /* Figure this out for dc */
-#else
-// SDK states that 1 cycle takes about 21.33 nanoseconds
-#define SECONDS_PER_CYCLE 0.00000002133f
-#endif
+#define SECONDS_PER_CYCLE 5e-9f /* Figure this out for dc */
 
 #define FPS_COUNTER_X_POS 24
 #define FPS_COUNTER_Y_POS 190
@@ -82,6 +71,7 @@ int gDoDither = FALSE;
 int gDoAA = FALSE;
 static u8 gRenderFPS = FALSE;
 
+#if 0
 static void calculate_frameTime_from_OSTime(OSTime diff) {
     gFrameTime += diff * SECONDS_PER_CYCLE;
     gFrames++;
@@ -120,6 +110,7 @@ static void render_fps(void) {
         print_text_fmt_int(FPS_COUNTER_X_POS, FPS_COUNTER_Y_POS, "FPS %d", gFPS);
     }
 }
+#endif
 
 /**
  * Initializes the Reality Display Processor (RDP).
@@ -129,27 +120,27 @@ static void render_fps(void) {
  */
 void my_rdp_init(void) {
     gDPPipeSync(gDisplayListHead++);
-    gDPPipelineMode(gDisplayListHead++, G_PM_1PRIMITIVE);
+/*     gDPPipelineMode(gDisplayListHead++, G_PM_1PRIMITIVE); */
 
     gDPSetScissor(gDisplayListHead++, G_SC_NON_INTERLACE, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     gDPSetCombineMode(gDisplayListHead++, G_CC_SHADE, G_CC_SHADE);
 
-    gDPSetTextureLOD(gDisplayListHead++, G_TL_TILE);
+/*     gDPSetTextureLOD(gDisplayListHead++, G_TL_TILE);
     gDPSetTextureLUT(gDisplayListHead++, G_TT_NONE);
     gDPSetTextureDetail(gDisplayListHead++, G_TD_CLAMP);
-    gDPSetTexturePersp(gDisplayListHead++, G_TP_PERSP);
+    gDPSetTexturePersp(gDisplayListHead++, G_TP_PERSP); */
     gDPSetTextureFilter(gDisplayListHead++, G_TF_BILERP);
-    gDPSetTextureConvert(gDisplayListHead++, G_TC_FILT);
+/*     gDPSetTextureConvert(gDisplayListHead++, G_TC_FILT); */
 
-    gDPSetCombineKey(gDisplayListHead++, G_CK_NONE);
+/*     gDPSetCombineKey(gDisplayListHead++, G_CK_NONE); */
     gDPSetAlphaCompare(gDisplayListHead++, G_AC_NONE);
     gDPSetRenderMode(gDisplayListHead++, G_RM_OPA_SURF, G_RM_OPA_SURF2);
-    gDPSetColorDither(gDisplayListHead++, G_CD_MAGICSQ);
-    gDPSetCycleType(gDisplayListHead++, G_CYC_FILL);
+/*     gDPSetColorDither(gDisplayListHead++, G_CD_MAGICSQ);
+    gDPSetCycleType(gDisplayListHead++, G_CYC_FILL); */
 
-#ifdef VERSION_SH
+/* #ifdef VERSION_SH
     gDPSetAlphaDither(gDisplayListHead++, G_AD_PATTERN);
-#endif
+#endif */
     gDPPipeSync(gDisplayListHead++);
 }
 
@@ -172,105 +163,30 @@ void my_rsp_init(void) {
     // unless the clipping ratio is changed back to the intended value,
     // as Fast3DEX2 uses a different initial value than Fast3D(EX).
 #ifdef F3DEX_GBI_2
-    gSPClipRatio(gDisplayListHead++, FRUSTRATIO_1);
+//    gSPClipRatio(gDisplayListHead++, FRUSTRATIO_1);
 #endif
 }
 
 /** Clear the Z buffer. */
 void clear_z_buffer(void) {
-#if defined(TARGET_N64)
-    gDPPipeSync(gDisplayListHead++);
-
-    gDPSetDepthSource(gDisplayListHead++, G_ZS_PIXEL);
-    gDPSetDepthImage(gDisplayListHead++, gPhysicalZBuffer);
-
-    gDPSetColorImage(gDisplayListHead++, G_IM_FMT_RGBA, G_IM_SIZ_16b, SCREEN_WIDTH, gPhysicalZBuffer);
-    gDPSetFillColor(gDisplayListHead++,
-                    GPACK_ZDZ(G_MAXFBZ, 0) << 16 | GPACK_ZDZ(G_MAXFBZ, 0));
-
-    gDPFillRectangle(gDisplayListHead++, 0, BORDER_HEIGHT, SCREEN_WIDTH - 1,
-                     SCREEN_HEIGHT - 1 - BORDER_HEIGHT);
-#endif
+    ;
 }
 
 /** Sets up the final framebuffer image. */
 void display_frame_buffer(void) {
-#if defined(TARGET_N64)
-    gDPPipeSync(gDisplayListHead++);
-
-    gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
-    gDPSetColorImage(gDisplayListHead++, G_IM_FMT_RGBA, G_IM_SIZ_16b, SCREEN_WIDTH,
-                     gPhysicalFrameBuffers[frameBufferIndex]);
-    gDPSetScissor(gDisplayListHead++, G_SC_NON_INTERLACE, 0, BORDER_HEIGHT, SCREEN_WIDTH,
-                  SCREEN_HEIGHT - BORDER_HEIGHT);
-#endif
+    ;
 }
 
-//#include <stdio.h>
-#define gSPSkybox(pkt)                                       \
-    {                                                                                   \
-        Gfx* _g = (Gfx*) (pkt);                                                         \
-                                                                                        \
-        _g->words.w0 = 0x424C4E44; \
-        _g->words.w1 = 0x12345678;               \
-    }
-
-    s32 clear_color;
+s32 clear_color;
 /** Clears the framebuffer, allowing it to be overwritten. */
 void clear_frame_buffer(s32 color) {
     clear_color = color;
-  //  printf("clear color now %08x\n", clear_color);
-#if defined(TARGET_N64)
-    gDPPipeSync(gDisplayListHead++);
-    gDPSetRenderMode(gDisplayListHead++, G_RM_OPA_SURF, G_RM_OPA_SURF2);
-    gDPSetCycleType(gDisplayListHead++, G_CYC_FILL);
-    gDPSetCombineMode(gDisplayListHead++, G_CC_SHADE, G_CC_SHADE);
-    gDPSetFillColor(gDisplayListHead++, color);
-gSPSkybox(gDisplayListHead++);
-    gDPFillRectangle(gDisplayListHead++,
-                     GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(0), BORDER_HEIGHT,
-                     GFX_DIMENSIONS_RECT_FROM_RIGHT_EDGE(0) - 1, SCREEN_HEIGHT - BORDER_HEIGHT - 1);
-gSPSkybox(gDisplayListHead++);
-
-    gDPPipeSync(gDisplayListHead++);
-
-    gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
-#else
-    (void)color;
-#endif
 }
 
 /** Clears and initializes the viewport. */
 void clear_viewport(Vp *viewport, s32 color) {
-    clear_color = color;
-//        printf("clear color now %08x\n", clear_color);
-
-#if defined(TARGET_N64)
-    s16 vpUlx = (viewport->vp.vtrans[0] - viewport->vp.vscale[0]) / 4 + 1;
-    s16 vpUly = (viewport->vp.vtrans[1] - viewport->vp.vscale[1]) / 4 + 1;
-    s16 vpLrx = (viewport->vp.vtrans[0] + viewport->vp.vscale[0]) / 4 - 2;
-    s16 vpLry = (viewport->vp.vtrans[1] + viewport->vp.vscale[1]) / 4 - 2;
-
-#ifdef WIDESCREEN
-    vpUlx = GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(vpUlx);
-    vpLrx = GFX_DIMENSIONS_RECT_FROM_RIGHT_EDGE(SCREEN_WIDTH - vpLrx);
-#endif
-
-    gDPPipeSync(gDisplayListHead++);
-
-    gDPSetRenderMode(gDisplayListHead++, G_RM_OPA_SURF, G_RM_OPA_SURF2);
-    gDPSetCycleType(gDisplayListHead++, G_CYC_FILL);
-
-    gDPSetFillColor(gDisplayListHead++, color);
-    gDPFillRectangle(gDisplayListHead++, vpUlx, vpUly, vpLrx, vpLry);
-
-    gDPPipeSync(gDisplayListHead++);
-
-    gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
-#else
     (void)viewport;
-    (void)color;
-#endif
+    clear_color = color;
 }
 
 /** Draws the horizontal screen borders */
@@ -280,7 +196,6 @@ void draw_screen_borders(void) {
     gDPSetScissor(gDisplayListHead++, G_SC_NON_INTERLACE, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     gDPSetRenderMode(gDisplayListHead++, G_RM_OPA_SURF, G_RM_OPA_SURF2);
     gDPSetCycleType(gDisplayListHead++, G_CYC_FILL);
-
     gDPSetFillColor(gDisplayListHead++, GPACK_RGBA5551(0, 0, 0, 0) << 16 | GPACK_RGBA5551(0, 0, 0, 0));
 
 #if BORDER_HEIGHT != 0
@@ -293,10 +208,10 @@ void draw_screen_borders(void) {
 }
 
 void make_viewport_clip_rect(Vp *viewport) {
-    s16 vpUlx = (viewport->vp.vtrans[0] - viewport->vp.vscale[0]) / 4 + 1;
-    s16 vpPly = (viewport->vp.vtrans[1] - viewport->vp.vscale[1]) / 4 + 1;
-    s16 vpLrx = (viewport->vp.vtrans[0] + viewport->vp.vscale[0]) / 4 - 1;
-    s16 vpLry = (viewport->vp.vtrans[1] + viewport->vp.vscale[1]) / 4 - 1;
+    s16 vpUlx = ((viewport->vp.vtrans[0] - viewport->vp.vscale[0]) >> 2/* / 4 */) + 1;
+    s16 vpPly = ((viewport->vp.vtrans[1] - viewport->vp.vscale[1]) >> 2/* / 4 */) + 1;
+    s16 vpLrx = ((viewport->vp.vtrans[0] + viewport->vp.vscale[0]) >> 2/* / 4 */) - 1;
+    s16 vpLry = ((viewport->vp.vtrans[1] + viewport->vp.vscale[1]) >> 2/* / 4 */) - 1;
 
     gDPSetScissor(gDisplayListHead++, G_SC_NON_INTERLACE, vpUlx, vpPly, vpLrx, vpLry);
 }
@@ -312,20 +227,16 @@ void create_task_structure(void) {
     gGfxSPTask->msgqueue = &D_80339CB8;
     gGfxSPTask->msg = (OSMesg) 2;
     gGfxSPTask->task.t.type = M_GFXTASK;
-#if TARGET_N64
-    gGfxSPTask->task.t.ucode_boot = rspF3DBootStart;
-    gGfxSPTask->task.t.ucode_boot_size = ((u8 *) rspF3DBootEnd - (u8 *) rspF3DBootStart);
-    gGfxSPTask->task.t.flags = 0;
-    gGfxSPTask->task.t.ucode = rspF3DStart;
-    gGfxSPTask->task.t.ucode_data = rspF3DDataStart;
-#endif
+
     gGfxSPTask->task.t.ucode_size = SP_UCODE_SIZE; // (this size is ignored)
     gGfxSPTask->task.t.ucode_data_size = SP_UCODE_DATA_SIZE;
+
     gGfxSPTask->task.t.dram_stack = (u64 *) gGfxSPTaskStack;
     gGfxSPTask->task.t.dram_stack_size = SP_DRAM_STACK_SIZE8;
     gGfxSPTask->task.t.output_buff = gGfxSPTaskOutputBuffer;
     gGfxSPTask->task.t.output_buff_size =
         (u64 *)((u8 *) gGfxSPTaskOutputBuffer + sizeof(gGfxSPTaskOutputBuffer));
+
     gGfxSPTask->task.t.data_ptr = (u64 *) &gGfxPool->buffer;
     gGfxSPTask->task.t.data_size = entries * sizeof(Gfx);
     gGfxSPTask->task.t.yield_data_ptr = (u64 *) gGfxSPTaskYieldBuffer;
@@ -344,13 +255,13 @@ void init_render_image(void) {
 /** Ends the master display list. */
 void end_master_display_list(void) {
     draw_screen_borders();
-    if (gShowProfiler) {
+/*     if (gShowProfiler) {
         draw_profiler();
     }
 
-    gDPFullSync(gDisplayListHead++);
-    gSPEndDisplayList(gDisplayListHead++);
+    gDPFullSync(gDisplayListHead++); */
 
+    gSPEndDisplayList(gDisplayListHead++);
     create_task_structure();
 }
 
@@ -387,7 +298,7 @@ void draw_reset_bars(void) {
 
 void rendering_init(void) {
     gGfxPool = &gGfxPools[0];
-    set_segment_base_addr(1, gGfxPool->buffer);
+    //set_segment_base_addr(1, gGfxPool->buffer);
     gGfxSPTask = &gGfxPool->spTask;
     gDisplayListHead = gGfxPool->buffer;
     gGfxPoolEnd = (u8 *) (gGfxPool->buffer + GFX_POOL_SIZE);
@@ -403,7 +314,7 @@ void rendering_init(void) {
 
 void config_gfx_pool(void) {
     gGfxPool = &gGfxPools[gGlobalTimer % GFX_NUM_POOLS];
-    set_segment_base_addr(1, gGfxPool->buffer);
+    //set_segment_base_addr(1, gGfxPool->buffer);
     gGfxSPTask = &gGfxPool->spTask;
     gDisplayListHead = gGfxPool->buffer;
     gGfxPoolEnd = (u8 *) (gGfxPool->buffer + GFX_POOL_SIZE);
@@ -420,9 +331,7 @@ void display_and_vsync(void) {
     send_display_list(&gGfxPool->spTask);
     //profiler_log_thread5_time(AFTER_DISPLAY_LISTS);
     //osRecvMesg(&gGameVblankQueue, &D_80339BEC, OS_MESG_BLOCK);
-#if !(defined(TARGET_DC) || defined(TARGET_PSP))
-    osViSwapBuffer((void *) PHYSICAL_TO_VIRTUAL(gPhysicalFrameBuffers[sCurrFBNum]));
-#endif
+
     //profiler_log_thread5_time(THREAD5_END);
     //osRecvMesg(&gGameVblankQueue, &D_80339BEC, OS_MESG_BLOCK);
     if (++sCurrFBNum == 3) {
@@ -433,12 +342,10 @@ void display_and_vsync(void) {
     }
     gGlobalTimer++;
 }
-
+#include "sh4zam.h"
 // take the updated controller struct and calculate
 // the new x, y, and distance floats.
 void adjust_analog_stick(struct Controller *controller) {
-    UNUSED u8 pad[8];
-
     // reset the controller's x and y floats.
     controller->stickX = 0;
     controller->stickY = 0;
@@ -462,13 +369,14 @@ void adjust_analog_stick(struct Controller *controller) {
 
     // calculate f32 magnitude from the center by vector length.
     controller->stickMag =
-        sqrtf(controller->stickX * controller->stickX + controller->stickY * controller->stickY);
+        shz_sqrtf_fsrra(controller->stickX * controller->stickX + controller->stickY * controller->stickY);
 
     // magnitude cannot exceed 64.0f: if it does, modify the values appropriately to
     // flatten the values down to the allowed maximum value.
     if (controller->stickMag > 64) {
-        controller->stickX *= 64 / controller->stickMag;
-        controller->stickY *= 64 / controller->stickMag;
+        f32 invmag64 = 64.0f * shz_fast_invf(controller->stickMag);
+        controller->stickX *= invmag64; // 64.0f / controller->stickMag;
+        controller->stickY *= invmag64; // 64.0f / controller->stickMag;
         controller->stickMag = 64;
     }
 }
@@ -545,7 +453,7 @@ void read_controller_inputs(void) {
     // if any controllers are plugged in, update the
     // controller information.
     if (gControllerBits) {
-        osRecvMesg(&gSIEventMesgQueue, &D_80339BEC, OS_MESG_BLOCK);
+//        osRecvMesg(&gSIEventMesgQueue, &D_80339BEC, OS_MESG_BLOCK);
         osContGetReadData(&gControllerPads[0]);
 #ifdef VERSION_SH
         release_rumble_pak_control();
@@ -631,33 +539,22 @@ void setup_game_memory(void) {
     set_segment_base_addr(0, (void *) 0x80000000);
     osCreateMesgQueue(&D_80339CB8, &D_80339CD4, 1);
     osCreateMesgQueue(&gGameVblankQueue, &D_80339CD0, 1);
-#if !(defined(TARGET_DC) || defined(TARGET_PSP))
-    gPhysicalZBuffer = VIRTUAL_TO_PHYSICAL(gZBuffer);
-    gPhysicalFrameBuffers[0] = VIRTUAL_TO_PHYSICAL(gFrameBuffer0);
-    gPhysicalFrameBuffers[1] = VIRTUAL_TO_PHYSICAL(gFrameBuffer1);
-    gPhysicalFrameBuffers[2] = VIRTUAL_TO_PHYSICAL(gFrameBuffer2);
-#endif
+
     D_80339CF0 = main_pool_alloc(0x4000, MEMORY_POOL_LEFT);
-    set_segment_base_addr(17, (void *) D_80339CF0);
+//    set_segment_base_addr(17, (void *) D_80339CF0);
     func_80278A78(&D_80339D10, gMarioAnims, D_80339CF0);
     D_80339CF4 = main_pool_alloc(2048, MEMORY_POOL_LEFT);
-    set_segment_base_addr(24, (void *) D_80339CF4);
+//    set_segment_base_addr(24, (void *) D_80339CF4);
     func_80278A78(&gDemo, gDemoInputs, D_80339CF4);
     load_segment(0x10, _entrySegmentRomStart, _entrySegmentRomEnd, MEMORY_POOL_LEFT);
     load_segment_decompress(2, _segment2_mio0SegmentRomStart, _segment2_mio0SegmentRomEnd);
 }
 
-#ifndef TARGET_N64
 static struct LevelCommand *levelCommandAddr;
-#endif
 
 // main game loop thread. runs forever as long as the game
 // continues.
 void thread5_game_loop(UNUSED void *arg) {
-#ifdef TARGET_N64
-    struct LevelCommand *levelCommandAddr;
-#endif
-
     setup_game_memory();
 #ifdef VERSION_SH
     init_rumble_pak_scheduler_queue();
@@ -676,24 +573,14 @@ void thread5_game_loop(UNUSED void *arg) {
     play_music(SEQ_PLAYER_SFX, SEQUENCE_ARGS(0, SEQ_SOUND_PLAYER), 0);
     set_sound_mode(save_file_get_sound_mode());
 
-#ifdef TARGET_N64
-    rendering_init();
-
-    while (1) {
-#else
     gGlobalTimer++;
 }
 
 void game_loop_one_iteration(void) {
-#endif
         // if the reset timer is active, run the process to reset the game.
         if (gResetTimer) {
             draw_reset_bars();
-#ifdef TARGET_N64
-            continue;
-#else
             return;
-#endif
         }
         //profiler_log_thread5_time(THREAD5_START);
 
@@ -712,6 +599,7 @@ void game_loop_one_iteration(void) {
         levelCommandAddr = level_script_execute(levelCommandAddr);
         display_and_vsync();
 
+#if 0
         // when debug info is enabled, print the "BUF %d" information.
         if (gShowDebugText) {
             // subtract the end of the gfx pool with the display list to obtain the
@@ -720,7 +608,5 @@ void game_loop_one_iteration(void) {
         }
         
         render_fps();
-#ifdef TARGET_N64
-    }
 #endif
 }

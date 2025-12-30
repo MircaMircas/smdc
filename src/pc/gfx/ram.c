@@ -1,4 +1,3 @@
-#if defined(TARGET_DC)
 /*
  * OpenBOR - http://www.LavaLit.com
  * -----------------------------------------------------------------------
@@ -32,12 +31,10 @@ static unsigned long stackSize = 0x00000000;
 /////////////////////////////////////////////////////////////////////////////
 // Symbols
 
-#if defined(TARGET_DC)
 extern unsigned long end;
 extern unsigned long start;
 #define _END end
 #define _START start
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 //  Functions
@@ -70,4 +67,3 @@ void getRamStatus(void) {
            2200000 - (int) getFreeRam(),
            getUsedRam());
 }
-#endif

@@ -161,6 +161,11 @@ f32 __attribute__((aligned(32))) gNoteFrequencies[128] = {
 };
 // clang-format on
 
+u8 __attribute__((aligned(32))) gDefaultShortNoteTables[32] = {
+    12, 25, 38, 51, 57, 64, 71, 76, 83, 89, 96, 102, 109, 115, 121, 127,
+    229, 203, 177, 151, 139, 126, 113, 100, 87, 74, 61, 48, 36, 23, 10, 0
+};
+#if 0
 // goes up by ~12 at each step for the first 4 values (starting from 0), then by ~6
 u8 __attribute__((aligned(32))) gDefaultShortNoteVelocityTable[16] = {
     12, 25, 38, 51, 57, 64, 71, 76, 83, 89, 96, 102, 109, 115, 121, 127,
@@ -170,7 +175,7 @@ u8 __attribute__((aligned(32))) gDefaultShortNoteVelocityTable[16] = {
 u8 __attribute__((aligned(32))) gDefaultShortNoteDurationTable[16] = {
     229, 203, 177, 151, 139, 126, 113, 100, 87, 74, 61, 48, 36, 23, 10, 0,
 };
-
+#endif
 #ifndef VERSION_EU
 // gVibratoCurve[k] = k*8
 s8 __attribute__((aligned(32))) gVibratoCurve[16] = { 0, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120 };

@@ -1,10 +1,7 @@
-#if 1
-//defined(TARGET_DC)
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <stdbool.h>
 #include <assert.h>
 
 #ifndef _LANGUAGE_C
@@ -19,16 +16,12 @@
 #include "gfx_screen_config.h"
 #include "macros.h"
 
-#if defined(TARGET_DC)
-#include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glext.h>
 #include <GL/glkos.h>
 #include "gl_fast_vert.h"
-#endif
 
 int in_trilerp = 0;
 int doing_peach = 0;
@@ -161,6 +154,7 @@ static struct RSP {
 
     uint8_t modelview_matrix_stack_size;
     Light_t __attribute__((aligned(32))) current_lights[MAX_LIGHTS + 1];
+    Light_t __attribute__((aligned(32))) current_lookat[2];
     float __attribute__((aligned(32))) current_lights_coeffs[MAX_LIGHTS][3];
     float __attribute__((aligned(32))) current_lookat_coeffs[2][3]; // lookat_x, lookat_y
     uint8_t current_num_lights; // includes ambient light
@@ -729,10 +723,10 @@ static void  __attribute__((noinline)) gfx_sp_vertex(size_t n_vertices, size_t d
             for (i = 0; i < rsp.current_num_lights - 1; i++) {
                 calculate_normal_dir(&rsp.current_lights[i], rsp.current_lights_coeffs[i]);
             }
-            static const Light_t lookat_x = {{0, 0, 0}, 0, {0, 0, 0}, 0, {127, 0, 0}, 0};
-            static const Light_t lookat_y = {{0, 0, 0}, 0, {0, 0, 0}, 0, {0, 127, 0}, 0};
-            calculate_normal_dir(&lookat_x, rsp.current_lookat_coeffs[0]);
-            calculate_normal_dir(&lookat_y, rsp.current_lookat_coeffs[1]);
+            //static const Light_t lookat_x = {{0, 0, 0}, 0, {0, 0, 0}, 0, {127, 0, 0}, 0};
+            //static const Light_t lookat_y = {{0, 0, 0}, 0, {0, 0, 0}, 0, {0, 127, 0}, 0};
+            calculate_normal_dir(&rsp.current_lookat[1], rsp.current_lookat_coeffs[0]);
+            calculate_normal_dir(&rsp.current_lookat[0], rsp.current_lookat_coeffs[1]);
             rsp.lights_changed = false;
         }
     }
@@ -909,6 +903,7 @@ static inline float step_ramp_pow(float x, float param, float n) {
 }
 
 int eyeball_guy = 0;
+
 static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
     struct LoadedVertex* v1 = &rsp.loaded_vertices[vtx3_idx];
     MEM_BARRIER_PREF(v1);
@@ -961,14 +956,15 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
     }
 
     if (in_trilerp) {
-        if (doing_peach && in_trilerp == 1) {
+        gfx_flush();
+        if (doing_bowser) {
             float mx,my,mz;
             get_mario_pos(&mx,&my,&mz);
-            float distance_frac = mz / -4000.0f;
+            float distance_frac = -(mz * 0.00025f);
 
             if (distance_frac < 0.0f)
-				distance_frac = 0.0f;
-			if (distance_frac > 1.0f)
+			 	distance_frac = 0.0f;
+            else if (distance_frac > 1.0f)
     			distance_frac = 1.0f;
 
             distance_frac = 1.0f - step_ramp_pow(distance_frac, 0.8f, 2.0f);
@@ -1085,7 +1081,7 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
             line_size = 1;
             tex_height_i = tex_size_bytes;
         } else {
-            tex_height_i = (uint32_t) ((float) tex_size_bytes / (float) line_size);
+            tex_height_i = (uint32_t) shz_divf((float) tex_size_bytes , (float) line_size);
         }
 
         switch (rdp.texture_tile.siz) {
@@ -1243,11 +1239,11 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
         }
     }
 
-    float recip_tw;
-    float recip_th;;
+    float recip_tw = 0.03125f;
+    float recip_th = 0.03125f;
     if (usetex) {
-        uint32_t tex_width = (rdp.texture_tile.lrs - rdp.texture_tile.uls + 4) / 4;
-        uint32_t tex_height = (rdp.texture_tile.lrt - rdp.texture_tile.ult + 4) / 4;
+        uint32_t tex_width = (rdp.texture_tile.lrs - rdp.texture_tile.uls + 4) >> 2;
+        uint32_t tex_height = (rdp.texture_tile.lrt - rdp.texture_tile.ult + 4) >> 2;
 
         recip_tw = shz_fast_invf(tex_width);
         recip_th = shz_fast_invf(tex_height);
@@ -1306,7 +1302,7 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
 
     buf_vbo_num_tris += 1;
 
-    if (font_draw || do_radar_mark || drawing_hand || in_trilerp || doing_skybox || water_bomb || aquarium_draw || buf_vbo_num_tris == MAX_BUFFERED) {
+    if (font_draw || do_radar_mark || drawing_hand || doing_peach || doing_bowser || doing_skybox || water_bomb || aquarium_draw || buf_vbo_num_tris == MAX_BUFFERED) {
         gfx_flush();
     }
 }
@@ -1485,15 +1481,15 @@ static void  __attribute__((noinline)) gfx_sp_geometry_mode(uint32_t clear, uint
 
 static void  __attribute__((noinline)) gfx_calc_and_set_viewport(const Vp_t *viewport) {
     // 2 bits fraction
-    float width = 2.0f * viewport->vscale[0] / 4.0f;
-    float height = 2.0f * viewport->vscale[1] / 4.0f;
-    float x = (viewport->vtrans[0] / 4.0f) - width / 2.0f;
-    float y = SCREEN_HEIGHT - ((viewport->vtrans[1] / 4.0f) + height / 2.0f);
+    float width = /* 2.0f * */ viewport->vscale[0] * 0.5f /* / 4.0f */;
+    float height = /* 2.0f * */ viewport->vscale[1] * 0.5f /* / 4.0f */;
+    float x = (viewport->vtrans[0] * 0.25f /* / 4.0f */) - width * 0.5f /* / 2.0f */;
+    float y = SCREEN_HEIGHT - ((viewport->vtrans[1] * 0.25f /* / 4.0f */) + height * 0.5f /* / 2.0f */);
     
-    width *= RATIO_X;
-    height *= RATIO_Y;
-    x *= RATIO_X;
-    y *= RATIO_Y;
+    width *= 2; //RATIO_X;
+    height *= 2; //RATIO_Y;
+    x *= 2; //RATIO_X;
+    y *= 2; //RATIO_Y;
     
     rdp.viewport.x = x;
     rdp.viewport.y = y;
@@ -1502,17 +1498,18 @@ static void  __attribute__((noinline)) gfx_calc_and_set_viewport(const Vp_t *vie
     
     rdp.viewport_or_scissor_changed = true;
 }
-
+#define G_MV_LOOKATY 0x82
+#define G_MV_LOOKATX 0x84
 static void  __attribute__((noinline)) gfx_sp_movemem(uint8_t index, uint8_t offset, const void* data) {
     switch (index) {
         case G_MV_VIEWPORT:
             gfx_calc_and_set_viewport((const Vp_t *) data);
             break;
-#if 0
+#if 1
         case G_MV_LOOKATY:
         case G_MV_LOOKATX:
             memcpy(rsp.current_lookat + (index - G_MV_LOOKATY) / 2, data, sizeof(Light_t));
-            //rsp.lights_changed = 1;
+            rsp.lights_changed = 1;
             break;
 #endif
 #ifdef F3DEX_GBI_2
@@ -1551,7 +1548,7 @@ static inline float exp_map_0_1000_f(float x) {
     if (x >= 1000.0f)
         return x * 1.01f; // 1000.0f;
 
-    const float t = x * 0.001f;
+    const float t = (x * 0.001f);
     const float num = expm1f(a * (t - 1.0f));
     const float den = expm1f(-a);
     return 1000.0f * (1.0f - shz_divf(num, den));
@@ -1567,7 +1564,7 @@ static void gfx_sp_moveword(uint8_t index, uint32_t data) {
 #else
             // Ambient light is included
             // The 31th bit is a flag that lights should be recalculated
-            rsp.current_num_lights = (data - 0x80000000U) / 32;
+            rsp.current_num_lights = (data - 0x80000000U) >> 5;// / 32;
 #endif
             rsp.lights_changed = 1;
             break;
@@ -1594,10 +1591,10 @@ static void  __attribute__((noinline)) gfx_sp_texture(uint16_t sc, uint16_t tc) 
 }
 
 static void  __attribute__((noinline)) gfx_dp_set_scissor(UNUSED uint32_t mode, uint32_t ulx, uint32_t uly, UNUSED uint32_t lrx, UNUSED uint32_t lry) {
-    float x = ulx / 4.0f * RATIO_X;
-    float y = (SCREEN_HEIGHT - lry / 4.0f) * RATIO_Y;
-    float width = (lrx - ulx) / 4.0f * RATIO_X;
-    float height = (lry - uly) / 4.0f * RATIO_Y;
+    float x = ulx * 0.5f; // / 4.0f * RATIO_X;
+    float y = (SCREEN_HEIGHT - lry * 0.25f) * 2.0f; // / 4.0f) * RATIO_Y;
+    float width = (lrx - ulx) * 0.5f; // / 4.0f * RATIO_X;
+    float height = (lry - uly) * 0.5f; // / 4.0f * RATIO_Y;
     
     rdp.scissor.x = x;
     rdp.scissor.y = y;
@@ -2074,6 +2071,7 @@ static void __attribute__((noinline)) gfx_run_dl(Gfx* cmd) {
                 doing_bowser = 0;
             } else if (cmd->words.w1 == 0xBBBBBBBB) {
                 doing_peach = 1;
+                doing_bowser = 0;
             } else if (cmd->words.w1 == 0xCCCCCCCC) {
                 doing_bowser = 1;
                 doing_peach = 0;
@@ -2359,6 +2357,17 @@ static void gfx_sp_reset() {
 
 rendering_state.fog_col_change = 0;
 rendering_state.fog_change = 0;
+memset(rsp.current_lookat, 0, sizeof(Light_t) * 2);
+//rsp.current_lookat[0].dir[0] = 0;
+rsp.current_lookat[0].dir[1] = 127;
+//rsp.current_lookat[0].dir[0] = 0;
+rsp.current_lookat[1].dir[0] = 127;
+//rsp.current_lookat[1].dir[0] = 0;
+//rsp.current_lookat[1].dir[0] = 0;
+
+            //static const Light_t lookat_x = {{0, 0, 0}, 0, {0, 0, 0}, 0, {127, 0, 0}, 0};
+            //static const Light_t lookat_y = {{0, 0, 0}, 0, {0, 0, 0}, 0, {0, 127, 0}, 0};
+
 }
 
 void gfx_get_dimensions(uint32_t *width, uint32_t *height) {
@@ -2444,4 +2453,3 @@ void gfx_end_frame(void) {
         gfx_wapi->swap_buffers_end();
     }
 }
-#endif

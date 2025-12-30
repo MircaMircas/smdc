@@ -280,21 +280,18 @@ static void level_cmd_load_mio0(void) {
     sCurrentCmd = CMD_NEXT;
 }
 
+extern void *main_pc_pool_gd;
+
 static void level_cmd_load_mario_head(void) {
     // TODO: Fix these hardcoded sizes
     void *addr = main_pool_alloc(DOUBLE_SIZE_ON_64_BIT(0xE1000), MEMORY_POOL_LEFT);
     if (addr != NULL) {
         gdm_init(addr, DOUBLE_SIZE_ON_64_BIT(0xE1000));
-#if !(defined(TARGET_DC) || defined(TARGET_PSP))
-        gd_add_to_heap(gZBuffer, sizeof(gZBuffer)); // 0x25800
-        gd_add_to_heap(gFrameBuffer0, 3 * sizeof(gFrameBuffer0)); // 0x70800, 460800 0x10c80
-#else
-        extern void *main_pc_pool_gd;
         gd_add_to_heap(main_pc_pool_gd, 0x70800);
-#endif
         gdm_setup();
         gdm_maketestdl(CMD_GET(s16, 2));
     } else {
+
     }
 
     sCurrentCmd = CMD_NEXT;
