@@ -387,46 +387,25 @@ sincoss(c[2], &sz, &cz);
  * 'position' is the position of the object in the world
  * 'angle' rotates the object while still facing the camera.
  */
+#include <string.h>
+
 void mtxf_billboard(Mat4 dest, Mat4 mtx, Vec3f position, s16 angle) {
-//    dest[0][0] = coss(angle);
-//    dest[0][1] = sins(angle);
+    shz_vec3_t destvec = shz_vec3_dot3(shz_vec3_deref(position),
+        shz_vec3_init(mtx[0][0], mtx[1][0], mtx[2][0]),
+        shz_vec3_init(mtx[0][1], mtx[1][1], mtx[2][1]),
+        shz_vec3_init(mtx[0][2], mtx[1][2], mtx[2][2])
+    );
+
+    memset(dest, 0, 64);
+
     sincoss(angle, &dest[0][1], &dest[0][0]);
-
-    dest[0][2] = 0;
-    dest[0][3] = 0;
-
     dest[1][0] = -dest[0][1];
     dest[1][1] = dest[0][0];
-    dest[1][2] = 0;
-    dest[1][3] = 0;
-
-    dest[2][0] = 0;
-    dest[2][1] = 0;
-    dest[2][2] = 1;
-    dest[2][3] = 0;
-#if 0
-    dest[3][0] =
-shz_dot8f(mtx[0][0], mtx[1][0], mtx[2][0], mtx[3][0], position[0], position[1], position[2], 1.0f);
-    //        mtx[0][0] * position[0] + mtx[1][0] * position[1] + mtx[2][0] * position[2] + mtx[3][0];
-    dest[3][1] =
-shz_dot8f(mtx[0][1], mtx[1][1], mtx[2][1], mtx[3][1], position[0], position[1], position[2], 1.0f);
-//        mtx[0][1] * position[0] + mtx[1][1] * position[1] + mtx[2][1] * position[2] + mtx[3][1];
-    dest[3][2] =
-shz_dot8f(mtx[0][2], mtx[1][2], mtx[2][2], mtx[3][2], position[0], position[1], position[2], 1.0f);
-
-//        mtx[0][2] * position[0] + mtx[1][2] * position[1] + mtx[2][2] * position[2] + mtx[3][2];
-#endif
-
-    dest[3][0] = shz_dot8f(position[0], position[1], position[2], 1.0f, 
-                mtx[0][0], mtx[1][0], mtx[2][0], mtx[3][0]);
-
-    dest[3][1] = shz_dot8f(position[0], position[1], position[2], 1.0f, 
-                mtx[0][1], mtx[1][1], mtx[2][1], mtx[3][1]);
-
-    dest[3][2] = shz_dot8f(position[0], position[1], position[2], 1.0f, 
-                mtx[0][2], mtx[1][2], mtx[2][2], mtx[3][2]);
-
-    dest[3][3] = 1;
+    dest[2][2] = 1.0f;
+    dest[3][0] = destvec.x + mtx[3][0];
+    dest[3][1] = destvec.y + mtx[3][1];
+    dest[3][2] = destvec.z + mtx[3][2];
+    dest[3][3] = 1.0f;
 }
 
 /**
