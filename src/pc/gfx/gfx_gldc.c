@@ -405,6 +405,7 @@ extern int font_draw;
 int doing_letter = 0;
 extern int drawing_hand;
 extern int do_radar_mark;
+extern int cotmc_shadow;
 void gfx_opengl_2d_projection(void);
 void gfx_opengl_reset_projection(void);
 
@@ -466,6 +467,17 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
             glDisable(GL_BLEND);
             glDisable(GL_FOG);
         }
+    }
+
+    if (cotmc_shadow) {
+        // Adjust depth values slightly for zmode_decal objects
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_GEQUAL);
+        glDepthMask(GL_TRUE);
+        
+        // Push the geometry slightly away from the camera
+        glPushMatrix();
+        glTranslatef(0.0f, -2.1f, -0.9f); // magic values need fine tuning. 
     }
 
     if (is_zmode_decal) {
@@ -530,7 +542,7 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
     if (drawing_hand || water_bomb)
         over_skybox_setup_post();
         
-    if (is_zmode_decal) {
+    if (cotmc_shadow || is_zmode_decal) {
         glPopMatrix();
         glDepthFunc(GL_LESS); // Reset depth function
     }

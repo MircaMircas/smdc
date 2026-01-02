@@ -71,10 +71,8 @@ void set_vblank_handler(UNUSED s32 index, UNUSED struct VblankHandler *handler, 
 static uint8_t inited = 0;
 
 #include "game/game_init.h" // for gGlobalTimer
+
 void send_display_list(struct SPTask *spTask) {
-    if (!inited) {
-        return;
-    }
     gfx_run((Gfx *)spTask->task.t.data_ptr);
 }
 
@@ -183,8 +181,6 @@ void main_func(void) {
     gfx_start_frame();
     game_loop_one_iteration();
     gfx_end_frame();
-
-        //        wm_api->main_loop(produce_one_frame);
     }
 }
 

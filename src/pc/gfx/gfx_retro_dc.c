@@ -903,6 +903,7 @@ static inline float step_ramp_pow(float x, float param, float n) {
 }
 
 int eyeball_guy = 0;
+int cotmc_shadow = 0;
 
 static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
     struct LoadedVertex* v1 = &rsp.loaded_vertices[vtx3_idx];
@@ -1260,7 +1261,6 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
             buf_vbo[buf_num_vert].vert.y = v_arr[i]->y;
             buf_vbo[buf_num_vert].vert.z = v_arr[i]->z;
         }
-        //buf_vbo[buf_vbo_len++] = z;
         
         if (usetex) {
             float u = (v_arr[i]->u - (rdp.texture_tile.uls << 3)) * 0.03125f;// / 32.0f;
@@ -1293,6 +1293,10 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
             packedc = PACK_ARGB8888(tc_r, tc_g, tc_b, color_a);
         }
 
+        if (cotmc_shadow) {
+            packedc = 0xB4000000;
+        }
+        
         buf_vbo[buf_num_vert].color.packed = packedc;
 
 		buf_num_vert++;
@@ -1302,7 +1306,7 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
 
     buf_vbo_num_tris += 1;
 
-    if (font_draw || do_radar_mark || drawing_hand || doing_peach || doing_bowser || doing_skybox || water_bomb || aquarium_draw || buf_vbo_num_tris == MAX_BUFFERED) {
+    if (cotmc_shadow || font_draw || do_radar_mark || drawing_hand || doing_peach || doing_bowser || doing_skybox || water_bomb || aquarium_draw || buf_vbo_num_tris == MAX_BUFFERED) {
         gfx_flush();
     }
 }
@@ -2019,6 +2023,9 @@ extern Gfx dl_menu_idle_hand[];
 extern Gfx dl_menu_grabbing_hand[];
 extern Gfx dl_menu_hand[];
 
+extern Gfx cotmc_seg7_dl_0700A4B8[];
+extern Gfx cotmc_seg7_dl_0700A3D0[];
+extern const Gfx *g_cotmc_seg7_dl_0700A3D0;
 #define GFX_DL_STACK_MAX 64 /* tune this to whatever nesting you expect */
 
 static Gfx __attribute__((aligned(32))) * dl_stack[GFX_DL_STACK_MAX];
@@ -2030,6 +2037,13 @@ static void __attribute__((noinline)) gfx_run_dl(Gfx* cmd) {
 
 //    dl_sp = 0;
     drawing_hand = 0;
+
+    if (cmd == g_cotmc_seg7_dl_0700A3D0) {
+        cotmc_shadow = 1;
+    } else {
+        cotmc_shadow = 0;
+    }
+
     if (cmd == mr_i_eyeball_seg6_dl_06002080) {
         eyeball_guy = 1;
     } else {
