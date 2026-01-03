@@ -64,18 +64,18 @@ s32 envfx_init_snow(s32 mode) {
             return 0;
 
         case ENVFX_SNOW_NORMAL:
-            gSnowParticleMaxCount = 140;
+            gSnowParticleMaxCount = 140 / 2;
             gSnowParticleCount = 5;
             break;
 
         case ENVFX_SNOW_WATER:
-            gSnowParticleMaxCount = 30;
-            gSnowParticleCount = 30;
+            gSnowParticleMaxCount = 30 / 2;
+            gSnowParticleCount = 30 / 2;
             break;
 
         case ENVFX_SNOW_BLIZZARD:
-            gSnowParticleMaxCount = 140;
-            gSnowParticleCount = 140;
+            gSnowParticleMaxCount = 140 / 2;
+            gSnowParticleCount = 140 / 2;
             break;
     }
 
@@ -142,6 +142,8 @@ void envfx_cleanup_snow(void *snowParticleArray) {
     }
 }
 
+#include "sh4zam.h"
+
 /**
  * Given two points, return the vector from one to the other represented
  * as Euler angles and a length
@@ -151,9 +153,37 @@ void orbit_from_positions(Vec3s from, Vec3s to, s16 *radius, s16 *pitch, s16 *ya
     f32 dy = to[1] - from[1];
     f32 dz = to[2] - from[2];
 
-    *radius = (s16) sqrtf(dx * dx + dy * dy + dz * dz);
-    *pitch = atan2s(sqrtf(dx * dx + dz * dz), dy);
+    *radius = (s16) shz_sqrtf_fsrra(shz_mag_sqr3f(dx, dy, dz)); //sqrtf(dx * dx + dy * dy + dz * dz);
+    *pitch = atan2s(shz_sqrtf_fsrra(dx * dx + dz * dz), dy);
     *yaw = atan2s(dz, dx);
+}
+
+static inline void sincoss(s16 arg0, f32* s, f32* c) {
+    register float __s __asm__("fr2");
+    register float __c __asm__("fr3");
+
+    asm("lds    %2,fpul\n\t"
+        "fsca    fpul,dr2\n\t"
+        : "=f"(__s), "=f"(__c)
+        : "r"(arg0)
+        : "fpul");
+
+    *s = __s;
+    *c = __c;
+}
+
+static inline void scaled_sincoss(s16 arg0, f32* s, f32* c, f32 scale) {
+    register float __s __asm__("fr2");
+    register float __c __asm__("fr3");
+
+    asm("lds    %2,fpul\n\t"
+        "fsca    fpul,dr2\n\t"
+        : "=f"(__s), "=f"(__c)
+        : "r"(arg0)
+        : "fpul");
+
+    *s = __s * scale;
+    *c = __c * scale;
 }
 
 /**
@@ -161,9 +191,15 @@ void orbit_from_positions(Vec3s from, Vec3s to, s16 *radius, s16 *pitch, s16 *ya
  * with a vector added represented by radius, pitch and yaw.
  */
 void pos_from_orbit(Vec3s origin, Vec3s result, s16 radius, s16 pitch, s16 yaw) {
-    result[0] = origin[0] + radius * coss(pitch) * sins(yaw);
-    result[1] = origin[1] + radius * sins(pitch);
-    result[2] = origin[2] + radius * coss(pitch) * coss(yaw);
+    f32 ps,pc;
+    f32 ys,yc;
+
+    scaled_sincoss(pitch, &ps, &pc, radius);
+    scaled_sincoss(yaw, &ys, &yc, pc);
+
+    result[0] = origin[0] + ys;//radius * coss(pitch) * sins(yaw);
+    result[1] = origin[1] + ps;//radius * sins(pitch);
+    result[2] = origin[2] + yc;//radius * coss(pitch) * coss(yaw);
 }
 
 /**
@@ -176,7 +212,7 @@ s32 envfx_is_snowflake_alive(s32 index, s32 snowCylinderX, s32 snowCylinderY, s3
     s32 y = (gEnvFxBuffer + index)->yPos;
     s32 z = (gEnvFxBuffer + index)->zPos;
 
-    if (sqr(x - snowCylinderX) + sqr(z - snowCylinderZ) > sqr(300)) {
+    if ((sqr(x - snowCylinderX) + sqr(z - snowCylinderZ)) > 90000 /* sqr(300) */) {
         return 0;
     }
 
@@ -212,15 +248,15 @@ void envfx_update_snow_normal(s32 snowCylinderX, s32 snowCylinderY, s32 snowCyli
             envfx_is_snowflake_alive(i, snowCylinderX, snowCylinderY, snowCylinderZ);
         if ((gEnvFxBuffer + i)->isAlive == 0) {
             (gEnvFxBuffer + i)->xPos =
-                400.0f * random_float() - 200.0f + snowCylinderX + (s16)(deltaX * 2);
+                400.0f * random_float() - 200.0f + snowCylinderX + (s16)(deltaX << 1);
             (gEnvFxBuffer + i)->zPos =
-                400.0f * random_float() - 200.0f + snowCylinderZ + (s16)(deltaZ * 2);
+                400.0f * random_float() - 200.0f + snowCylinderZ + (s16)(deltaZ << 1);
             (gEnvFxBuffer + i)->yPos = 200.0f * random_float() + snowCylinderY;
             (gEnvFxBuffer + i)->isAlive = 1;
         } else {
-            (gEnvFxBuffer + i)->xPos += random_float() * 2 - 1.0f + (s16)(deltaX / 1.2);
-            (gEnvFxBuffer + i)->yPos -= 2 -(s16)(deltaY * 0.8);
-            (gEnvFxBuffer + i)->zPos += random_float() * 2 - 1.0f + (s16)(deltaZ / 1.2);
+            (gEnvFxBuffer + i)->xPos += random_float() * 2.0f - 1.0f + (s16)(deltaX * 0.83333333f /* / 1.2 */);
+            (gEnvFxBuffer + i)->yPos -= 2 -(s16)(deltaY * 0.8f);
+            (gEnvFxBuffer + i)->zPos += random_float() * 2.0f - 1.0f + (s16)(deltaZ * 0.83333333f /* / 1.2 */);
         }
     }
 
@@ -246,15 +282,15 @@ void envfx_update_snow_blizzard(s32 snowCylinderX, s32 snowCylinderY, s32 snowCy
             envfx_is_snowflake_alive(i, snowCylinderX, snowCylinderY, snowCylinderZ);
         if ((gEnvFxBuffer + i)->isAlive == 0) {
             (gEnvFxBuffer + i)->xPos =
-                400.0f * random_float() - 200.0f + snowCylinderX + (s16)(deltaX * 2);
+                400.0f * random_float() - 200.0f + snowCylinderX + (s16)(deltaX << 1);
             (gEnvFxBuffer + i)->zPos =
-                400.0f * random_float() - 200.0f + snowCylinderZ + (s16)(deltaZ * 2);
+                400.0f * random_float() - 200.0f + snowCylinderZ + (s16)(deltaZ << 1);
             (gEnvFxBuffer + i)->yPos = 400.0f * random_float() - 200.0f + snowCylinderY;
             (gEnvFxBuffer + i)->isAlive = 1;
         } else {
-            (gEnvFxBuffer + i)->xPos += random_float() * 2 - 1.0f + (s16)(deltaX / 1.2) + 20.0f;
+            (gEnvFxBuffer + i)->xPos += random_float() * 2.0f - 1.0f + (s16)(deltaX * 0.83333333f /* / 1.2 */) + 20.0f;
             (gEnvFxBuffer + i)->yPos -= 5 -(s16)(deltaY * 0.8);
-            (gEnvFxBuffer + i)->zPos += random_float() * 2 - 1.0f + (s16)(deltaZ / 1.2);
+            (gEnvFxBuffer + i)->zPos += random_float() * 2.0f - 1.0f + (s16)(deltaZ * 0.83333333f /* / 1.2 */);
         }
     }
 
@@ -287,16 +323,20 @@ void envfx_update_snow_water(s32 snowCylinderX, s32 snowCylinderY, s32 snowCylin
  * is needed for billboarding of particles.
  */
 void rotate_triangle_vertices(Vec3s vertex1, Vec3s vertex2, Vec3s vertex3, s16 pitch, s16 yaw) {
-    f32 cosPitch = coss(pitch);
-    f32 sinPitch = sins(pitch);
-    f32 cosMYaw = coss(-yaw);
-    f32 sinMYaw = sins(-yaw);
+    f32 cosPitch;// = coss(pitch);
+    f32 sinPitch;// = sins(pitch);
+    f32 cosMYaw;//= coss(-yaw);
+    f32 sinMYaw;// = sins(-yaw);
 
     Vec3f v1, v2, v3;
+
+    sincoss(pitch, &sinPitch, &cosPitch);
 
     v1[0] = vertex1[0];
     v1[1] = vertex1[1];
     v1[2] = vertex1[2];
+
+    sincoss(-yaw, &sinMYaw, &cosMYaw);
 
     v2[0] = vertex2[0];
     v2[1] = vertex2[1];
