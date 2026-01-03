@@ -905,6 +905,7 @@ static inline float step_ramp_pow(float x, float param, float n) {
 int eyeball_guy = 0;
 int cotmc_shadow = 0;
 int water_ring = 0;
+int ddd_ripple = 0;
 
 static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
     struct LoadedVertex* v1 = &rsp.loaded_vertices[vtx3_idx];
@@ -1307,7 +1308,7 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
 
     buf_vbo_num_tris += 1;
 
-    if (water_ring || cotmc_shadow || font_draw || do_radar_mark || drawing_hand || doing_peach || doing_bowser || doing_skybox || water_bomb || aquarium_draw || buf_vbo_num_tris == MAX_BUFFERED) {
+    if (ddd_ripple || water_ring || cotmc_shadow || font_draw || do_radar_mark || drawing_hand || doing_peach || doing_bowser || doing_skybox || water_bomb || aquarium_draw || buf_vbo_num_tris == MAX_BUFFERED) {
         gfx_flush();
     }
 }
@@ -2032,6 +2033,9 @@ extern Gfx cotmc_seg7_dl_0700A3D0[];
 extern const Gfx *g_cotmc_seg7_dl_0700A3D0;
 
 extern Gfx water_ring_seg6_dl_06013AC0[];
+extern Gfx dl_paintings_env_mapped_begin[];
+extern Gfx dl_paintings_env_mapped_end[];
+extern Gfx *ddd_dl;
 
 //#define GFX_DL_STACK_MAX 64 /* tune this to whatever nesting you expect */
 
@@ -2044,6 +2048,13 @@ static void __attribute__((noinline)) gfx_run_dl(Gfx* cmd) {
 
 //    dl_sp = 0;
     drawing_hand = 0;
+
+//    ddd_ripple = 0;
+//    if (cmd == dl_paintings_env_mapped_begin && ddd_dl) {
+  //      ddd_ripple = 1;
+    //} else {
+      //  ddd_ripple = 0;
+    //}
 
     if (cmd == water_ring_seg6_dl_06013AC0) {
         water_ring = 1;
@@ -2077,6 +2088,14 @@ static void __attribute__((noinline)) gfx_run_dl(Gfx* cmd) {
 
     for (;;) {
         uint32_t opcode = cmd->words.w0 >> 24;
+
+        if (cmd == dl_paintings_env_mapped_begin && ddd_dl) {
+            ddd_ripple = 1;
+        }
+        if (cmd == dl_paintings_env_mapped_end && ddd_dl) {
+            ddd_ripple = 0;
+        }
+
         if (cmd == dl_menu_hand) {
             drawing_hand = 1;
         }

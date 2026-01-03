@@ -60,6 +60,8 @@
  *          enough.
  */
 
+Gfx *ddd_dl = NULL;
+
 /**
  * Triggers a passive ripple on the left side of the painting.
  */
@@ -251,7 +253,7 @@ f32 painting_ripple_y(struct Painting *painting, s8 ySource) {
             return painting_mario_z(painting); // floor paintings use X and Z
             break;
         case MIDDLE_Y:
-            return painting->size / 2.0; // some concentric ripples don't care about Mario
+            return painting->size * 0.5f/* / 2.0 */; // some concentric ripples don't care about Mario
             break;
         default:
             return 0.f;
@@ -263,9 +265,9 @@ f32 painting_ripple_y(struct Painting *painting, s8 ySource) {
  * Return the quarter of the painting that is closest to the floor Mario entered.
  */
 f32 painting_nearest_4th(struct Painting *painting) {
-    f32 firstQuarter = painting->size / 4.0;       // 1/4 of the way across the painting
-    f32 secondQuarter = painting->size / 2.0;      // 1/2 of the way across the painting
-    f32 thirdQuarter = painting->size * 3.0 / 4.0; // 3/4 of the way across the painting
+    f32 firstQuarter = painting->size * 0.25f; // / 4.0;       // 1/4 of the way across the painting
+    f32 secondQuarter = painting->size * 0.5f; // / 2.0;      // 1/2 of the way across the painting
+    f32 thirdQuarter = painting->size * 0.75f; // 3.0 / 4.0; // 3/4 of the way across the painting
 
     if (painting->floorEntered & RIPPLE_LEFT) {
         return firstQuarter;
@@ -291,8 +293,8 @@ f32 painting_nearest_4th(struct Painting *painting) {
 f32 painting_mario_x(struct Painting *painting) {
     f32 relX = gPaintingMarioXPos - painting->posX;
 
-    if (relX < 0.0) {
-        relX = 0.0;
+    if (relX < 0.0f) {
+        relX = 0.0f;
     } else if (relX > painting->size) {
         relX = painting->size;
     }
@@ -311,7 +313,7 @@ f32 painting_ripple_x(struct Painting *painting, s8 xSource) {
             return painting_mario_x(painting);
             break;
         case MIDDLE_X: // concentric rippling may not care about Mario
-            return painting->size / 2.0;
+            return painting->size * 0.5f; // / 2.0;
             break;
         default:
             return 0.f;
@@ -585,11 +587,11 @@ void painting_update_ripple_state(struct Painting *painting) {
         //! 16777216 (1 << 24), at which point it will freeze (due to floating-point
         //! imprecision?) and the painting will stop rippling. This happens to HMC, DDD, and
         //! CotMC. This happens on Wii VC. Untested on N64 and Wii U VC.
-        painting->rippleTimer += 1.0;
+        painting->rippleTimer += 1.0f;
     }
     if (painting->rippleTrigger == RIPPLE_TRIGGER_PROXIMITY) {
         // if the painting is barely rippling, make it stop rippling
-        if (painting->currRippleMag <= 1.0) {
+        if (painting->currRippleMag <= 1.0f) {
             painting->state = PAINTING_IDLE;
             gRipplingPainting = NULL;
         }
@@ -641,7 +643,7 @@ s16 calculate_ripple_at_point(struct Painting *painting, f32 posX, f32 posY) {
     } else {
         // use a cosine wave to make the ripple go up and down,
         // scaled by the painting's ripple magnitude
-        f32 rippleZ = rippleMag * cosf(rippleRate * (2 * M_PI) * (rippleTimer - rippleDistance));
+        f32 rippleZ = rippleMag * cosf(rippleRate * 6.28318531f /* (2 * M_PI) */ * (rippleTimer - rippleDistance));
 
         // round it to an int and return it
         return round_float(rippleZ);
@@ -791,6 +793,7 @@ void painting_average_vertex_normals(s16 *neighborTris, s16 numVtx) {
 
         // The first number of each entry is the number of adjacent tris
         neighbors = neighborTris[entry];
+        f32 nbrecip = shz_fast_invf((f32)neighbors);
         for (j = 0; j < neighbors; j++) {
             tri = neighborTris[entry + j + 1];
             nx += gPaintingTriNorms[tri][0];
@@ -801,9 +804,9 @@ void painting_average_vertex_normals(s16 *neighborTris, s16 numVtx) {
         entry += neighbors + 1;
 
         // average the surface normals from each neighboring tri
-        nx /= neighbors;
-        ny /= neighbors;
-        nz /= neighbors;
+        nx *= nbrecip; // /= neighbors;
+        ny *= nbrecip; // /= neighbors;
+        nz *= nbrecip; // /= neighbors;
 
         shz_vec3_t normd = shz_vec3_normalize((shz_vec3_t){.x = nx, .y = ny, .z = nz});
         gPaintingMesh[i].norm[0] = normalize_component(normd.x);
@@ -941,6 +944,7 @@ Gfx *painting_model_view_transform(struct Painting *painting) {
 /**
  * Ripple a painting that has 1 or more images that need to be mapped
  */
+
 Gfx *painting_ripple_image(struct Painting *painting) {
     s16 meshVerts;
     s16 meshTris;
@@ -976,6 +980,13 @@ Gfx *painting_ripple_image(struct Painting *painting) {
     gSPPopMatrix(gfx++, G_MTX_MODELVIEW);
     gSPDisplayList(gfx++, dl_paintings_rippling_end);
     gSPEndDisplayList(gfx);
+
+    if (painting != &ddd_painting) {
+        ddd_dl = NULL;
+    } else {
+        ddd_dl = dlist;
+    }
+
     return dlist;
 }
 
@@ -1013,6 +1024,13 @@ Gfx *painting_ripple_env_mapped(struct Painting *painting) {
     gSPPopMatrix(gfx++, G_MTX_MODELVIEW);
     gSPDisplayList(gfx++, dl_paintings_env_mapped_end);
     gSPEndDisplayList(gfx);
+
+    if (painting != &ddd_painting) {
+        ddd_dl = NULL;
+    } else {
+        ddd_dl = dlist;
+    }
+
     return dlist;
 }
 
@@ -1241,7 +1259,6 @@ Gfx *geo_painting_draw(s32 callContext, struct GraphNode *node, UNUSED void *con
     if (callContext != GEO_CONTEXT_RENDER) {
         reset_painting(painting);
     } else if (callContext == GEO_CONTEXT_RENDER) {
-
         // Update the ddd painting before drawing
         if (group == 1 && id == PAINTING_ID_DDD) {
             move_ddd_painting(painting, 3456.0f, 5529.6f, 20.0f);
@@ -1252,6 +1269,10 @@ Gfx *geo_painting_draw(s32 callContext, struct GraphNode *node, UNUSED void *con
 
         // Draw before updating
         paintingDlist = display_painting(painting);
+
+        if (id == PAINTING_ID_DDD) {
+            ddd_dl = paintingDlist;
+        }
 
         // Update the painting
         painting_update_floors(painting);

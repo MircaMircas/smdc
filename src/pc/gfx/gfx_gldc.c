@@ -408,6 +408,7 @@ extern int do_radar_mark;
 extern int cotmc_shadow;
 extern int water_ring;
 extern int env_a;
+extern int ddd_ripple;
 void gfx_opengl_2d_projection(void);
 void gfx_opengl_reset_projection(void);
 
@@ -542,7 +543,18 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
         for(unsigned int i=0;i<3*buf_vbo_num_tris;i++)
             fast_vbo[i].color.array.a = env_a;
     }
+
+    if (ddd_ripple) {
+        glEnable(GL_BLEND);
+        dc_fast_t *fast_vbo = (dc_fast_t*)buf_vbo;
+        for(unsigned int i=0;i<3*buf_vbo_num_tris;i++)
+            fast_vbo[i].color.array.a = 0xB4;
+    }
+
     glDrawArrays(GL_TRIANGLES, 0, 3 * buf_vbo_num_tris);
+
+    if (water_ring)
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
     if(do_radar_mark)
         gfx_opengl_reset_projection();
