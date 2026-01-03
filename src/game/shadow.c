@@ -128,7 +128,7 @@ void rotate_rectangle(f32 *newZ, f32 *newX, f32 oldZ, f32 oldX) {
  * the standard atan2.
  */
 f32 atan2_deg(f32 a, f32 b) {
-    return ((f32) atan2s(a, b) / 65535.0 * 360.0);
+    return ((f32) atan2s(a, b) * 0.00549325f); // / 65535.0 * 360.0);
 }
 
 /**
@@ -138,12 +138,12 @@ f32 atan2_deg(f32 a, f32 b) {
 f32 scale_shadow_with_distance(f32 initial, f32 distFromFloor) {
     f32 newScale;
 
-    if (distFromFloor <= 0.0) {
+    if (distFromFloor <= 0.0f) {
         newScale = initial;
-    } else if (distFromFloor >= 600.0) {
-        newScale = initial * 0.5;
+    } else if (distFromFloor >= 600.0f) {
+        newScale = initial * 0.5f;
     } else {
-        newScale = initial * (1.0 - (0.5 * distFromFloor / 600.0));
+        newScale = initial * (1.0f - (0.00083333 * distFromFloor)); //(0.5f * distFromFloor / 600.0));
     }
 
     return newScale;
@@ -168,12 +168,12 @@ u8 dim_shadow_with_distance(u8 solidity, f32 distFromFloor) {
 
     if (solidity < 121) {
         return solidity;
-    } else if (distFromFloor <= 0.0) {
+    } else if (distFromFloor <= 0.0f) {
         return solidity;
-    } else if (distFromFloor >= 600.0) {
+    } else if (distFromFloor >= 600.0f) {
         return 120;
     } else {
-        ret = ((120 - solidity) * distFromFloor) / 600.0 + (f32) solidity;
+        ret = ((120 - solidity) * distFromFloor) * 0.00166667f /* / 600.0 */ + (f32) solidity;
         return ret;
     }
 }
@@ -184,7 +184,7 @@ u8 dim_shadow_with_distance(u8 solidity, f32 distFromFloor) {
  */
 f32 get_water_level_below_shadow(struct Shadow *s) {
     f32 waterLevel = find_water_level(s->parentX, s->parentZ);
-    if (waterLevel < -10000.0) {
+    if (waterLevel < -10000.0f) {
         return 0;
     } else if (s->parentY >= waterLevel && s->floorHeight <= waterLevel) {
         gShadowAboveWaterOrLava = TRUE;
@@ -222,14 +222,14 @@ s8 init_shadow(struct Shadow *s, f32 xPos, f32 yPos, f32 zPos, s16 shadowScale, 
         s->floorHeight = waterLevel;
 
         // Assume that the water is flat.
-        s->floorNormalX = 0;
-        s->floorNormalY = 1.0;
-        s->floorNormalZ = 0;
+        s->floorNormalX = 0.0f;
+        s->floorNormalY = 1.0f;
+        s->floorNormalZ = 0.0f;
         s->floorOriginOffset = -waterLevel;
     } else {
         // Don't draw a shadow if the floor is lower than expected possible,
         // or if the y-normal is negative (an unexpected result).
-        if (s->floorHeight < -10000.0 || floorGeometry->normalY <= 0.0) {
+        if (s->floorHeight < -10000.0f || floorGeometry->normalY <= 0.0f) {
             return 1;
         }
 
@@ -247,13 +247,13 @@ s8 init_shadow(struct Shadow *s, f32 xPos, f32 yPos, f32 zPos, s16 shadowScale, 
 
     s->floorDownwardAngle = atan2_deg(s->floorNormalZ, s->floorNormalX);
 
-    floorSteepness = sqrtf(s->floorNormalX * s->floorNormalX + s->floorNormalZ * s->floorNormalZ);
+    floorSteepness = shz_sqrtf_fsrra(s->floorNormalX * s->floorNormalX + s->floorNormalZ * s->floorNormalZ);
 
     // This if-statement avoids dividing by 0.
-    if (floorSteepness == 0.0) {
-        s->floorTilt = 0;
+    if (floorSteepness == 0.0f) {
+        s->floorTilt = 0.0f;
     } else {
-        s->floorTilt = 90.0 - atan2_deg(floorSteepness, s->floorNormalY);
+        s->floorTilt = 90.0f - atan2_deg(floorSteepness, s->floorNormalY);
     }
     return 0;
 }
@@ -323,7 +323,7 @@ void make_shadow_vertex_at_xyz(Vtx *vertices, s8 index, f32 relX, f32 relY, f32 
  * according to the floor's normal vector.
  */
 f32 extrapolate_vertex_y_position(struct Shadow s, f32 vtxX, f32 vtxZ) {
-    return -(s.floorNormalX * vtxX + s.floorNormalZ * vtxZ + s.floorOriginOffset) / s.floorNormalY;
+    return shz_divf(-(s.floorNormalX * vtxX + s.floorNormalZ * vtxZ + s.floorOriginOffset) , s.floorNormalY);
 }
 
 /**
