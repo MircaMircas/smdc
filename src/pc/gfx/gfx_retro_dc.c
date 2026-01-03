@@ -1325,7 +1325,7 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
 
     buf_vbo_num_tris += 1;
 
-    if ((buf_vbo_num_tris == MAX_BUFFERED) || transition_verts || doing_skybox || water_bomb || font_draw || do_radar_mark || drawing_hand || doing_peach || doing_bowser ||  aquarium_draw || cotmc_water || ddd_ripple || water_ring || cotmc_shadow)
+    if ((buf_vbo_num_tris == MAX_BUFFERED) || /* transition_verts ||  */doing_skybox || water_bomb || font_draw || do_radar_mark || drawing_hand || doing_peach || doing_bowser ||  aquarium_draw || cotmc_water || ddd_ripple || water_ring || cotmc_shadow)
         gfx_flush();
 }
 

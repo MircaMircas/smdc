@@ -15,6 +15,14 @@
 
 #include "sh4zam.h"
 
+#define gSPRadarMark(pkt)          \
+    {                              \
+        Gfx* _g = (Gfx*) (pkt);    \
+                                   \
+        _g->words.w0 = 0x424C4E44; \
+        _g->words.w1 = 0x87654321; \
+    }
+
 u8 gTransAlpha = 255;
 
 u8 sTransitionColorFadeCount[4] = { 0 };
@@ -73,11 +81,13 @@ s32 dl_transition_color(s8 fadeTimer, u8 transTime, struct WarpTransitionData *t
     Vtx *verts = vertex_transition_color(transData, alpha);
 
     if (verts != NULL) {
+        gSPRadarMark(gDisplayListHead++);
         gSPDisplayList(gDisplayListHead++, dl_proj_mtx_fullscreen);
         gDPSetCombineMode(gDisplayListHead++, G_CC_SHADE, G_CC_SHADE);
         gDPSetRenderMode(gDisplayListHead++, G_RM_AA_XLU_SURF, G_RM_AA_XLU_SURF2);
         gSPVertex(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(verts), 4, 0);
         gSPDisplayList(gDisplayListHead++, dl_draw_quad_verts_0123);
+        gSPRadarMark(gDisplayListHead++);
         gSPDisplayList(gDisplayListHead++, dl_screen_transition_end);
     }
     return set_and_reset_transition_fade_timer(fadeTimer, transTime);
@@ -180,13 +190,7 @@ void *sTextureTransitionID[] = {
     texture_transition_mario,
     texture_transition_bowser_half,
 };
-#define gSPRadarMark(pkt)          \
-    {                              \
-        Gfx* _g = (Gfx*) (pkt);    \
-                                   \
-        _g->words.w0 = 0x424C4E44; \
-        _g->words.w1 = 0x87654321; \
-    }
+
 s32 render_textured_transition(s8 fadeTimer, s8 transTime, struct WarpTransitionData *transData, s8 texID, s8 transTexType) {
     f32 texTransTime = calc_tex_transition_time(fadeTimer, transTime, transData);
     u16 texTransPos = convert_tex_transition_angle_to_pos(transData);
