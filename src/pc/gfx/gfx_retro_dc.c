@@ -904,6 +904,7 @@ static inline float step_ramp_pow(float x, float param, float n) {
 
 int eyeball_guy = 0;
 int cotmc_shadow = 0;
+int water_ring = 0;
 
 static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
     struct LoadedVertex* v1 = &rsp.loaded_vertices[vtx3_idx];
@@ -1306,7 +1307,7 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
 
     buf_vbo_num_tris += 1;
 
-    if (cotmc_shadow || font_draw || do_radar_mark || drawing_hand || doing_peach || doing_bowser || doing_skybox || water_bomb || aquarium_draw || buf_vbo_num_tris == MAX_BUFFERED) {
+    if (water_ring || cotmc_shadow || font_draw || do_radar_mark || drawing_hand || doing_peach || doing_bowser || doing_skybox || water_bomb || aquarium_draw || buf_vbo_num_tris == MAX_BUFFERED) {
         gfx_flush();
     }
 }
@@ -1746,11 +1747,14 @@ static void  __attribute__((noinline)) gfx_dp_set_combine_mode(uint32_t rgb, uin
     rdp.combine_mode = rgb | (alpha << 12);
 }
 
+int env_a;
+
 static void  __attribute__((noinline)) gfx_dp_set_env_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     rdp.env_color.r = r;
     rdp.env_color.g = g;
     rdp.env_color.b = b;
     rdp.env_color.a = a;
+    env_a = a;
 }
 
 static void  __attribute__((noinline)) gfx_dp_set_prim_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
@@ -2026,9 +2030,12 @@ extern Gfx dl_menu_hand[];
 extern Gfx cotmc_seg7_dl_0700A4B8[];
 extern Gfx cotmc_seg7_dl_0700A3D0[];
 extern const Gfx *g_cotmc_seg7_dl_0700A3D0;
-#define GFX_DL_STACK_MAX 64 /* tune this to whatever nesting you expect */
 
-static Gfx __attribute__((aligned(32))) * dl_stack[GFX_DL_STACK_MAX];
+extern Gfx water_ring_seg6_dl_06013AC0[];
+
+//#define GFX_DL_STACK_MAX 64 /* tune this to whatever nesting you expect */
+
+//static Gfx __attribute__((aligned(32))) * dl_stack[GFX_DL_STACK_MAX];
 
 static void __attribute__((noinline)) gfx_run_dl(Gfx* cmd) {
 //    int dl_sp;
@@ -2037,6 +2044,12 @@ static void __attribute__((noinline)) gfx_run_dl(Gfx* cmd) {
 
 //    dl_sp = 0;
     drawing_hand = 0;
+
+    if (cmd == water_ring_seg6_dl_06013AC0) {
+        water_ring = 1;
+    } else {
+        water_ring = 0;
+    }
 
     if (cmd == g_cotmc_seg7_dl_0700A3D0) {
         cotmc_shadow = 1;
