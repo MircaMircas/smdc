@@ -15,6 +15,8 @@
 
 #include "sh4zam.h"
 
+u8 gTransAlpha = 255;
+
 u8 sTransitionColorFadeCount[4] = { 0 };
 u16 sTransitionTextureFadeCount[2] = { 0 };
 
@@ -31,15 +33,21 @@ s32 set_and_reset_transition_fade_timer(s8 fadeTimer, u8 transTime) {
     return reset;
 }
 
+// note from jn64:
+// if you do a bad job approximating the math, the fade-out transition has an opaque flash at the end
+// just leave it as-is, not critical path
 u8 set_transition_color_fade_alpha(s8 fadeType, s8 fadeTimer, u8 transTime) {
     u8 time = 0;
 
     switch (fadeType) {
-        case 0:
-            time = shz_divf((f32) sTransitionColorFadeCount[fadeTimer] * 255.0f , (f32)(transTime - 1)) + 0.5f; // fade in
-            break;
+//            time = (f32) sTransitionColorFadeCount[fadeTimer] * 255.0 / (f32)(transTime - 1) + 0.5; // fade in
+//            break;
         case 1:
-            time = shz_divf((1.0f - sTransitionColorFadeCount[fadeTimer]) , (f32)(transTime - 1)) * 255.0f + 0.5f; // fade out
+            time = (1.0 - sTransitionColorFadeCount[fadeTimer] / (f32)(transTime - 1)) * 255.0 + 0.5; // fade out
+            break;
+        case 0:
+        default:
+            time = (f32) sTransitionColorFadeCount[fadeTimer] * 255.0 / (f32)(transTime - 1) + 0.5; // fade in
             break;
     }
     return time;
@@ -77,12 +85,15 @@ s32 dl_transition_color(s8 fadeTimer, u8 transTime, struct WarpTransitionData *t
 
 s32 render_fade_transition_from_color(s8 fadeTimer, u8 transTime, struct WarpTransitionData *transData) {
     u8 alpha = set_transition_color_fade_alpha(1, fadeTimer, transTime);
+    gTransAlpha = alpha;
 
     return dl_transition_color(fadeTimer, transTime, transData, alpha);
 }
 
 s32 render_fade_transition_into_color(s8 fadeTimer, u8 transTime, struct WarpTransitionData *transData) {
     u8 alpha = set_transition_color_fade_alpha(0, fadeTimer, transTime);
+    gTransAlpha = alpha;
+
 
     return dl_transition_color(fadeTimer, transTime, transData, alpha);
 }

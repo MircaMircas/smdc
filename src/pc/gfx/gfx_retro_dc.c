@@ -912,6 +912,7 @@ int cotmc_water = 0;
 extern u8 gWarpTransRed;
 extern u8 gWarpTransGreen;
 extern u8 gWarpTransBlue;
+extern u8 gTransAlpha;
 
 static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
     struct LoadedVertex* v1 = &rsp.loaded_vertices[vtx3_idx];
@@ -1265,6 +1266,7 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
         color_r = gWarpTransRed;
         color_g = gWarpTransGreen;
         color_b = gWarpTransBlue;
+        color_a = gTransAlpha;
         packedc = PACK_ARGB8888(color_r, color_g, color_b, color_a);
     }
 
@@ -1323,9 +1325,8 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
 
     buf_vbo_num_tris += 1;
 
-    if (cotmc_water || ddd_ripple || water_ring || cotmc_shadow || font_draw || do_radar_mark || drawing_hand || doing_peach || doing_bowser || doing_skybox || water_bomb || aquarium_draw || buf_vbo_num_tris == MAX_BUFFERED) {
+    if ((buf_vbo_num_tris == MAX_BUFFERED) || transition_verts || doing_skybox || water_bomb || font_draw || do_radar_mark || drawing_hand || doing_peach || doing_bowser ||  aquarium_draw || cotmc_water || ddd_ripple || water_ring || cotmc_shadow)
         gfx_flush();
-    }
 }
 
 extern void gfx_opengl_draw_triangles_2d(void *buf_vbo, size_t buf_vbo_len, size_t buf_vbo_num_tris);
