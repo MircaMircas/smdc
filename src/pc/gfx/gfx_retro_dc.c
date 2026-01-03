@@ -30,6 +30,7 @@ int drawing_hand = 0;
 int do_radar_mark = 0;
 int in_transition = 0;
 int transition_verts = 0;
+int in_cannon = 0;
 
 #define SUPPORT_CHECK(x) assert(x)
 int aquarium_draw = 0;
@@ -1263,10 +1264,18 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
 
     if (transition_verts) {
         use_shade = 0;
+        lit = 0;
         color_r = gWarpTransRed;
         color_g = gWarpTransGreen;
         color_b = gWarpTransBlue;
         color_a = gTransAlpha;
+        packedc = PACK_ARGB8888(color_r, color_g, color_b, color_a);
+    } else if (in_cannon) {
+        use_shade = 0;
+        lit = 0;
+        color_r = 0;
+        color_g = 0;
+        color_b = 0;
         packedc = PACK_ARGB8888(color_r, color_g, color_b, color_a);
     }
 
@@ -1325,7 +1334,7 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
 
     buf_vbo_num_tris += 1;
 
-    if ((buf_vbo_num_tris == MAX_BUFFERED) || /* transition_verts ||  */doing_skybox || water_bomb || font_draw || do_radar_mark || drawing_hand || doing_peach || doing_bowser ||  aquarium_draw || cotmc_water || ddd_ripple || water_ring || cotmc_shadow)
+    if ((buf_vbo_num_tris == MAX_BUFFERED) || doing_skybox || water_bomb || font_draw || do_radar_mark || drawing_hand || doing_peach || doing_bowser ||  aquarium_draw || cotmc_water || ddd_ripple || water_ring || cotmc_shadow)
         gfx_flush();
 }
 
@@ -2151,6 +2160,8 @@ static void __attribute__((noinline)) gfx_run_dl(Gfx* cmd) {
         if (cmd->words.w0 == 0x424C4E44) {
             if (cmd->words.w1 == 0x87654321) {
                 do_radar_mark ^= 1;
+            } else if (cmd->words.w1 == 0x87654322) {
+                in_cannon ^= 1;
             } else if (cmd->words.w1 == 0x12345678) {
                 doing_skybox ^= 1;
             } else if (cmd->words.w1 == 0xAAAAAAAA) {
