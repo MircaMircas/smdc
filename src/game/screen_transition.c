@@ -32,8 +32,6 @@
     }
 
 
-u8 gTransAlpha = 255;
-
 u8 sTransitionColorFadeCount[4] = { 0 };
 u16 sTransitionTextureFadeCount[2] = { 0 };
 
@@ -104,15 +102,12 @@ s32 dl_transition_color(s8 fadeTimer, u8 transTime, struct WarpTransitionData *t
 
 s32 render_fade_transition_from_color(s8 fadeTimer, u8 transTime, struct WarpTransitionData *transData) {
     u8 alpha = set_transition_color_fade_alpha(1, fadeTimer, transTime);
-    gTransAlpha = alpha;
 
     return dl_transition_color(fadeTimer, transTime, transData, alpha);
 }
 
 s32 render_fade_transition_into_color(s8 fadeTimer, u8 transTime, struct WarpTransitionData *transData) {
     u8 alpha = set_transition_color_fade_alpha(0, fadeTimer, transTime);
-    gTransAlpha = alpha;
-
 
     return dl_transition_color(fadeTimer, transTime, transData, alpha);
 }

@@ -651,17 +651,18 @@ static void  __attribute__((noinline)) gfx_sp_matrix(uint8_t parameters, const i
     if (parameters & G_MTX_PROJECTION) {
         if (parameters & G_MTX_LOAD) {
             shz_xmtrx_store_4x4((shz_matrix_4x4_t *)rsp.P_matrix);
-//            n64_memcpy(rsp.P_matrix, matrix, sizeof(matrix));
         } else {
             gfx_matrix_mul((shz_matrix_4x4_t *)rsp.P_matrix, (const shz_matrix_4x4_t *)matrix, (const shz_matrix_4x4_t *)rsp.P_matrix);
         }
     } else { // G_MTX_MODELVIEW
         if ((parameters & G_MTX_PUSH) && rsp.modelview_matrix_stack_size < 11) {
             ++rsp.modelview_matrix_stack_size;
+            // why does this break goddard background
+            // shz_matrix_4x4_copy((shz_matrix_4x4_t *)rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], (const shz_matrix_4x4_t *)rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 2]);
             n64_memcpy(rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 2], sizeof(matrix));
         }
+
         if (parameters & G_MTX_LOAD) {
-//            n64_memcpy(rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], matrix, sizeof(matrix));
             shz_xmtrx_store_4x4((shz_matrix_4x4_t *)rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1]);
         } else {
             gfx_matrix_mul((shz_matrix_4x4_t *)rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], (const shz_matrix_4x4_t *)matrix, (const shz_matrix_4x4_t *)rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1]);
@@ -910,7 +911,6 @@ int cotmc_water = 0;
 extern u8 gWarpTransRed;
 extern u8 gWarpTransGreen;
 extern u8 gWarpTransBlue;
-extern u8 gTransAlpha;
 
 static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
     struct LoadedVertex* v1 = &rsp.loaded_vertices[vtx3_idx];
@@ -983,9 +983,6 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
 
     if (do_radar_mark)
         gfx_flush();
-//    if (do_radar_mark) {
-//        screen_2d_z += 1.0f;
-//    }
 
     bool depth_test = (rsp.geometry_mode & G_ZBUFFER) == G_ZBUFFER;
 
@@ -1265,7 +1262,6 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
         color_r = gWarpTransRed;
         color_g = gWarpTransGreen;
         color_b = gWarpTransBlue;
-//        color_a = gTransAlpha;
         packedc = PACK_ARGB8888(color_r, color_g, color_b, color_a);
     } else if (in_cannon) {
         use_shade = 0;

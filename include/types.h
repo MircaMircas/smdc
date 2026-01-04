@@ -42,7 +42,7 @@ typedef s32 Vec3i[3];
 typedef f32 Vec4f[4];
 typedef s16 Vec4s[4];
 
-typedef f32 __attribute((aligned(32))) Mat4[4][4];
+typedef f32 Mat4[4][4] __attribute__((aligned(32)));
 
 typedef uintptr_t GeoLayout;
 typedef uintptr_t LevelScript;

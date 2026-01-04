@@ -552,10 +552,11 @@ void mtxf_mul(Mat4 dest, Mat4 a, Mat4 b) {
     shz_xmtrx_load_4x4_unaligned((const float*)b);
     shz_xmtrx_apply_4x4_unaligned((const float *)a);
     shz_xmtrx_store_4x4_unaligned((float *)dest);
+#else
+    // in theory these are all 32-byte aligned
+    // in practice, the following call crashes
+    shz_xmtrx_load_4x4_apply_store((shz_matrix_4x4_t *)dest, (const shz_matrix_4x4_t *)b, (const shz_matrix_4x4_t *)a);
 #endif
-//    shz_xmtrx_load_4x4_apply_store(dest, b, a);
-
-//    MEM_BARRIER();
 
     dest[0][3] = 0.0f;
     dest[1][3] = 0.0f;
