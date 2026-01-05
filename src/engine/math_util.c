@@ -769,7 +769,6 @@ static u16 atan2_lookup(f32 y, f32 x) {
  * Compute the angle from (0, 0) to (x, y) as a s16. Given that terrain is in
  * the xz-plane, this is commonly called with (z, x) to get a yaw angle.
  */
-
 s16 atan2s(f32 y, f32 x) {
     u16 ret;
 
