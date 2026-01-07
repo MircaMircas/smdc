@@ -19,9 +19,11 @@
 #define MUSIC_NONE 0xFFFF
 
 static Vec3f unused80339DC0;
+#if 0
 static OSMesgQueue sSoundMesgQueue;
 static OSMesg sSoundMesgBuf[1];
 static struct VblankHandler sSoundVblankHandler;
+#endif
 
 static u8 D_8032C6C0 = 0;
 static u8 D_8032C6C4 = 0;

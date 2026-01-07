@@ -482,6 +482,7 @@ void draw_face(struct ObjFace *face) {
     imout();
 }
 
+#if 0
 /**
  * Render a filled rectangle from (`ulx`, `uly`) to (`lrx`, `lry`).
  *
@@ -505,6 +506,7 @@ void draw_rect_stroke(s32 color, f32 ulx, f32 uly, f32 lrx, f32 lry) {
     gd_set_fill(gd_get_colour(color));
     gd_draw_border_rect(ulx, uly, lrx, lry);
 }
+#endif
 
 /**
  * Uncalled function that calls other orphan stub functions.
@@ -605,12 +607,12 @@ void draw_net(struct ObjNet *self) {
 
 /* 227F3C -> 22803C; orig name: Proc8017976C */
 void draw_gadget(struct ObjGadget *gdgt) {
+#if 0
     s32 colour = 0;
 
     if (gdgt->unk5C != 0) {
         colour = gdgt->unk5C;
     }
-
     draw_rect_fill(colour, gdgt->unk14.x, gdgt->unk14.y, gdgt->unk14.x + gdgt->unk28 * gdgt->unk40.x,
                    gdgt->unk14.y + gdgt->unk40.y);
 
@@ -618,6 +620,7 @@ void draw_gadget(struct ObjGadget *gdgt) {
         draw_rect_stroke(8, gdgt->unk14.x, gdgt->unk14.y, gdgt->unk14.x + gdgt->unk28 * gdgt->unk40.x,
                          gdgt->unk14.y + gdgt->unk40.y);
     }
+#endif
     gdgt->header.drawFlags &= ~OBJ_USE_ENV_COLOUR;
 }
 

@@ -670,11 +670,11 @@ void vec3f_get_dist_and_angle(Vec3f from, Vec3f to, f32 *dist, s16 *pitch, s16 *
 void vec3f_set_dist_and_angle(Vec3f from, Vec3f to, f32 dist, s16 pitch, s16 yaw) {
     f32 ps,pc;
     f32 ys,yc;
-    float tx,ty,tz;
 
     scaled_sincoss(pitch, &ps, &pc, dist);
     sincoss(yaw, &ys, &yc);
 #if 0
+    float tx,ty,tz;
     tx = from[0];// + dist * coss(pitch) * sins(yaw);
     ty = from[1];// + dist * sins(pitch);
     tz = from[2];// + dist * coss(pitch) * coss(yaw);

@@ -1263,8 +1263,7 @@ extern void gfx_opengl_draw_triangles_2d(void *buf_vbo, size_t buf_vbo_len, size
 
 int do_ext_fill = 0;
 
-static void __attribute__((noinline)) gfx_sp_quad_2d(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx,
-                                                     uint8_t vtx1_idx2, uint8_t vtx2_idx2, uint8_t vtx3_idx2) {
+static void __attribute__((noinline)) gfx_sp_quad_2d(void) {
     dc_fast_t* v2d = &rsp.loaded_vertices_2D[0];
     gfx_flush();
 
@@ -1505,8 +1504,8 @@ static inline float exp_map_0_1000_f(float x) {
     const float den = expm1f(-a);
     return 1000.0f * (1.0f - shz_divf(num, den));
 }
-#undef UNUSED
-#define UNUSED
+//#undef UNUSED
+//#define UNUSED
 
 static void gfx_sp_moveword(uint8_t index, uint32_t data) {
     switch (index) {
@@ -1580,7 +1579,7 @@ static void  __attribute__((noinline)) gfx_dp_set_tile_size(uint16_t uls, uint16
     rdp.texture_changed = true;
 }
 
-static void  __attribute__((noinline)) gfx_dp_load_block(uint8_t tile, uint32_t lrs) {
+static void  __attribute__((noinline)) gfx_dp_load_block(uint32_t lrs) {
     // The lrs field rather seems to be number of pixels to load
     uint32_t word_size_shift = 0;
     switch (rdp.texture_to_load.siz) {
@@ -1606,7 +1605,7 @@ static void  __attribute__((noinline)) gfx_dp_load_block(uint8_t tile, uint32_t 
     rdp.texture_changed = true;
 }
 
-static void  __attribute__((noinline)) gfx_dp_load_tile(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t lrs, uint32_t lrt) {
+static void  __attribute__((noinline)) gfx_dp_load_tile(uint32_t uls, uint32_t ult, uint32_t lrs, uint32_t lrt) {
     uint32_t word_size_shift = 0;
     switch (rdp.texture_to_load.siz) {
         case G_IM_SIZ_4b:
@@ -1791,7 +1790,7 @@ static void  __attribute__((noinline)) gfx_draw_rectangle(int32_t ulx, int32_t u
     rdp.viewport_or_scissor_changed = true;
     rsp.geometry_mode = 0;
 
-    gfx_sp_quad_2d(0, 1, 3, 1, 2, 3);
+    gfx_sp_quad_2d();
 
     rsp.geometry_mode = geometry_mode_saved;
     rdp.viewport = viewport_saved;
@@ -2213,10 +2212,10 @@ static void __attribute__((noinline)) gfx_run_dl(Gfx* cmd) {
                 gfx_dp_set_texture_image(C0(19, 2), C0(0, 10), seg_addr(cmd->words.w1));
                 break;
             case G_LOADBLOCK:
-                gfx_dp_load_block(C1(24, 3), C1(12, 12));
+                gfx_dp_load_block(C1(12, 12));
                 break;
             case G_LOADTILE:
-                gfx_dp_load_tile(C1(24, 3), C0(12, 12), C0(0, 12), C1(12, 12), C1(0, 12));
+                gfx_dp_load_tile(C0(12, 12), C0(0, 12), C1(12, 12), C1(0, 12));
                 break;
             case G_SETTILE:
                 gfx_dp_set_tile(C0(21, 3), C0(19, 2), C0(9, 9), C1(24, 3), C1(18, 2), C1(8, 2));

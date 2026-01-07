@@ -28,8 +28,8 @@ void gd_mat4f_lookat(Mat4f *mtx, f32 xFrom, f32 yFrom, f32 zFrom, f32 xTo, f32 y
                      f32 zColY, f32 yColY, f32 xColY) {
     f32 invLength;
 
-    struct GdVec3f d;
-    struct GdVec3f colX;
+    /* struct GdVec3f */shz_vec3_t d;
+    /* struct GdVec3f */shz_vec3_t colX;
     struct GdVec3f norm;
 
     // No reason to do this? mtx is set lower.

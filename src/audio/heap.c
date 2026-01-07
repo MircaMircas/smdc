@@ -666,7 +666,9 @@ void audio_reset_session(void) {
 #ifndef VERSION_EU
     s8 updatesPerFrame;
     s32 reverbWindowSize;
+#if 0
     s32 k;
+#endif
 #endif
     s32 i;
     s32 j;

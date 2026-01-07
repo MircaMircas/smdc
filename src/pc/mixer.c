@@ -846,7 +846,9 @@ void aResampleImpl(uint8_t flags, uint16_t pitch, RESAMPLE_STATE state) {
     size_t l;
 
     int16_t *dp, *sp;
+#if 0
     int32_t *wdp, *wsp;
+#endif
 
     if (!(flags & A_INIT)) {
         shz_copy_16_shorts(tmp, state);

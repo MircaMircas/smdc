@@ -130,7 +130,6 @@ n64copy1:
 static volatile snd_stream_hnd_t shnd = SND_STREAM_INVALID; 
 // The main audio buffer
 static uint8_t __attribute__((aligned(4096))) cb_buf_internal[2][RING_BUFFER_MAX_BYTES]; 
-static bool audio_started = false;
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 

@@ -1458,6 +1458,7 @@ void gd_rdp_init(void) {
     gDPPipeSync(next_gfx());
 }
 
+#if 0
 /* 24BB30 -> 24BED8; orig name: func_8019D360 */
 void gd_draw_rect(f32 ulx, f32 uly, f32 lrx, f32 lry) {
 #if 0
@@ -1502,6 +1503,7 @@ void gd_draw_border_rect(f32 ulx, f32 uly, f32 lrx, f32 lry) {
     gDPSetRenderMode(next_gfx(), G_RM_AA_ZB_OPA_INTER, G_RM_NOOP2);
 #endif
 }
+#endif
 
 /* 24CAC8 -> 24CDB4; orig name: func_8019E2F8 */
 void gd_set_fill(struct GdColour *colour) {
@@ -2424,6 +2426,7 @@ void parse_p1_controller(void) {
     }
 }
 
+#if 0
 /* 251A1C -> 251AC4 */
 void Unknown801A324C(f32 arg0) {
 #if 0
@@ -2436,6 +2439,7 @@ void Unknown801A324C(f32 arg0) {
     }
 #endif
 }
+#endif
 
 /* 251AC4 -> 251AF4 */
 void Unknown801A32F4(s32 arg0) {
@@ -2481,8 +2485,10 @@ void Unknown801A347C(f32 x, f32 y, f32 z) {
 void border_active_view(void) {
     if (sActiveView->flags & VIEW_BORDERED) {
         gd_set_fill(gd_get_colour(1));
+#if 0
         gd_draw_border_rect(0.0f, 0.0f, (sActiveView->lowerRight.x - 1.0f),
                             (sActiveView->lowerRight.y - 1.0f));
+#endif
     }
 }
 
@@ -2622,7 +2628,7 @@ void gd_create_ortho_matrix(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f) {
 
 /* 25245C -> 25262C */
 void gd_create_perspective_matrix(f32 fovy, f32 aspect, f32 near, f32 far) {
-    u16 perspNorm;
+//    u16 perspNorm;
 //    UNUSED u32 unused1;
     uintptr_t perspecMtx;
     uintptr_t rotMtx;
@@ -2630,7 +2636,7 @@ void gd_create_perspective_matrix(f32 fovy, f32 aspect, f32 near, f32 far) {
 //    UNUSED f32 unusedf = 0.0625f;
 
     sGdPerspTimer += 0.1;
-    guPerspective(&DL_CURRENT_MTX(sCurrentGdDl), &perspNorm, fovy, aspect, near, far, 1.0f);
+    guPerspective(&DL_CURRENT_MTX(sCurrentGdDl), fovy, aspect, near, far, 1.0f);
 
     //gSPPerspNormalize(next_gfx(), perspNorm);
 

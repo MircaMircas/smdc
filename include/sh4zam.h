@@ -485,13 +485,13 @@ SHZ_FORCE_INLINE shz_vec3_t shz_vec3_normalize(shz_vec3_t vec) SHZ_NOEXCEPT {
 }
 
 //! Dereferences the given pointer to a sequence of 2 floats as a shz_vec2_t.
-#define shz_vec2_deref(ptr) (*((shz_vec2_t*) (ptr)))
+#define shz_vec2_deref(ptr) (*((shz_vec2_t*) (void*) (ptr)))
 
 //! Dereferences the given pointer to a sequence of 3 floats as a shz_vec3_t.
-#define shz_vec3_deref(ptr) (*((shz_vec3_t*) (ptr)))
+#define shz_vec3_deref(ptr) (*((shz_vec3_t*) (void*) (ptr)))
 
 //! Dereferences the given pointer to a sequence of 4 floats as a shz_vec4_t.
-#define shz_vec4_deref(ptr) (*((shz_vec4_t*) (ptr)))
+#define shz_vec4_deref(ptr) (*((shz_vec4_t*) (void*) (ptr)))
 
 SHZ_FORCE_INLINE shz_vec3_t shz_vec2_vec3(shz_vec2_t vec, float z) SHZ_NOEXCEPT {
     return (shz_vec3_t) { .xy = vec, .z = z };

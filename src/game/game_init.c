@@ -64,14 +64,18 @@ struct DemoInput gRecordedDemoInput = { 0 }; // possibly removed in EU. TODO: Ch
 #define FPS_COUNTER_X_POS 24
 #define FPS_COUNTER_Y_POS 190
 
+#if 0
 static OSTime gLastOSTime = 0;
 static float gFrameTime = 0.0f;
 static u16 gFrames = 0;
+#endif
 u16 gFPS = 0;
 int gProcessAudio = TRUE;
 int gDoDither = FALSE;
 int gDoAA = FALSE;
+#if 0
 static u8 gRenderFPS = FALSE;
+#endif
 
 #if 0
 static void calculate_frameTime_from_OSTime(OSTime diff) {

@@ -243,7 +243,7 @@ static void geo_process_perspective(struct GraphNodePerspective *node) {
         node->fnNode.func(GEO_CONTEXT_RENDER, &node->fnNode.node, gMatStack[gMatStackIndex]);
     }
     if (node->fnNode.node.children != NULL) {
-        u16 perspNorm;
+        //u16 perspNorm;
         Mtx *mtx = alloc_display_list(sizeof(*mtx));
 
 #ifdef VERSION_EU
@@ -252,7 +252,7 @@ static void geo_process_perspective(struct GraphNodePerspective *node) {
         f32 aspect = shz_divf((f32) gCurGraphNodeRoot->width , (f32) gCurGraphNodeRoot->height);
 #endif
 
-        guPerspective(mtx, &perspNorm, node->fov, aspect, node->near, node->far, 1.0f);
+        guPerspective(mtx, node->fov, aspect, node->near, node->far, 1.0f);
         //gSPPerspNormalize(gDisplayListHead++, perspNorm);
 
         gSPMatrix(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(mtx), G_MTX_PROJECTION | G_MTX_LOAD | G_MTX_NOPUSH);

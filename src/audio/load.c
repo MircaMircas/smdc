@@ -665,7 +665,9 @@ gBankLoadStatus[bankId] = SOUND_LOAD_STATUS_COMPLETE;// SOUND_LOAD_STATUS_IN_PRO
 
 void *sequence_dma_immediate(s32 seqId, UNUSED s32 arg1) {
     s32 seqLength;
+#if 0
     void *ptr;
+#endif
     u8 *seqData;
 
     seqLength = gSeqFileHeader->seqArray[seqId].len + 0xf;

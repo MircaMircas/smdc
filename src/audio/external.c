@@ -902,7 +902,9 @@ void process_sound_request(u32 bits, f32 *pos) {
     u8 counter = 0;
     u8 soundId;
     f32 dist;
+#if 0
     const f32 one = 1.0f;
+#endif
 
     bankIndex = (bits & SOUNDARGS_MASK_BANK) >> SOUNDARGS_SHIFT_BANK;
     soundId = (bits & SOUNDARGS_MASK_SOUNDID) >> SOUNDARGS_SHIFT_SOUNDID;
