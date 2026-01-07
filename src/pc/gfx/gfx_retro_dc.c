@@ -894,7 +894,6 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
     }
 
     if (in_trilerp) {
-        gfx_flush();
         if (doing_bowser) {
             float mx,my,mz;
             get_mario_pos(&mx,&my,&mz);
@@ -911,41 +910,33 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
         }
     }
 
-    if (do_radar_mark)
-        gfx_flush();
-
     bool depth_test = (rsp.geometry_mode & G_ZBUFFER) == G_ZBUFFER;
 
     if (water_bomb) depth_test = 0;
 
     if (depth_test != rendering_state.depth_test) {
-        gfx_flush();
         gfx_rapi->set_depth_test(depth_test);
         rendering_state.depth_test = depth_test;
     }
     
     bool z_upd = (rdp.other_mode_l & Z_UPD) == Z_UPD;
     if (z_upd != rendering_state.depth_mask) {
-        gfx_flush();
         gfx_rapi->set_depth_mask(z_upd);
         rendering_state.depth_mask = z_upd;
     }
     
     bool zmode_decal = (rdp.other_mode_l & ZMODE_DEC) == ZMODE_DEC;
     if (zmode_decal != rendering_state.decal_mode) {
-        gfx_flush();
         gfx_rapi->set_zmode_decal(zmode_decal);
         rendering_state.decal_mode = zmode_decal;
     }
     
     if (rdp.viewport_or_scissor_changed) {
         if (memcmp(&rdp.viewport, &rendering_state.viewport, sizeof(rdp.viewport)) != 0) {
-            gfx_flush();
             gfx_rapi->set_viewport(rdp.viewport.x, rdp.viewport.y, rdp.viewport.width, rdp.viewport.height);
             n64_memcpy(&rendering_state.viewport, &rdp.viewport, sizeof(rdp.viewport));
         }
         if (memcmp(&rdp.scissor, &rendering_state.scissor, sizeof(rdp.scissor)) != 0) {
-            gfx_flush();
             gfx_rapi->set_scissor(rdp.scissor.x, rdp.scissor.y, rdp.scissor.width, rdp.scissor.height);
             n64_memcpy(&rendering_state.scissor, &rdp.scissor, sizeof(rdp.scissor));
         }
@@ -957,7 +948,6 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
     bool use_alpha = (rdp.other_mode_l & (G_BL_A_MEM << 18)) == 0;
     bool use_fog = (rdp.other_mode_l >> 30) == G_BL_CLR_FOG;
     if ((rsp.use_fog != use_fog)) {
-        gfx_flush();
         rsp.use_fog = use_fog;
     }
     bool texture_edge = (rdp.other_mode_l & CVG_X_ALPHA) == CVG_X_ALPHA;
@@ -986,7 +976,6 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
     }
 
     if (use_alpha != rendering_state.alpha_blend) {
-        gfx_flush();
         gfx_rapi->set_use_alpha(use_alpha);
         rendering_state.alpha_blend = use_alpha;
     }
@@ -999,7 +988,7 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
 
     if (usetex) {
         if (rdp.texture_changed) {
-            // necessary
+            // necessary - confirmed yet again
             gfx_flush();
             import_texture();
             rdp.texture_changed = 0;
@@ -1048,9 +1037,9 @@ static void  __attribute__((noinline)) gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx
         }
         linear_filter = (rdp.other_mode_h & (3U << G_MDSFT_TEXTFILT)) != G_TF_POINT;
 
-        if (((linear_filter != rendering_state.texture->linear_filter) || (rendering_state.texture->cms != cms) || (rendering_state.texture->cmt != cmt))) {
-            gfx_flush();
-        }
+//        if (((linear_filter != rendering_state.texture->linear_filter) || (rendering_state.texture->cms != cms) || (rendering_state.texture->cmt != cmt))) {
+//            gfx_flush();
+//        }
 
         gfx_rapi->set_sampler_parameters(linear_filter, cms, cmt);
         rendering_state.texture->linear_filter = linear_filter;
@@ -1265,7 +1254,6 @@ int do_ext_fill = 0;
 
 static void __attribute__((noinline)) gfx_sp_quad_2d(void) {
     dc_fast_t* v2d = &rsp.loaded_vertices_2D[0];
-    gfx_flush();
 
     // for reasons, this is always 0? why?
     uint8_t depth_test = (rsp.geometry_mode & G_ZBUFFER) == G_ZBUFFER;
