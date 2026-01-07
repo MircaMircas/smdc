@@ -30,7 +30,7 @@ static const Vtx cyan_fish_seg6_vertex_0600DC80[] = {
 // 0x0600DD20 - 0x0600DDD8
 const Gfx cyan_fish_seg6_dl_0600DD20[] = {
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, cyan_fish_seg6_texture_0600D468),
-    gsDPLoadSync(),
+    //gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
     gsSPLight(&cyan_fish_seg6_lights_0600DC68.l, 1),
     gsSPLight(&cyan_fish_seg6_lights_0600DC68.a, 2),
@@ -52,7 +52,7 @@ const Gfx cyan_fish_seg6_dl_0600DDD8[] = {
     gsDPSetCombineMode(G_CC_MODULATERGB, G_CC_MODULATERGB),
     gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 0, 0, G_TX_LOADTILE, 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOLOD, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOLOD),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
-    gsDPTileSync(),
+    //gsDPTileSync(),
     gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 8, 0, G_TX_RENDERTILE, 0, G_TX_CLAMP, 5, G_TX_NOLOD, G_TX_CLAMP, 5, G_TX_NOLOD),
     gsDPSetTileSize(0, 0, 0, (32 - 1) << G_TEXTURE_IMAGE_FRAC, (32 - 1) << G_TEXTURE_IMAGE_FRAC),
     gsSPDisplayList(cyan_fish_seg6_dl_0600DD20),
@@ -79,7 +79,7 @@ static const Vtx cyan_fish_seg6_vertex_0600DE50[] = {
 // 0x0600DE90 - 0x0600DED8
 const Gfx cyan_fish_seg6_dl_0600DE90[] = {
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, cyan_fish_seg6_texture_0600D468),
-    gsDPLoadSync(),
+    //gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
     gsSPLight(&cyan_fish_seg6_lights_0600DE38.l, 1),
     gsSPLight(&cyan_fish_seg6_lights_0600DE38.a, 2),
@@ -95,7 +95,7 @@ const Gfx cyan_fish_seg6_dl_0600DED8[] = {
     gsSPClearGeometryMode(G_CULL_BACK),
     gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 0, 0, G_TX_LOADTILE, 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOLOD, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOLOD),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
-    gsDPTileSync(),
+    //gsDPTileSync(),
     gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 8, 0, G_TX_RENDERTILE, 0, G_TX_CLAMP, 5, G_TX_NOLOD, G_TX_CLAMP, 5, G_TX_NOLOD),
     gsDPSetTileSize(0, 0, 0, (32 - 1) << G_TEXTURE_IMAGE_FRAC, (32 - 1) << G_TEXTURE_IMAGE_FRAC),
     gsSPDisplayList(cyan_fish_seg6_dl_0600DE90),
@@ -125,7 +125,7 @@ static const Vtx cyan_fish_seg6_vertex_0600DF60[] = {
 // 0x0600DFC0 - 0x0600E038
 const Gfx cyan_fish_seg6_dl_0600DFC0[] = {
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, cyan_fish_seg6_texture_0600D468),
-    gsDPLoadSync(),
+    //gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
     gsSPLight(&cyan_fish_seg6_lights_0600DF48.l, 1),
     gsSPLight(&cyan_fish_seg6_lights_0600DF48.a, 2),
@@ -143,7 +143,7 @@ const Gfx cyan_fish_seg6_dl_0600E038[] = {
     gsDPSetCombineMode(G_CC_MODULATERGB, G_CC_MODULATERGB),
     gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 0, 0, G_TX_LOADTILE, 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOLOD, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOLOD),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
-    gsDPTileSync(),
+    //gsDPTileSync(),
     gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 8, 0, G_TX_RENDERTILE, 0, G_TX_CLAMP, 5, G_TX_NOLOD, G_TX_CLAMP, 5, G_TX_NOLOD),
     gsDPSetTileSize(0, 0, 0, (32 - 1) << G_TEXTURE_IMAGE_FRAC, (32 - 1) << G_TEXTURE_IMAGE_FRAC),
     gsSPDisplayList(cyan_fish_seg6_dl_0600DFC0),

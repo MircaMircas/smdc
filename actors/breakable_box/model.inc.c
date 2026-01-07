@@ -77,7 +77,7 @@ const Gfx breakable_box_seg8_dl_08012CD8[] = {
     gsSPClearGeometryMode(G_SHADING_SMOOTH),
     gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 0, 0, G_TX_LOADTILE, 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOLOD, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOLOD),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
-    gsDPTileSync(),
+    //gsDPTileSync(),
     gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 8, 0, G_TX_RENDERTILE, 0, G_TX_CLAMP, 5, G_TX_NOLOD, G_TX_CLAMP, 5, G_TX_NOLOD),
     gsDPSetTileSize(0, 0, 0, (32 - 1) << G_TEXTURE_IMAGE_FRAC, (32 - 1) << G_TEXTURE_IMAGE_FRAC),
     gsSPEndDisplayList(),
@@ -87,7 +87,7 @@ const Gfx breakable_box_seg8_dl_08012CD8[] = {
 const Gfx breakable_box_seg8_dl_08012D20[] = {
     gsSPDisplayList(breakable_box_seg8_dl_08012CD8),
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, breakable_box_seg8_texture_08011A90),
-    gsDPLoadSync(),
+    //gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
     gsSPBranchList(breakable_box_seg8_dl_08012C30),
 };
@@ -96,7 +96,7 @@ const Gfx breakable_box_seg8_dl_08012D20[] = {
 const Gfx breakable_box_seg8_dl_08012D48[] = {
     gsSPDisplayList(breakable_box_seg8_dl_08012CD8),
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, breakable_box_seg8_texture_08012290),
-    gsDPLoadSync(),
+    //gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
     gsSPBranchList(breakable_box_seg8_dl_08012C30),
 };

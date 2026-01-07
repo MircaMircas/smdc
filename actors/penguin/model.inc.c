@@ -208,7 +208,7 @@ const Gfx penguin_seg5_dl_05006380[] = {
     gsDPPipeSync(),
     gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 0, 0, G_TX_LOADTILE, 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOLOD, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOLOD),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
-    gsDPTileSync(),
+    //gsDPTileSync(),
     gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 8, 0, G_TX_RENDERTILE, 0, G_TX_CLAMP, 5, G_TX_NOLOD, G_TX_CLAMP, 5, G_TX_NOLOD),
     gsDPSetTileSize(0, 0, 0, (32 - 1) << G_TEXTURE_IMAGE_FRAC, (32 - 1) << G_TEXTURE_IMAGE_FRAC),
     gsDPPipeSync(),
@@ -222,7 +222,7 @@ const Gfx penguin_seg5_dl_050063C8[] = {
     gsDPPipeSync(),
     gsDPSetCombineMode(G_CC_MODULATERGB, G_CC_MODULATERGB),
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, penguin_seg5_texture_050055E0),
-    gsDPLoadSync(),
+    //gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
     gsSPDisplayList(penguin_seg5_dl_050061C8),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
@@ -236,7 +236,7 @@ const Gfx penguin_seg5_dl_050063C8[] = {
 const Gfx penguin_seg5_dl_05006428[] = {
     gsSPDisplayList(penguin_seg5_dl_05006380),
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, penguin_seg5_texture_05002DE0),
-    gsDPLoadSync(),
+    //gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
     gsSPDisplayList(penguin_seg5_dl_050063C8),
     gsSPEndDisplayList(),
@@ -246,7 +246,7 @@ const Gfx penguin_seg5_dl_05006428[] = {
 const Gfx penguin_seg5_dl_05006458[] = {
     gsSPDisplayList(penguin_seg5_dl_05006380),
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, penguin_seg5_texture_050035E0),
-    gsDPLoadSync(),
+    //gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
     gsSPDisplayList(penguin_seg5_dl_050063C8),
     gsSPEndDisplayList(),
@@ -256,7 +256,7 @@ const Gfx penguin_seg5_dl_05006458[] = {
 const Gfx penguin_seg5_dl_05006488[] = {
     gsSPDisplayList(penguin_seg5_dl_05006380),
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, penguin_seg5_texture_05003DE0),
-    gsDPLoadSync(),
+    //gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
     gsSPDisplayList(penguin_seg5_dl_050063C8),
     gsSPEndDisplayList(),
@@ -266,7 +266,7 @@ const Gfx penguin_seg5_dl_05006488[] = {
 const Gfx penguin_seg5_dl_050064B8[] = {
     gsSPDisplayList(penguin_seg5_dl_05006380),
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, penguin_seg5_texture_050045E0),
-    gsDPLoadSync(),
+    //gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
     gsSPDisplayList(penguin_seg5_dl_050063C8),
     gsSPEndDisplayList(),
@@ -276,7 +276,7 @@ const Gfx penguin_seg5_dl_050064B8[] = {
 const Gfx penguin_seg5_dl_050064E8[] = {
     gsSPDisplayList(penguin_seg5_dl_05006380),
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, penguin_seg5_texture_05004DE0),
-    gsDPLoadSync(),
+    //gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
     gsSPDisplayList(penguin_seg5_dl_050063C8),
     gsSPEndDisplayList(),

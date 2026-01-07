@@ -228,7 +228,7 @@ static void geo_process_ortho_projection(struct GraphNodeOrthoProjection *node) 
         f32 bottom = (gCurGraphNodeRoot->y + gCurGraphNodeRoot->height) * scale;// / 2.0f * node->scale;
 
         guOrtho(mtx, left, right, bottom, top, -2.0f, 2.0f, 1.0f);
-        gSPPerspNormalize(gDisplayListHead++, 0xFFFF);
+        //gSPPerspNormalize(gDisplayListHead++, 0xFFFF);
         gSPMatrix(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(mtx), G_MTX_PROJECTION | G_MTX_LOAD | G_MTX_NOPUSH);
 
         geo_process_node_and_siblings(node->node.children);
@@ -253,7 +253,7 @@ static void geo_process_perspective(struct GraphNodePerspective *node) {
 #endif
 
         guPerspective(mtx, &perspNorm, node->fov, aspect, node->near, node->far, 1.0f);
-        gSPPerspNormalize(gDisplayListHead++, perspNorm);
+        //gSPPerspNormalize(gDisplayListHead++, perspNorm);
 
         gSPMatrix(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(mtx), G_MTX_PROJECTION | G_MTX_LOAD | G_MTX_NOPUSH);
 

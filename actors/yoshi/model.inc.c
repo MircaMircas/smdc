@@ -242,7 +242,7 @@ static const Vtx yoshi_seg5_vertex_0501D410[] = {
 // 0x0501D440 - 0x0501D488
 const Gfx yoshi_seg5_dl_0501D440[] = {
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, yoshi_seg5_texture_0501C8A0),
-    gsDPLoadSync(),
+    //gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 16 * 16 - 1, CALC_DXT(16, G_IM_SIZ_16b_BYTES)),
     gsSPLight(&yoshi_seg5_lights_0501C458.l, 1),
     gsSPLight(&yoshi_seg5_lights_0501C458.a, 2),
@@ -350,7 +350,7 @@ const Gfx yoshi_seg5_dl_0501D8F8[] = {
     gsDPSetCombineMode(G_CC_MODULATERGB, G_CC_MODULATERGB),
     gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 0, 0, G_TX_LOADTILE, 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOLOD, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOLOD),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
-    gsDPTileSync(),
+    //gsDPTileSync(),
     gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 4, 0, G_TX_RENDERTILE, 0, G_TX_CLAMP, 4, G_TX_NOLOD, G_TX_CLAMP, 4, G_TX_NOLOD),
     gsDPSetTileSize(0, 0, 0, (16 - 1) << G_TEXTURE_IMAGE_FRAC, (16 - 1) << G_TEXTURE_IMAGE_FRAC),
     gsSPDisplayList(yoshi_seg5_dl_0501D440),
@@ -371,7 +371,7 @@ const Gfx yoshi_seg5_dl_0501D940[] = {
 const Gfx yoshi_seg5_dl_0501D970[] = {
     gsSPDisplayList(yoshi_seg5_dl_0501D8F8),
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, yoshi_seg5_texture_0501C4A0),
-    gsDPLoadSync(),
+    //gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 16 * 16 - 1, CALC_DXT(16, G_IM_SIZ_16b_BYTES)),
     gsSPBranchList(yoshi_seg5_dl_0501D940),
 };
@@ -380,7 +380,7 @@ const Gfx yoshi_seg5_dl_0501D970[] = {
 const Gfx yoshi_seg5_dl_0501D998[] = {
     gsSPDisplayList(yoshi_seg5_dl_0501D8F8),
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, yoshi_seg5_texture_0501C6A0),
-    gsDPLoadSync(),
+    //gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 16 * 16 - 1, CALC_DXT(16, G_IM_SIZ_16b_BYTES)),
     gsSPBranchList(yoshi_seg5_dl_0501D940),
 };

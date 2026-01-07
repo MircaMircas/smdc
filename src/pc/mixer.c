@@ -890,7 +890,7 @@ void aResampleImpl(uint8_t flags, uint16_t pitch, RESAMPLE_STATE state) {
             pitch_accumulator += (pitch << 1);
             in += pitch_accumulator >> 16;
             MEM_BARRIER_PREF(in);
-            pitch_accumulator %= 0x10000;
+            pitch_accumulator &= 0xffff; //%= 0x10000;
             MEM_BARRIER();
             *out++ = clamp16f((sample_f));
             MEM_BARRIER();
