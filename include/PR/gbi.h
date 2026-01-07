@@ -2219,6 +2219,7 @@ typedef union {
 	 __gsSP1Triangle_w1f(v10, v11, v12, flag1)			\
 }}
 #else
+#if 0
 #define gSP2Triangles(pkt, v00, v01, v02, flag0, v10, v11, v12, flag1)	\
 {									\
 	gSP1Triangle(pkt, v00, v01, v02, flag0);			\
@@ -2227,6 +2228,24 @@ typedef union {
 #define gsSP2Triangles(v00, v01, v02, flag0, v10, v11, v12, flag1)	\
 	gsSP1Triangle(v00, v01, v02, flag0),				\
 	gsSP1Triangle(v10, v11, v12, flag1)
+#endif
+
+define gSP2Triangles(pkt, v00, v01, v02, flag0, v10, v11, v12, flag1)	\
+{									\
+	Gfx *_g = (Gfx *)(pkt);						\
+									\
+	_g->words.w0 = (_SHIFTL(G_TRI2, 24, 8)|				\
+			__gsSP1Triangle_w1f(v00, v01, v02, flag0));	\
+        _g->words.w1 =  __gsSP1Triangle_w1f(v10, v11, v12, flag1); 	\
+}
+
+#define gsSP2Triangles(v00, v01, v02, flag0, v10, v11, v12, flag1)	\
+{{									\
+	(_SHIFTL(G_TRI2, 24, 8)|					\
+	 __gsSP1Triangle_w1f(v00, v01, v02, flag0)),			\
+	 __gsSP1Triangle_w1f(v10, v11, v12, flag1)			\
+}}
+
 #endif	/* F3DEX_GBI/F3DLP_GBI */
 
 #if	(defined(F3DEX_GBI)||defined(F3DLP_GBI))

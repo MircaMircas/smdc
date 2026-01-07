@@ -2186,7 +2186,7 @@ static void __attribute__((noinline)) gfx_run_dl(Gfx* cmd) {
                 gfx_sp_tri1(C1(16, 8) / 10, C1(8, 8) / 10, C1(0, 8) / 10);
 #endif
                 break;
-#if defined(F3DEX_GBI) || defined(F3DLP_GBI)
+#if defined(F3DEX_GBI) || defined(F3DLP_GBI) || defined(F3DEX_GBI_2)
             case (uint8_t)G_TRI2:
                 gfx_sp_tri1(C0(17, 7), C0(9, 7), C0(1, 7));
                 gfx_sp_tri1(C1(17, 7), C1(9, 7), C1(1, 7));
