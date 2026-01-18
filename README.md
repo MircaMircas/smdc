@@ -1,4 +1,4 @@
-# Super Mario 64 for the Sega Dreamcast
+# Super Mario DC
 
 This is an update to the original 2020 mrneo240 Dreamcast port of Super Mario 64. It addresses the audio-visual issues that were present and adds VMU saving.
 
@@ -14,7 +14,7 @@ Nobody follows directions anyway. If you want to build it the real way, I'll lea
 
 1. Install the Dreamcast toolchain https://github.com/KallistiOS/KallistiOS/tree/master/utils/dc-chain.
 2. Install python3
-3. Place a Super Mario 64 ROM called `baserom.<VERSION>.z64` into the repository's root directory for asset extraction, where `VERSION` can be `us`, `jp`, or `eu`. **Note: Only US supported**
+3. Place a Super Mario 64 ROM called `baserom.us.z64` into the repository's root directory for asset extraction
 4. Run `make TARGET_DC=1`
 5. This will produce an ELF ready to be loaded with dc-tool / dc-load.
 6. To make a CDI, run `make TARGET_DC=1 cdi` . You need `mkdcdisc` installed and on your path.
